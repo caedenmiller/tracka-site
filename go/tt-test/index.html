@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Link test</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<style>
+:root{color-scheme:dark}
+body{margin:0;background:#08080A;color:#fff;font:500 16px/1.45 -apple-system,system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px max(32px,env(safe-area-inset-bottom))}
+h1{font-size:22px;margin:0 0 6px}
+p{color:#969CA4;margin:0 0 20px;font-size:14px}
+a,button{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin:0 0 10px;padding:10px 16px;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:#101013;color:#fff;font:600 16px -apple-system,system-ui,sans-serif;text-decoration:none;text-align:left}
+a:active,button:active{background:#1c1c21}
+.k{flex:none;width:30px;height:30px;border-radius:50%;background:#fff;color:#000;font-weight:800;display:flex;align-items:center;justify-content:center}
+small{display:block;color:#7E858E;font-size:12px;font-weight:500;word-break:break-all}
+#log{margin-top:18px;font-size:13px;color:#C5C9CF;white-space:pre-wrap}
+#ua{margin-top:18px;font-size:11px;color:#7E858E;word-break:break-all}
+</style>
+</head>
+<body>
+<h1>TikTok link test</h1>
+<p>Open this inside TikTok. Tap each button, then come back here. Note which ones reach the App Store or Safari.</p>
+<a data-k="A" href="https://apps.apple.com/app/id6778956833"><span class="k">A</span><span>Plain App Store link<small>https://apps.apple.com/…</small></span></a>
+<a data-k="B" href="itms-apps://apps.apple.com/app/id6778956833"><span class="k">B</span><span>App Store scheme<small>itms-apps://</small></span></a>
+<a data-k="C" href="itms-appss://apps.apple.com/app/id6778956833"><span class="k">C</span><span>App Store scheme, secure<small>itms-appss://</small></span></a>
+<a data-k="D" href="x-safari-https://gettracka.com/go/tiktok/"><span class="k">D</span><span>Open our page in Safari<small>x-safari-https://gettracka.com/go/tiktok/</small></span></a>
+<a data-k="E" href="x-safari-https://apps.apple.com/app/id6778956833"><span class="k">E</span><span>Open the App Store page in Safari<small>x-safari-https://apps.apple.com/…</small></span></a>
+<button data-k="F" type="button" id="pop"><span class="k">F</span><span>Pop-out window<small>window.open(App Store link)</small></span></button>
+<div id="log"></div>
+<div id="ua"></div>
+<script>
+(function(){
+  var ua=navigator.userAgent,log=document.getElementById('log');
+  document.getElementById('ua').textContent=(/TikTok|musical_ly|BytedanceWebview|trill_/i.test(ua)?'TikTok browser detected':'Not TikTok')+'\n'+ua;
+  function note(k){
+    var left=false,m=function(){if(document.visibilityState==='hidden')left=true;};
+    document.addEventListener('visibilitychange',m);
+    log.textContent='Tapped '+k+'…\n'+log.textContent;
+    setTimeout(function(){document.removeEventListener('visibilitychange',m);
+      log.textContent=k+(left?': LEFT TikTok':': stayed here (failed?)')+'\n'+log.textContent.replace('Tapped '+k+'…\n','');},1500);
+  }
+  [].forEach.call(document.querySelectorAll('a[data-k]'),function(a){a.addEventListener('click',function(){note(a.getAttribute('data-k'));});});
+  document.getElementById('pop').addEventListener('click',function(){note('F');window.open('https://apps.apple.com/app/id6778956833','_blank');});
+})();
+</script>
+</body>
+</html>
