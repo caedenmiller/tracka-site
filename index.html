@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="/track.js?v=3"></script>
-<title>Tracka: Know what your cards are worth today</title>
-<meta name="description" content="Scan a Pokémon card, see live raw and graded prices, and watch your collection value update. Set price alerts and find card shows near you. Free on iPhone.">
+<title>Tracka: Know the floor before you walk it</title>
+<meta name="description" content="See what vendors are bringing to Pokémon card shows near you, with prices, before the doors open. Track your collection, scan cards and follow prices. Free on iPhone.">
 <meta name="theme-color" content="#2a8576">
 <meta name="color-scheme" content="light">
 <meta name="apple-itunes-app" content="app-id=6778956833">
@@ -13,24 +13,24 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=6">
 <link rel="icon" type="image/png" href="/favicon.png?v=6">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5">
-<meta property="og:title" content="Tracka: Know what your cards are worth today">
-<meta property="og:description" content="Scan a card, see live raw and graded prices, and watch your collection value update. Free on iPhone.">
+<meta property="og:title" content="Tracka: Know the floor before you walk it">
+<meta property="og:description" content="See what vendors are bringing to card shows near you, with prices, before the doors open. Free on iPhone.">
 <meta property="og:url" content="https://gettracka.com/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Tracka">
-<meta property="og:image" content="https://gettracka.com/og.jpg?v=9">
+<meta property="og:image" content="https://gettracka.com/og.jpg?v=8">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The Tracka Scan tab: a binder page of nine cards, each one identified and priced, $596.07 in all.">
+<meta property="og:image:alt" content="The Tracka Shows tab, listing upcoming card shows with their flyers and vendor tables.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Tracka: Know what your cards are worth today">
-<meta name="twitter:description" content="Scan a card, see live raw and graded prices, and watch your collection value update. Free on iPhone.">
-<meta name="twitter:image" content="https://gettracka.com/og.jpg?v=9">
+<meta name="twitter:title" content="Tracka: Know the floor before you walk it">
+<meta name="twitter:description" content="See what vendors are bringing to card shows near you, with prices, before the doors open. Free on iPhone.">
+<meta name="twitter:image" content="https://gettracka.com/og.jpg?v=8">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/plus-jakarta-sans-latin.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/instrument-serif-italic-latin.woff2">
-<link rel="preload" as="image" href="/shots/scan-720.webp?v=1" imagesrcset="/shots/scan-360.webp?v=1 360w, /shots/scan-540.webp?v=1 540w, /shots/scan-720.webp?v=1 720w" imagesizes="(max-width:560px) 176px, 264px" fetchpriority="high">
+<link rel="preload" as="image" href="/shots/home-720.webp?v=1" imagesrcset="/shots/home-360.webp?v=1 360w, /shots/home-540.webp?v=1 540w, /shots/home-720.webp?v=1 720w" imagesizes="(max-width:560px) 176px, 264px" fetchpriority="high">
 <script>document.documentElement.className="js";addEventListener("load",function(){if(!(window.tcgvMain&&window.tcgvSite))document.documentElement.className=""})</script>
-<link rel="stylesheet" href="/site.css?v=36">
+<link rel="stylesheet" href="/site.css?v=35">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -51,10 +51,9 @@
     {
       "@type": "MobileApplication",
       "name": "Tracka",
-      "alternateName": "TCGVendr",
       "operatingSystem": "iOS",
       "applicationCategory": "ShoppingApplication",
-      "description": "Scan a card, see live raw and graded prices, and watch your collection value update. Set price alerts, build binders and master sets, and find card shows near you.",
+      "description": "See what vendors are bringing to Pokémon card shows before the doors open, search one card across every table, and track your collection at market value.",
       "url": "https://gettracka.com/",
       "installUrl": "https://apps.apple.com/us/app/id6778956833",
       "publisher": { "@id": "https://gettracka.com/#org" },
@@ -82,20 +81,22 @@
   <div class="wrap nav-in">
     <a class="brand" href="/" aria-label="Tracka home" translate="no"><img src="/art/v2/icon.png?v=2" width="30" height="30" alt="">Tracka</a>
     <nav class="nav-links" aria-label="Primary">
+      <a href="#shows">Shows</a>
       <a href="#scan">Scan</a>
       <a href="#collection">Collection</a>
+      <a href="#vendors">Vendors</a>
       <a href="#pro">Pro</a>
-      <a href="#shows">Shows</a>
       <a href="#faq">FAQ</a>
     </nav>
     <a class="nav-cta" href="https://apps.apple.com/us/app/id6778956833">Get the app</a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Open menu"><span></span><span></span></button>
   </div>
   <nav class="menu" id="menu" aria-label="Menu" hidden>
+    <a href="#shows">Shows</a>
     <a href="#scan">Scan</a>
     <a href="#collection">Collection</a>
+    <a href="#vendors">Vendors</a>
     <a href="#pro">Pro</a>
-    <a href="#shows">Shows</a>
     <a href="#faq">FAQ</a>
     <a class="pill" href="https://apps.apple.com/us/app/id6778956833">Get the app</a>
   </nav>
@@ -108,14 +109,14 @@
     <canvas class="hero-shader" aria-hidden="true"></canvas>
     <div class="wrap hero-copy">
       <p class="chip">FREE ON IPHONE</p>
-      <h1>Know what your cards <span class="it">are worth today.</span></h1>
-      <p class="lede"><span class="lede-lead">Scan a card, see live raw and graded prices, and watch your collection value update.</span> <span class="lede-rest">Set price alerts, build binders and master sets, and find card shows near you.</span><span class="lede-short">Set price alerts and find card shows near you.</span></p>
+      <h1>Know the floor <span class="it">before you walk it.</span></h1>
+      <p class="lede"><span class="lede-lead">The all-in-one TCG app.</span> <span class="lede-rest">Find shows, see the tables, scan your cards and track what they’re worth.</span><span class="lede-short">Find shows, see the tables, track your cards.</span></p>
       <div class="cta-row">
         <a class="store" href="https://apps.apple.com/us/app/id6778956833" aria-label="Download Tracka on the App Store">
           <svg aria-hidden="true"><use href="#i-apple"/></svg>
           <span><small>Download on the</small><b>App Store</b></span>
         </a>
-        <a class="see" href="#scan">See how<svg aria-hidden="true"><use href="#i-right"/></svg></a>
+        <a class="see" href="#shows">See how<svg aria-hidden="true"><use href="#i-right"/></svg></a>
       </div>
       <p class="fine">Made for iPhone · Pokémon English and Japanese</p>
     </div>
@@ -124,18 +125,131 @@
       <img class="float float-a" src="/art/v2/card-umbreon.webp" width="260" height="362" alt="" aria-hidden="true" data-depth="-.5">
       <img class="float float-b" src="/art/v2/card-blastoise.webp" width="260" height="363" alt="" aria-hidden="true" data-depth=".6">
       <div class="phone p-left" data-depth=".35">
-        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/home-720.webp?v=1" srcset="/shots/home-360.webp?v=1 360w, /shots/home-540.webp?v=1 540w, /shots/home-720.webp?v=1 720w" sizes="(max-width:560px) 140px, 229px" width="720" height="1565" alt="Home: a $166,799 portfolio with its 30-day graph and top movers."></div></div></div><span class="island"></span>
+        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/shows-720.webp?v=1" srcset="/shots/shows-360.webp?v=1 360w, /shots/shows-540.webp?v=1 540w, /shots/shows-720.webp?v=1 720w" sizes="(max-width:560px) 140px, 229px" width="720" height="1565" alt="The Shows tab: upcoming card shows with their flyers, dates and hours."></div></div></div><span class="island"></span>
       </div>
       <div class="phone p-right" data-depth=".35">
         <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/chart-720.webp?v=1" srcset="/shots/chart-360.webp?v=1 360w, /shots/chart-540.webp?v=1 540w, /shots/chart-720.webp?v=1 720w" sizes="(max-width:560px) 140px, 229px" width="720" height="1565" alt="Gengar VMAX price history: $1,027, up $705.85 since 2024."></div></div></div><span class="island"></span>
       </div>
       <div class="phone p-center" data-depth="0">
-        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/scan-720.webp?v=1" srcset="/shots/scan-360.webp?v=1 360w, /shots/scan-540.webp?v=1 540w, /shots/scan-720.webp?v=1 720w" sizes="(max-width:560px) 176px, 264px" width="720" height="1565" alt="The Scan tab in Page mode: a 3 by 3 binder page, nine cards identified and priced, $596.07 in all." fetchpriority="high"></div></div></div><span class="island"></span>
+        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/home-720.webp?v=1" srcset="/shots/home-360.webp?v=1 360w, /shots/home-540.webp?v=1 540w, /shots/home-720.webp?v=1 720w" sizes="(max-width:560px) 176px, 264px" width="720" height="1565" alt="Home: a $166,799 portfolio with its 30-day graph and top movers." fetchpriority="high"></div></div></div><span class="island"></span>
       </div>
     </div>
   </section>
 
   <div class="band">
+
+    <section class="strip" id="tables" aria-labelledby="tables-h">
+      <div class="wrap strip-head">
+        <h2 id="tables-h" data-past="Cards on vendors’ tables">Cards at upcoming shows</h2>
+        <div class="strip-nav" aria-hidden="true">
+          <button type="button" class="round" data-scroll="-1" tabindex="-1"><svg><use href="#i-left"/></svg></button>
+          <button type="button" class="round" data-scroll="1" tabindex="-1"><svg><use href="#i-right"/></svg></button>
+        </div>
+      </div>
+      <div class="tiles-wrap">
+      <ul class="tiles" data-tiles>
+      <li class="tile" data-end="2026-11-28">
+        <span class="tile-price">$1,189</span>
+        <img src="/cards/sv8pt5-161.webp" width="440" height="615" loading="lazy" decoding="async" alt="Umbreon ex, Prismatic Evolutions, NM">
+        <b>Umbreon ex</b>
+        <span class="tile-meta">Prismatic Evolutions</span>
+        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
+      </li>
+      <li class="tile" data-end="2026-11-28">
+        <span class="tile-price">$400</span>
+        <img src="/cards/sv8pt5-156.webp" width="440" height="615" loading="lazy" decoding="async" alt="Sylveon ex, Prismatic Evolutions, NM">
+        <b>Sylveon ex</b>
+        <span class="tile-meta">Prismatic Evolutions</span>
+        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
+      </li>
+      <li class="tile" data-end="2026-11-28">
+        <span class="tile-price">$265</span>
+        <img src="/cards/sv8pt5-155.webp" width="440" height="615" loading="lazy" decoding="async" alt="Espeon ex, Prismatic Evolutions, NM">
+        <b>Espeon ex</b>
+        <span class="tile-meta">Prismatic Evolutions</span>
+        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
+      </li>
+      <li class="tile" data-end="2026-12-27">
+        <span class="tile-price">$2,400</span>
+        <img src="/cards/swsh8-271.webp" width="440" height="614" loading="lazy" decoding="async" alt="Gengar VMAX, Fusion Strike, NM">
+        <b>Gengar VMAX</b>
+        <span class="tile-meta">Fusion Strike</span>
+        <span class="tile-show">Dec 27, Pokémon Market at Bell Works</span>
+      </li>
+      <li class="tile" data-end="2026-12-27">
+        <span class="tile-price">$400</span>
+        <img src="/cards/dpp-DP47.webp" width="440" height="605" loading="lazy" decoding="async" alt="Rayquaza C LV.X, DP Black Star Promos, MP">
+        <b>Rayquaza C LV.X</b>
+        <span class="tile-meta">DP Black Star Promos</span>
+        <span class="tile-show">Dec 27, Pokémon Market at Bell Works</span>
+      </li>
+      <li class="tile" data-end="2026-12-27">
+        <span class="tile-price">$299</span>
+        <img src="/cards/sv3pt5-199.webp" width="440" height="615" loading="lazy" decoding="async" alt="Charizard ex, 151, NM">
+        <b>Charizard ex</b>
+        <span class="tile-meta">151</span>
+        <span class="tile-show">Dec 27, Pokémon Market at Bell Works</span>
+      </li>
+      <li class="tile" data-end="2026-11-28">
+        <span class="tile-price">$250</span>
+        <img src="/cards/sv8pt5-150.webp" width="440" height="615" loading="lazy" decoding="async" alt="Glaceon ex, Prismatic Evolutions, NM">
+        <b>Glaceon ex</b>
+        <span class="tile-meta">Prismatic Evolutions</span>
+        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
+      </li>
+      <li class="tile" data-end="2026-10-25">
+        <span class="tile-price">$186</span>
+        <img src="/cards/base1-46.webp" width="440" height="605" loading="lazy" decoding="async" alt="Charmander, Base, NM">
+        <b>Charmander</b>
+        <span class="tile-meta">Base</span>
+        <span class="tile-show">Oct 24 to 25, TCG Jam Fox Valley Sports Spooktackular</span>
+      </li>
+      <li class="tile" data-end="2026-10-23">
+        <span class="tile-price">$125</span>
+        <img src="/cards/dpp-DP17.webp" width="440" height="605" loading="lazy" decoding="async" alt="Dialga LV.X, DP Black Star Promos, NM">
+        <b>Dialga LV.X</b>
+        <span class="tile-meta">DP Black Star Promos</span>
+        <span class="tile-show">Oct 23, National Card Sharks TCG and Sports EXPO</span>
+      </li>
+      <li class="tile" data-end="2026-10-23">
+        <span class="tile-price">$28.91</span>
+        <img src="/cards/dpp-DP39.webp" width="440" height="605" loading="lazy" decoding="async" alt="Shaymin LV.X, DP Black Star Promos, LP">
+        <b>Shaymin LV.X</b>
+        <span class="tile-meta">DP Black Star Promos</span>
+        <span class="tile-show">Oct 23, National Card Sharks TCG and Sports EXPO</span>
+      </li>
+      <li class="tile" data-end="2026-10-23">
+        <span class="tile-price">$21.39</span>
+        <img src="/cards/ecard1-75.webp" width="440" height="605" loading="lazy" decoding="async" alt="Dragonair, Expedition Base Set, NM">
+        <b>Dragonair</b>
+        <span class="tile-meta">Expedition Base Set</span>
+        <span class="tile-show">Oct 23, National Card Sharks TCG and Sports EXPO</span>
+      </li>
+    </ul>
+      </div>
+    </section>
+
+    <section class="feat" id="shows">
+      <div class="wrap feat-in">
+        <div class="feat-art reveal" data-pluck>
+          <svg class="well" viewBox="0 0 560 560" aria-hidden="true"><circle cx="280" cy="280" r="210" fill="var(--well)"/><circle cx="280" cy="280" r="272" fill="none" stroke="var(--ring)"/></svg>
+          <div class="phone" data-float>
+            <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/show-720.webp?v=2" srcset="/shots/show-360.webp?v=2 360w, /shots/show-540.webp?v=2 540w, /shots/show-720.webp?v=2 720w" sizes="(max-width:560px) 200px, 232px" width="720" height="1565" loading="lazy" decoding="async" alt="A show page: the Poke'Ville Card Show flyer, date, hours, Going and Directions, and the tables coming with their cards."></div></div></div><span class="island"></span>
+            <img class="pluck" src="/art/v2/card-sylveon.webp" width="440" height="615" loading="lazy" decoding="async" alt="" aria-hidden="true">
+            <span class="pluck-tag" aria-hidden="true"><b>Sylveon Ex</b><span>$416 <small>Market</small></span></span>
+            <img class="pop-map" src="/art/v2/pop-map.webp" width="720" height="641" loading="lazy" decoding="async" alt="" aria-hidden="true">
+            <svg class="map-arrow" viewBox="0 0 500 450" aria-hidden="true"><path class="line shaft" pathLength="1" d="M470 100Q220 400 50 80"/><path class="line head" pathLength="1" d="M50 125L50 80L87 105"/></svg>
+            <svg class="map-arrow-m" viewBox="0 0 400 500" aria-hidden="true"><path class="line shaft" pathLength="1" d="M370 230Q170 450 40 80"/><path class="line head" pathLength="1" d="M33 125L40 80L73 111"/></svg>
+          </div>
+        </div>
+        <div class="feat-copy reveal">
+          <p class="eyebrow">At the show</p>
+          <h2>See every table before the show.</h2>
+          <p class="body">Vendors post the cards they’re bringing, with prices. Search one card across every table at the show.</p>
+          <p class="note">Flyers, hours and entry fees for every show.</p>
+        </div>
+      </div>
+    </section>
 
     <section class="feat flip" id="scan">
       <div class="ghost" aria-hidden="true">Scan it</div>
@@ -152,9 +266,9 @@
         </div>
         <div class="feat-copy reveal">
           <p class="eyebrow">Scan</p>
-          <h2>Scan a card. <span class="it">See what it’s worth.</span></h2>
-          <p class="body">Point your camera at a card, a slab or a whole binder page, up to nine cards in one shot. Every card comes back priced and ready to add.</p>
-          <p class="note">Works on Japanese cards too.</p>
+          <h2>Scan a whole <span class="it">binder page.</span></h2>
+          <p class="body">Up to nine cards in one shot, all priced.</p>
+          <p class="note">Singles and slabs too. Works on Japanese cards.</p>
         </div>
       </div>
     </section>
@@ -174,7 +288,25 @@
           <p class="eyebrow">Your collection</p>
           <h2>Know what it’s worth. <span class="it">Every single day.</span></h2>
           <p class="body">Raw cards follow the live market. Slabs are priced from real sales data, and you can see every one.</p>
-          <p class="note">Singles, slabs and sealed in one number. Set a price alert and get a push when a card hits your price.</p>
+          <p class="note">Singles, slabs and sealed in one number.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="vendors" id="vendors">
+      <div class="wrap reveal">
+        <p class="eyebrow">For vendors</p>
+        <h2>Get found <span class="it">before the doors open.</span></h2>
+        <p class="body">Put the cards you’re bringing in front of buyers before the show starts.</p>
+        <div class="v-grid">
+          <div class="v-item"><h3>Publish a table</h3><p>Pick cards from your collection for any show you’re booked at. It takes a few taps.</p></div>
+          <div class="v-item"><h3>Price it your way</h3><p>Set your own prices or let market value show. Prices you set save back to your cards for next time.</p></div>
+          <div class="v-item"><h3>Show up in search</h3><p>Anyone who searches for a card at that show finds it on your table.</p></div>
+          <div class="v-item"><h3>See who wants what</h3><p>You’ll know when someone favorites one of your cards. Bring it, or set it aside for them.</p></div>
+        </div>
+        <div class="v-band">
+          <p><b>Bringing cards but not tabling?</b> Tap Going on the show and pick what you’re bringing so other collectors can see it.</p>
+          <p><b>Run a show?</b> Send it in from the Shows tab. Listing is free.</p>
         </div>
       </div>
     </section>
@@ -225,136 +357,6 @@
       </div>
     </section>
 
-    <section class="feat" id="shows">
-      <div class="wrap feat-in">
-        <div class="feat-art reveal" data-pluck>
-          <svg class="well" viewBox="0 0 560 560" aria-hidden="true"><circle cx="280" cy="280" r="210" fill="var(--well)"/><circle cx="280" cy="280" r="272" fill="none" stroke="var(--ring)"/></svg>
-          <div class="phone" data-float>
-            <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/show-720.webp?v=2" srcset="/shots/show-360.webp?v=2 360w, /shots/show-540.webp?v=2 540w, /shots/show-720.webp?v=2 720w" sizes="(max-width:560px) 200px, 232px" width="720" height="1565" loading="lazy" decoding="async" alt="A show page: the Poke'Ville Card Show flyer, date, hours, Going and Directions, and the tables coming with their cards."></div></div></div><span class="island"></span>
-            <img class="pluck" src="/art/v2/card-sylveon.webp" width="440" height="615" loading="lazy" decoding="async" alt="" aria-hidden="true">
-            <span class="pluck-tag" aria-hidden="true"><b>Sylveon Ex</b><span>$416 <small>Market</small></span></span>
-            <img class="pop-map" src="/art/v2/pop-map.webp" width="720" height="641" loading="lazy" decoding="async" alt="" aria-hidden="true">
-            <svg class="map-arrow" viewBox="0 0 500 450" aria-hidden="true"><path class="line shaft" pathLength="1" d="M470 100Q220 400 50 80"/><path class="line head" pathLength="1" d="M50 125L50 80L87 105"/></svg>
-            <svg class="map-arrow-m" viewBox="0 0 400 500" aria-hidden="true"><path class="line shaft" pathLength="1" d="M370 230Q170 450 40 80"/><path class="line head" pathLength="1" d="M33 125L40 80L73 111"/></svg>
-          </div>
-        </div>
-        <div class="feat-copy reveal">
-          <p class="eyebrow">Card shows</p>
-          <h2>Find card shows <span class="it">near you.</span></h2>
-          <p class="body">Flyers, hours and entry fees for each show. When vendors post a table, you can see what they’re bringing, with prices, and search one card across every table.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="strip" id="tables" aria-labelledby="tables-h">
-      <div class="wrap strip-head">
-        <h2 id="tables-h" data-past="Cards on vendors’ tables">Cards at upcoming shows</h2>
-        <div class="strip-nav" aria-hidden="true">
-          <button type="button" class="round" data-scroll="-1" tabindex="-1"><svg><use href="#i-left"/></svg></button>
-          <button type="button" class="round" data-scroll="1" tabindex="-1"><svg><use href="#i-right"/></svg></button>
-        </div>
-      </div>
-      <div class="tiles-wrap">
-      <ul class="tiles" data-tiles>
-      <li class="tile" data-end="2026-11-28">
-        <span class="tile-price">$1,184</span>
-        <img src="/cards/sv8pt5-161.webp" width="440" height="615" loading="lazy" decoding="async" alt="Umbreon ex, Prismatic Evolutions, NM">
-        <b>Umbreon ex</b>
-        <span class="tile-meta">Prismatic Evolutions</span>
-        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
-      </li>
-      <li class="tile" data-end="2026-11-28">
-        <span class="tile-price">$399</span>
-        <img src="/cards/sv8pt5-156.webp" width="440" height="615" loading="lazy" decoding="async" alt="Sylveon ex, Prismatic Evolutions, NM">
-        <b>Sylveon ex</b>
-        <span class="tile-meta">Prismatic Evolutions</span>
-        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
-      </li>
-      <li class="tile" data-end="2026-11-28">
-        <span class="tile-price">$265</span>
-        <img src="/cards/sv8pt5-155.webp" width="440" height="615" loading="lazy" decoding="async" alt="Espeon ex, Prismatic Evolutions, NM">
-        <b>Espeon ex</b>
-        <span class="tile-meta">Prismatic Evolutions</span>
-        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
-      </li>
-      <li class="tile" data-end="2026-12-27">
-        <span class="tile-price">$2,400</span>
-        <img src="/cards/swsh8-271.webp" width="440" height="614" loading="lazy" decoding="async" alt="Gengar VMAX, Fusion Strike, NM">
-        <b>Gengar VMAX</b>
-        <span class="tile-meta">Fusion Strike</span>
-        <span class="tile-show">Dec 27, Pokémon Market at Bell Works</span>
-      </li>
-      <li class="tile" data-end="2026-12-27">
-        <span class="tile-price">$400</span>
-        <img src="/cards/dpp-DP47.webp" width="440" height="605" loading="lazy" decoding="async" alt="Rayquaza C LV.X, DP Black Star Promos, MP">
-        <b>Rayquaza C LV.X</b>
-        <span class="tile-meta">DP Black Star Promos</span>
-        <span class="tile-show">Dec 27, Pokémon Market at Bell Works</span>
-      </li>
-      <li class="tile" data-end="2026-12-27">
-        <span class="tile-price">$301</span>
-        <img src="/cards/sv3pt5-199.webp" width="440" height="615" loading="lazy" decoding="async" alt="Charizard ex, 151, NM">
-        <b>Charizard ex</b>
-        <span class="tile-meta">151</span>
-        <span class="tile-show">Dec 27, Pokémon Market at Bell Works</span>
-      </li>
-      <li class="tile" data-end="2026-11-28">
-        <span class="tile-price">$250</span>
-        <img src="/cards/sv8pt5-150.webp" width="440" height="615" loading="lazy" decoding="async" alt="Glaceon ex, Prismatic Evolutions, NM">
-        <b>Glaceon ex</b>
-        <span class="tile-meta">Prismatic Evolutions</span>
-        <span class="tile-show">Nov 28, Poke’Ville Card Show</span>
-      </li>
-      <li class="tile" data-end="2026-10-25">
-        <span class="tile-price">$186</span>
-        <img src="/cards/base1-46.webp" width="440" height="605" loading="lazy" decoding="async" alt="Charmander, Base, NM">
-        <b>Charmander</b>
-        <span class="tile-meta">Base</span>
-        <span class="tile-show">Oct 24 to 25, TCG Jam Fox Valley Sports Spooktackular</span>
-      </li>
-      <li class="tile" data-end="2026-10-23">
-        <span class="tile-price">$125</span>
-        <img src="/cards/dpp-DP17.webp" width="440" height="605" loading="lazy" decoding="async" alt="Dialga LV.X, DP Black Star Promos, NM">
-        <b>Dialga LV.X</b>
-        <span class="tile-meta">DP Black Star Promos</span>
-        <span class="tile-show">Oct 23, National Card Sharks TCG and Sports EXPO</span>
-      </li>
-      <li class="tile" data-end="2026-10-23">
-        <span class="tile-price">$28.91</span>
-        <img src="/cards/dpp-DP39.webp" width="440" height="605" loading="lazy" decoding="async" alt="Shaymin LV.X, DP Black Star Promos, LP">
-        <b>Shaymin LV.X</b>
-        <span class="tile-meta">DP Black Star Promos</span>
-        <span class="tile-show">Oct 23, National Card Sharks TCG and Sports EXPO</span>
-      </li>
-      <li class="tile" data-end="2026-10-23">
-        <span class="tile-price">$21.39</span>
-        <img src="/cards/ecard1-75.webp" width="440" height="605" loading="lazy" decoding="async" alt="Dragonair, Expedition Base Set, NM">
-        <b>Dragonair</b>
-        <span class="tile-meta">Expedition Base Set</span>
-        <span class="tile-show">Oct 23, National Card Sharks TCG and Sports EXPO</span>
-      </li>
-    </ul>
-      </div>
-    </section>
-
-    <section class="vendors" id="vendors">
-      <div class="wrap reveal">
-        <p class="eyebrow">For vendors</p>
-        <h2>Get found <span class="it">before the doors open.</span></h2>
-        <p class="body">Put the cards you’re bringing in front of buyers before the show starts.</p>
-        <div class="v-grid">
-          <div class="v-item"><h3>Publish a table</h3><p>Pick cards from your collection for any show you’re booked at. It takes a few taps.</p></div>
-          <div class="v-item"><h3>Price it your way</h3><p>Set your own prices or let market value show. Prices you set save back to your cards for next time.</p></div>
-          <div class="v-item"><h3>Show up in search</h3><p>Anyone who searches for a card at that show finds it on your table.</p></div>
-          <div class="v-item"><h3>See who wants what</h3><p>You’ll know when someone favorites one of your cards. Bring it, or set it aside for them.</p></div>
-        </div>
-        <div class="v-band">
-          <p><b>Bringing cards but not tabling?</b> Tap Going on the show and pick what you’re bringing so other collectors can see it.</p>
-          <p><b>Run a show?</b> Send it in from the Shows tab. Listing is free.</p>
-        </div>
-      </div>
-    </section>
-
     <section class="faq" id="faq">
       <div class="wrap faq-in">
         <div class="faq-head">
@@ -362,13 +364,12 @@
           <p>Something else? Email <a href="mailto:support@tcgvendr.com">support@tcgvendr.com</a></p>
         </div>
         <div class="faq-list">
-          <details><summary>Is it free?</summary><p>Yes. Your collection, card prices, shows, tables, search, favorites, messages and publishing a table are all free, and you get 25 card scans and 10 slab scans a week. Tracka Pro is optional: one payment of $29.99, with no subscription.</p></details>
-          <details><summary>Where do the prices come from?</summary><p>Raw cards and sealed follow the live market and update every day. Slabs are priced from recent sales, and you can see those sales under the chart. On a table, the vendor’s own price comes first.</p></details>
-          <details><summary>Which games does it cover?</summary><p>Pokémon for now: English and Japanese cards, plus sealed product. Japanese cards show their English names.</p></details>
-          <details><summary>Wasn’t this called TCGVendr?</summary><p>Yes. Tracka used to be called TCGVendr. Same app, same account, same cards.</p></details>
+          <details><summary>Is Tracka a marketplace?</summary><p>No. Vendors show what they’re bringing, and you buy in person at the show. There are no payments, shipping or escrow in the app.</p></details>
+          <details><summary>Is it free?</summary><p>Yes. Shows, tables, search, your collection, favorites, messages and publishing a table are all free, and you get 25 card scans and 10 slab scans a week. Tracka Pro is optional.</p></details>
           <details><summary>Do I need an account?</summary><p>Yes. Sign in with Apple, Google or your email (we send you a code, there’s no password). Then add a display name and your home state so the app can show you shows nearby.</p></details>
           <details><summary>Who can see my collection?</summary><p>Your cards show on your profile, with an asking price if you set one. Nobody sees what you paid or what you’ve sold. Hide any card to take it off your profile.</p></details>
-          <details><summary>Is Tracka a marketplace?</summary><p>No. Vendors show what they’re bringing, and you buy in person at the show. There are no payments, shipping or escrow in the app.</p></details>
+          <details><summary>Where do the prices come from?</summary><p>Raw cards and sealed follow the live market and update every day. Slabs are priced from recent sales, and you can see those sales under the chart. On a table, the vendor’s own price comes first.</p></details>
+          <details><summary>Which games does it cover?</summary><p>Pokémon for now: English and Japanese cards, plus sealed product. Japanese cards show their English names.</p></details>
           <details><summary>I run a show. How do I get it listed?</summary><p>Tap + on the Shows tab and fill it in. We check every show before it goes live, and listing is free.</p></details>
           <details><summary>Is there an Android app?</summary><p>Not yet. Tracka is iPhone only for now. On an Android phone, tap Get notified anywhere on this page and leave your email, and we’ll tell you the day it’s out.</p></details>
         </div>
@@ -378,9 +379,9 @@
     <section class="close" aria-labelledby="close-h">
       <div class="wrap close-in reveal">
         <div>
-          <p class="eyebrow">Start with one card</p>
-          <h2 id="close-h" style="margin-top:18px">What’s yours <span class="it">worth today?</span></h2>
-          <p class="sub">Scan it, add it, and watch your collection value update.</p>
+          <p class="eyebrow">Before the next show</p>
+          <h2 id="close-h" style="margin-top:18px">Don’t guess. <span class="it">Show up with a plan.</span></h2>
+          <p class="sub">Find the show, see the tables, know the prices.</p>
         </div>
         <div class="close-cta">
           <a class="store close-pill" href="https://apps.apple.com/us/app/id6778956833" aria-label="Free on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg>Free on the App Store</a>
@@ -407,7 +408,7 @@
     </div>
     <div class="foot-base">
       <p>© 2026 Tracka</p>
-      <p>Tracka is not affiliated with, sponsored or endorsed by The Pokémon Company International, Nintendo, Creatures Inc. or GAME FREAK. Pokémon is a trademark of its owners.</p>
+      <p>Not affiliated with or endorsed by The Pokémon Company or any game publisher.</p>
     </div>
   </div>
 </footer>
