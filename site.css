@@ -597,3 +597,30 @@ body:has(.doc, .lost) .nav { position: sticky; }
 .lost p { margin-top: 18px; color: var(--ink-sub); }
 .lost .pill { display: inline-flex; margin-top: 28px; height: 50px; align-items: center; padding: 0 22px; border-radius: 999px; background: var(--deep); color: #fff; font-weight: 700; }
 @media (max-width: 560px) { .doc .toc ol { columns: 1; } .doc { padding: 28px 0 64px; } }
+
+/* ---------- foil: the T's foil as the site's one accent (his pick G, 2026-11-02) ----------
+   Words use a pale ramp on teal and a deep ramp on the light sections, because the T's own
+   blues and jades vanish on teal and its pale bands vanish on sage. Lowest contrast 3.1 on
+   teal, 3.6 on sage (large headlines need 3). Buttons use the T's own colors. Sampled from
+   the icon, in its order. Browsers without text clipping keep the plain italic color. */
+:root {
+  --foil-teal: linear-gradient(105deg, #ffd0f6, #dcd2ff, #b8e4ff, #eefeff, #a8fff0, #bdf0ff, #d8d8ff);
+  --foil-light: linear-gradient(105deg, #a82dc4, #5d48e8, #0c6fdc, #00787a, #0a6fbd, #5f4fe0);
+  --foil-true: linear-gradient(105deg, #cd65e5, #8976ff, #2f9aff, #9cecff, #c2f7ff, #00decd, #00c8ec, #01b0fb, #4998ff);
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  /* the padding is room for the italic's overhang and descenders, or the clip cuts them off */
+  .hero h1 .it, .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it, .pf-hub h3 .it {
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+    padding: .06em .08em .16em .04em; margin-top: -.06em; margin-bottom: -.16em;
+  }
+  .hero h1 .it { background-image: var(--foil-teal); width: fit-content; margin-left: auto; margin-right: auto; }
+  .pf-hub h3 .it { background-image: var(--foil-teal); }
+  .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it { background-image: var(--foil-light); }
+  .feat-copy h2 .it, .vendors h2 .it, .close h2 .it { width: fit-content; margin-left: -.04em; }
+}
+@media (forced-colors: active) {
+  .hero h1 .it, .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it, .pf-hub h3 .it { background-image: none; color: CanvasText; -webkit-text-fill-color: CanvasText; }
+}
+.nav-cta, .menu .pill, .pf-hub .pro-btn { background: var(--foil-true); color: #06222b; }
