@@ -413,8 +413,9 @@ p { margin: 0; }
 @media (max-width: 1080px) {
   .nav-links { display: none; }
   .menu-btn { display: flex; }
+  .nav-in { gap: 12px; } /* the button sits beside the menu, not out in the middle (Caeden 11-02) */
   .nav-cta { margin-left: auto; }
-  .menu-btn { margin-left: 8px; }
+  .menu-btn { margin-left: 0; }
 }
 @media (min-width: 1081px) { .menu { display: none !important; } }
 @media (max-width: 900px) {
@@ -551,7 +552,7 @@ p { margin: 0; }
   .nav-in { gap: 10px; }
   .brand { font-size: 16px; gap: 8px; }
   .nav-cta { padding: 9px 12px; font-size: 13px; }
-  .menu-btn { margin-left: 6px; }
+  .menu-btn { margin-left: 0; }
 }
 @media (max-width: 340px) {
   .foot nav { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; }
