@@ -26,6 +26,9 @@
     : /FBAN|FBAV|FB_IAB/i.test(ua) ? 'facebook'
     : 'none';
   var os = /iPhone|iPad|iPod/i.test(ua) ? 'ios' : /Android/i.test(ua) ? 'android' : 'other';
+  // Coarse only, never the full user agent. host is the real site; `site` stays as it was so old charts keep working.
+  var browser = /CriOS|Chrome|Chromium/i.test(ua) ? 'chrome' : /FxiOS|Firefox/i.test(ua) ? 'firefox' : /Safari/i.test(ua) ? 'safari' : 'other';
+  var botHint = !!navigator.webdriver || /HeadlessChrome|bot\b|crawl|spider|slurp|Lighthouse|PageSpeed|facebookexternalhit|preview/i.test(ua);
 
   var id;
   try {
@@ -36,7 +39,7 @@
   }
 
   function send(event, props) {
-    var p = { $process_person_profile: false, $lib: 'tcgvendr-web', site: 'tcgvendr.com', path: location.pathname, in_app: inApp, os: os };
+    var p = { $process_person_profile: false, $lib: 'tcgvendr-web', site: 'tcgvendr.com', host: location.hostname, browser: browser, bot_hint: botHint, path: location.pathname, in_app: inApp, os: os };
     for (var k in props) p[k] = props[k];
     var body = JSON.stringify({ api_key: KEY, event: event, distinct_id: id, timestamp: new Date().toISOString(), properties: p });
     try {
