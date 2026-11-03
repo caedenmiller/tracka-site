@@ -68,7 +68,7 @@
     sheet.setAttribute('aria-labelledby', 'aw-title');
     sheet.innerHTML =
       '<div class="aw-sheet">' +
-        '<div class="aw-head"><img src="/go/icon.png?v=2" alt=""><h2 id="aw-title">Tracka is iPhone only for now</h2></div>' +
+        '<div class="aw-head"><img src="/go/icon.png?v=3" alt=""><h2 id="aw-title">Tracka is iPhone only for now</h2></div>' +
         '<p id="aw-text">Leave your email and we’ll tell you the day it’s on Android. One email, nothing else.</p>' +
         '<form class="aw-form" novalidate>' +
           '<input class="aw-input" type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@email.com" aria-label="Email" required>' +

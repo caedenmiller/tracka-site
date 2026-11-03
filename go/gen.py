@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
-"""Regenerate /go/<dir>/index.html.  usage: python3 gen.py <dir> <ct> [--code <CODE>]
---code makes it a creator's page (scripts/creators/add-creator.mjs): the in-app
-browser view shows the code to type in the app, the one way to credit the creator
-once the App Store has taken over. Safari redirects at once, as on every page.
+"""Regenerate /go/<dir>/index.html.  usage: python3 gen.py <dir> <ct> [--code <CODE>] [--out <folder>]
+--code makes it a creator's page (scripts/creators/add-creator.mjs): the code to type
+in the app, large, and one button, the one way to credit the creator once the App
+Store has taken over. It stays up in Safari too, where every other page redirects.
+--out writes to <folder>/<dir>/ instead of beside this file (add-creator's dry run).
 The strip at the top reads ../data/tables.json (cards on tables at upcoming
 shows, baked by scripts/website-tables.py). Each tile carries its show's last
 day; with three or more still upcoming the page drops the ended ones, with fewer
 it keeps them after the upcoming ones, without their past show line."""
 import json, sys, os, html
 dir_, ct = sys.argv[1], sys.argv[2]
-code = sys.argv[4] if len(sys.argv) > 4 and sys.argv[3] == "--code" else None
+
+
+def flag(name):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv[3:] else None
+
+
+code = flag("--code")
 here = os.path.dirname(os.path.abspath(__file__))
+out = flag("--out") or here
 url = f"https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct={ct}&mt=8"
 data = json.load(open(os.path.join(here, "..", "data", "tables.json")))
 
@@ -26,21 +34,47 @@ def tile(t):
             f'<span class="ts">{html.escape(t["when"])}, {html.escape(t["state"] or "")}</span></div></li>')
 
 
-tiles = "".join(tile(t) for t in data["tiles"])
+# No strip on a creator's page, so no tiles: display:none alone still downloads the images.
+shown = [] if code else data["tiles"]
+tiles = "".join(tile(t) for t in shown)
 # A creator's page only; empty on the others, whose output doesn't change. No strip:
-# this view is only ever seen in an in-app browser, and with the strip the code pushed
-# the button down until "Free on iPhone" ran under the fixed "Not opening?" line
-# (headless Chrome, 390 x 780 and 430 x 800, 11-02). Code and button on the first screen.
-code_css = code_html = code_js = trill = ""
+# with the strip the code pushed the button down until "Free on iPhone" ran under the
+# fixed "Not opening?" line (headless Chrome, 390 x 780 and 430 x 800, 11-02). Code and
+# button on the first screen.
+code_css = code_html = trill = ""
+# The rest of the page text and behavior every other page keeps, byte for byte.
+pitch = 'See what vendors are bringing to card shows, with prices, <span>before you walk the floor.</span>'
+leave = 'else{location.replace(url);}'
+itunes_banner = '<meta name="apple-itunes-app" content="app-id=6778956833">\n'
 if code:
     code_css = ('\n.code{margin-top:22px;padding:12px 20px;border:1px solid var(--line);border-radius:12px;display:grid;gap:2px;justify-items:center}'
                 '\n.code small{font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}'
-                '\n.code b{font-size:26px;line-height:1.25;font-weight:800;letter-spacing:.06em;-webkit-user-select:all;user-select:all}'
+                # As large as fits one line at any phone width, whatever the code's length.
+                f'\n.code{{max-width:100%}}'
+                f'\n.code b{{font-size:min(44px,calc((100vw - 88px) / {len(code) * .86:.2f}));line-height:1.2;font-weight:800;letter-spacing:.06em;overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}}'
                 '\n.code span{font-size:13px;color:var(--ink-2)}'
-                '\n.strip{display:none}')
+                '\n.strip{display:none}'
+                # Short screens only (fixed "Not opening?" hit the button and "Free on iPhone" at
+                # 320 x 480, measured clear from about 540 tall): tighter, and the line joins the
+                # flow so it can't sit on anything. 560 and taller is untouched.
+                '\n@media(max-height:559px){'
+                'main{padding-top:18px;padding-bottom:12px}'
+                '.icon{width:72px;height:72px;border-radius:16px;margin-bottom:12px}'
+                'h1{font-size:22px;margin-bottom:8px}'
+                '.code{margin-top:12px;padding:6px 16px}'
+                '.badge{margin-top:16px}'
+                '.sub{margin-top:6px}'
+                '.foot{position:static;padding:8px 24px max(12px,env(safe-area-inset-bottom))}'
+                '}')
     code_html = (f'\n<div class="code" id="code" hidden><small>Creator code</small><b>{html.escape(code)}</b>'
                  '<span>Enter it in the app so they get credit.</span></div>')
-    code_js = 'document.getElementById("code").hidden=false;'
+    # What the DMs sell (operator/notes/creator-program.html), not vendors at shows.
+    pitch = 'Scan a card and <span>see what it’s worth.</span>'
+    # No redirect: the code has to be seen before the App Store takes over. Android still
+    # returns above with neither. The "Not opening?" line stays in-app only.
+    leave = 'document.getElementById("code").hidden=false;'
+    # Safari's banner would be a second button, and it carries no campaign token.
+    itunes_banner = ""
     # TikTok's other build. escape.js, track.js and android.js know it, this check doesn't,
     # so it would redirect to a blank page. Creator pages only: the older pages' behavior
     # is his to change.
@@ -57,8 +91,7 @@ page = f'''<!doctype html>
 <link rel="icon" href="/favicon.svg?v=6" type="image/svg+xml">
 <link rel="canonical" href="{url}">
 <link rel="preconnect" href="https://apps.apple.com">
-<meta name="apple-itunes-app" content="app-id=6778956833">
-<style>
+{itunes_banner}<style>
 @font-face{{font-family:"Plus Jakarta Sans";font-weight:500 800;font-display:swap;src:url(/fonts/plus-jakarta-sans-latin.woff2) format("woff2")}}
 :root{{color-scheme:dark;--bg:#08080A;--ink:#fff;--ink-2:#969CA4;--ink-3:#7E858E;--line:rgba(255,255,255,.1);--blue:rgb(147,197,240);--font:"Plus Jakarta Sans",-apple-system,system-ui,sans-serif}}
 *{{box-sizing:border-box}}
@@ -105,9 +138,9 @@ p span{{color:var(--blue)}}
 <div class="dots" id="dots" aria-hidden="true"></div>
 </div>
 <main class="wrap">
-<img class="icon" src="/go/icon.png?v=2" width="96" height="96" alt="">
+<img class="icon" src="/go/icon.png?v=3" width="96" height="96" alt="">
 <h1>Tracka</h1>
-<p>See what vendors are bringing to card shows, with prices, <span>before you walk the floor.</span></p>{code_html}
+<p>{pitch}</p>{code_html}
 <a class="badge" href="{url}" aria-label="Download on the App Store">
 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.64c-.02-2.1 1.72-3.11 1.8-3.16-.98-1.43-2.5-1.63-3.04-1.65-1.3-.13-2.53.76-3.19.76-.66 0-1.67-.74-2.75-.72-1.41.02-2.72.82-3.44 2.09-1.47 2.55-.38 6.32 1.05 8.39.7 1.01 1.53 2.15 2.62 2.11 1.05-.04 1.45-.68 2.72-.68s1.63.68 2.74.66c1.13-.02 1.85-1.03 2.54-2.05.8-1.17 1.13-2.3 1.15-2.36-.03-.01-2.2-.85-2.2-3.39zM14.28 6.46c.58-.7.97-1.68.86-2.66-.83.03-1.85.56-2.45 1.26-.54.62-1.01 1.62-.88 2.57.93.07 1.88-.47 2.47-1.17z"/></svg>
 <span><small>Download on the</small><b>App Store</b></span>
@@ -149,8 +182,8 @@ p span{{color:var(--blue)}}
   // navigation to apps.apple.com (blank page) but honor a user tap, so those
   // get this page and the badge. Everyone else redirects on load.
   var inApp=/Instagram|FBAN|FBAV|FB_IAB|Barcelona|TikTok|musical_ly|BytedanceWebview{trill}/i.test(navigator.userAgent);
-  if(inApp){{document.getElementById("hint").hidden=false;{code_js}}}
-  else{{location.replace(url);}}
+  if(inApp){{document.getElementById("hint").hidden=false;}}
+  {leave}
 }})();
 </script>
 <script src="/escape.js?v=7" defer></script>
@@ -158,6 +191,6 @@ p span{{color:var(--blue)}}
 </body>
 </html>
 '''
-os.makedirs(os.path.join(here, dir_), exist_ok=True)
-open(os.path.join(here, dir_, "index.html"), "w").write(page)
-print(dir_, ct, len(data["tiles"]), "tiles")
+os.makedirs(os.path.join(out, dir_), exist_ok=True)
+open(os.path.join(out, dir_, "index.html"), "w").write(page)
+print(dir_, ct, len(shown), "tiles")

@@ -78,7 +78,7 @@
           '<li><span class="tt-n">2</span><span>Choose <b>Open in browser</b></span></li>' +
           (onGo ? '' : '<li><span class="tt-n">3</span><span>Tap <b>Get the app</b> again</span></li>') +
         '</ol>' +
-        '<div class="tt-alt"><img src="/go/icon.png?v=2" alt=""><span>Or search <b>Tracka</b> in the App Store.</span></div>' +
+        '<div class="tt-alt"><img src="/go/icon.png?v=3" alt=""><span>Or search <b>Tracka</b> in the App Store.</span></div>' +
         '<button class="tt-close" type="button">Got it</button>' +
       '</div>';
     sheet.addEventListener('click', function (e) {
