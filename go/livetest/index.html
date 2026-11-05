@@ -52,8 +52,9 @@ p span{color:var(--blue)}
 .code small{font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
 .code{max-width:100%}
 .code b{font-size:min(44px,calc((100vw - 88px) / 6.88));line-height:1.2;font-weight:800;letter-spacing:.06em;overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}
-.code span{font-size:13px;color:var(--ink-2)}
 .strip{display:none}
+.foil{font-weight:700;color:var(--blue)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){.foil{background-image:linear-gradient(105deg,#cd65e5,#8976ff,#2f9aff,#9cecff,#c2f7ff,#00decd,#00c8ec,#01b0fb,#4998ff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}}
 @media(max-height:559px){main{padding-top:18px;padding-bottom:12px}.icon{width:72px;height:72px;border-radius:16px;margin-bottom:12px}h1{font-size:22px;margin-bottom:8px}.code{margin-top:12px;padding:6px 16px}.badge{margin-top:16px}.sub{margin-top:6px}.foot{position:static;padding:8px 24px max(12px,env(safe-area-inset-bottom))}}
 </style>
 </head>
@@ -66,8 +67,8 @@ p span{color:var(--blue)}
 <main class="wrap">
 <img class="icon" src="/go/icon.png?v=3" width="96" height="96" alt="">
 <h1>Tracka</h1>
-<p>The all-in-one <span>TCG app.</span></p>
-<div class="code" id="code" hidden><small>Creator code</small><b>LIVETEST</b><span>Enter it in the app so they get credit.</span></div>
+<p><span class="foil">The all-in-one TCG app.</span></p>
+<div class="code" id="code" hidden><small>Creator code</small><b>LIVETEST</b></div>
 <a class="badge" href="https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=c-LIVETEST&mt=8" aria-label="Download on the App Store">
 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.64c-.02-2.1 1.72-3.11 1.8-3.16-.98-1.43-2.5-1.63-3.04-1.65-1.3-.13-2.53.76-3.19.76-.66 0-1.67-.74-2.75-.72-1.41.02-2.72.82-3.44 2.09-1.47 2.55-.38 6.32 1.05 8.39.7 1.01 1.53 2.15 2.62 2.11 1.05-.04 1.45-.68 2.72-.68s1.63.68 2.74.66c1.13-.02 1.85-1.03 2.54-2.05.8-1.17 1.13-2.3 1.15-2.36-.03-.01-2.2-.85-2.2-3.39zM14.28 6.46c.58-.7.97-1.68.86-2.66-.83.03-1.85.56-2.45 1.26-.54.62-1.01 1.62-.88 2.57.93.07 1.88-.47 2.47-1.17z"/></svg>
 <span><small>Download on the</small><b>App Store</b></span>
