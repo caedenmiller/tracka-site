@@ -49,13 +49,17 @@
       '.tt-tip b{display:inline-block;padding:0 9px;border-radius:9px;background:#fff;color:#08080A;font-weight:800}' +
       '.tt-close{position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);height:50px;padding:0 34px;border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font:700 16px "Plus Jakarta Sans",-apple-system,system-ui,sans-serif}' +
       '.tt-close:focus{outline:none}.tt-close:active{background:rgba(255,255,255,.22)}' +
-      // the pinned bar: the nav and the page sit below it (--ttb = its height)
-      '.tt-bar{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:12px;padding:10px 14px 10px 16px;background:#fff;color:#183e39;font:600 14px/1.35 "Plus Jakarta Sans",-apple-system,system-ui,sans-serif;box-shadow:0 1px 0 rgba(0,0,0,.1)}' +
-      '.tt-bar span{flex:1}' +
+      // the pinned bar: one line at a FIXED 40px, and the nav and the page sit 40px
+      // lower. It used to be measured by script once on load (offsetHeight into
+      // --ttb); in an iOS in-app browser sheet that number came out far too big and
+      // nothing measured it again, leaving a blank band two thirds of the screen
+      // tall above the nav (Caeden's iPhone, 11-06). A constant can't drift.
+      '.tt-bar{position:fixed;top:0;left:0;right:0;z-index:60;box-sizing:border-box;height:40px;display:flex;align-items:center;gap:10px;padding:0 14px 0 16px;background:#fff;color:#183e39;font:600 min(14px,3.6vw)/1 "Plus Jakarta Sans",-apple-system,system-ui,sans-serif;white-space:nowrap;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.1)}' +
+      '.tt-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}' +
       '.tt-bar b{font-weight:800}' +
-      '.tt-bar svg{flex:none;width:22px;height:22px;color:#205e54;animation:tt-nudge 1.4s ease-in-out infinite}' +
-      'html.tt-in body{padding-top:var(--ttb,0px)}' +
-      'html.tt-in .nav{top:var(--ttb,0px)}' +
+      '.tt-bar svg{flex:none;width:20px;height:20px;color:#205e54;animation:tt-nudge 1.4s ease-in-out infinite}' +
+      'html.tt-in body{padding-top:40px}' +
+      'html.tt-in .nav{top:40px}' +
       '@media(prefers-reduced-motion:reduce){.tt-arrow,.tt-bar svg{animation:none}.tt-scrim{transition:none}}';
     document.head.appendChild(s);
   }
@@ -123,9 +127,6 @@
         '<path d="M6 18L18 6"/><path d="M9 6h9v9"/></svg>';
     document.body.insertBefore(b, document.body.firstChild);
     var root = document.documentElement;
-    function fit() { root.style.setProperty('--ttb', b.offsetHeight + 'px'); }
-    fit();
-    window.addEventListener('resize', fit);
     root.classList.add('tt-in');
   }
 

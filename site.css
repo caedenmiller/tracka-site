@@ -120,14 +120,18 @@ p { margin: 0; }
 
 .hero-stage { position: relative; max-width: 960px; height: 624px; margin: 44px auto 0; }
 .orbit { position: absolute; left: 0; top: 136px; width: 100%; height: 416px; pointer-events: none; }
-/* the turntable: three slots, every phone the front's size and the side ones scaled
-   down, so a move is one transform (site.js animates it). The side slots sit where
-   the old 229px side phones sat: centers .832 of the front's width out, 67px lower. */
-.hero-stage { --pw: 264px; --dx: calc(var(--pw) * .832); --dy: 67px; --s: .867; --r: 7deg; }
-.hero-stage .phone { --w: var(--pw); position: absolute; left: 50%; top: 16px; transform-origin: 50% 50%; }
-.hero-stage .slot-front { transform: translateX(-50%); z-index: 3; }
-.hero-stage .slot-left { transform: translateX(-50%) translate(calc(var(--dx) * -1), var(--dy)) rotate(calc(var(--r) * -1)) scale(var(--s)); z-index: 2; }
-.hero-stage .slot-right { transform: translateX(-50%) translate(var(--dx), var(--dy)) rotate(var(--r)) scale(var(--s)); z-index: 1; }
+/* the turntable: three phones on one circle, each the front's size, the sides scaled
+   down, so every move is transform only (site.js turns the circle and follows a
+   swipe). These slots are the resting places and the no-JS layout: the sides sit
+   where the old 229px side phones sat, centers .832 of the front's width out and
+   67px lower. site.js reads --kx, --dy, --s and --r. */
+.hero-stage { --pw: 264px; --kx: .832; --dy: 67; --s: .867; --r: 7; touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.hero-stage .phone { --w: var(--pw); position: absolute; left: 50%; top: 16px; margin-left: -.5em; transform-origin: 50% 50%; will-change: transform; cursor: grab; }
+.hero-stage .phone img, .hero-stage .phone video { -webkit-user-drag: none; }
+.hero-stage .slot-front { transform: none; z-index: 3; }
+.hero-stage .slot-left { transform: translate(calc(var(--pw) * var(--kx) * -1), calc(var(--dy) * 1px)) rotate(calc(var(--r) * -1deg)) scale(var(--s)); z-index: 2; }
+.hero-stage .slot-right { transform: translate(calc(var(--pw) * var(--kx)), calc(var(--dy) * 1px)) rotate(calc(var(--r) * 1deg)) scale(var(--s)); z-index: 1; }
+.hero-stage.dragging .phone { cursor: grabbing; }
 /* the clip sits on its poster (the same first frame) and shows once it's playing */
 .hero-stage .screen img { object-fit: cover; }
 .hero-stage .screen video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .25s ease-out; pointer-events: none; background: transparent; }
@@ -182,6 +186,14 @@ p { margin: 0; }
 @media (min-width: 901px) { .tiles { gap: 20px; } } /* gap = the side gutter, so the next card starts past the edge */
 @media (min-width: 1081px) { .tile { width: calc((100% - 5 * 20px) / 6); } }
 @media (min-width: 901px) and (max-width: 1080px) { .tile { width: calc((100% - 4 * 20px) / 5); } }
+
+/* the card row under the hero phones: real card art only, scrolls sideways */
+.cardrow { padding: 4px 0 8px; }
+.cardrow-list { list-style: none; margin: 0 auto; max-width: var(--wrap); padding: 10px var(--gut-r) 18px var(--gut-l); display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut-l); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.cardrow-list::-webkit-scrollbar { display: none; }
+.cardrow-list li { flex: none; width: 104px; scroll-snap-align: start; }
+.cardrow-list img { width: 100%; height: auto; aspect-ratio: 240 / 336; object-fit: contain; border-radius: 5px; filter: drop-shadow(0 6px 8px rgba(24, 62, 57, .16)); -webkit-user-drag: none; }
+@media (max-width: 560px) { .cardrow-list { gap: 9px; } .cardrow-list li { width: 76px; } .cardrow-list img { border-radius: 4px; } }
 
 /* features: one phone each, alternating sides */
 .feat { padding: 88px 0; }
@@ -424,7 +436,7 @@ p { margin: 0; }
 @media (min-width: 1081px) { .menu { display: none !important; } }
 @media (max-width: 900px) {
   .hero-stage { height: 560px; }
-  .hero-stage { --pw: 230px; --dx: calc(var(--pw) * .716); --dy: 58px; --s: .852; }
+  .hero-stage { --pw: 230px; --kx: .716; --dy: 58; --s: .852; }
   .float { display: none; }
   .feat { padding: 64px 0; }
   .feat-in { grid-template-columns: 1fr; gap: 28px; }
@@ -497,7 +509,7 @@ p { margin: 0; }
   .fine { margin-top: 12px; font-size: 11px; }
   .hero-stage { height: 385px; margin-top: 28px; }
   .orbit { top: 70px; height: 240px; }
-  .hero-stage { --pw: 176px; --dx: calc(var(--pw) * .541); --dy: 28px; --s: .795; --r: 6deg; }
+  .hero-stage { --pw: 176px; --kx: .541; --dy: 28; --s: .795; --r: 6; }
   .hero-stage .phone { top: 0; }
   .float { display: none; }
   .strip { padding: 32px 0 24px; }

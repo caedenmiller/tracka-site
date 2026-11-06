@@ -18,52 +18,77 @@
     setTimeout(start, 1600); // never leave the hero empty on a slow image
   }
 
-  /* The hero reel (11-06): only the FRONT phone plays its clip (profile, binder,
-     shows). When it ends, the phones turn: the right one swings to the front and
-     plays, the front one steps to the left, the left one goes round the back to
-     the right. Muted + playsinline, started from here (no autoplay attribute, so
-     reduced motion never starts it). If the browser refuses to play (iPhone Low
-     Power Mode, an in-app browser that blocks it), the posters still turn every
-     HOLD ms. Stops while the hero is off screen or the tab is hidden. */
+  /* The hero reel (11-06). Three phones on one circle; only the FRONT one plays
+     its clip (profile, binder, shows). When it ends the circle turns a third: the
+     right phone comes to the front, the front one goes left, the left one round
+     the back. Swipe or drag sideways to turn it yourself (it follows the finger);
+     tap a side phone to bring it round. Every frame sets only transform and
+     z-index, all three from one angle, so they move as one piece on one easing
+     and never cross the wrong way. Clips are muted inline and started from here
+     (no autoplay attribute). If the browser won't play them (Low Power Mode, an
+     in-app browser that blocks it) the posters still turn every HOLD ms. Reduced
+     motion: no clips, no auto turn; a swipe still works and just snaps. Pauses
+     while the hero is off screen or the tab is hidden. */
   var reel = stage && stage.hasAttribute('data-reel') ? stage : null;
-  if (reel && !reduce) {
+  if (reel) {
     var phones = [].slice.call(reel.querySelectorAll('.phone'));
-    var HOLD = 5000, MOVE = 900;
-    var timer = null, blocked = false, onScreen = true, moving = false, ready = false;
-    var vid = function (p) { return p.querySelector('video'); };
-    var inSlot = function (s) { return phones.filter(function (p) { return p.classList.contains(s); })[0]; };
-    var arm = function (ms) { clearTimeout(timer); timer = setTimeout(next, ms); };
-    var slotOf = function (p) { return p.classList.contains('slot-front') ? 'slot-front' : p.classList.contains('slot-right') ? 'slot-right' : 'slot-left'; };
-    var TURN = { 'slot-right': 'slot-front', 'slot-front': 'slot-left', 'slot-left': 'slot-right' };
+    var STEP = 120, MOVE = 850, HOLD = 5000, SIN = Math.sin(Math.PI / 3);
+    // where each phone sits on the circle when angle is 0: front 0, right +120, left -120
+    var BASE = phones.map(function (p) { return p.classList.contains('slot-right') ? STEP : p.classList.contains('slot-left') ? -STEP : 0; });
+    var angle = 0, geo = null, anim = 0, cur = BASE.indexOf(0);
+    var timer = null, blocked = reduce, onScreen = true, ready = false, drag = null;
 
-    var turn = function () {
-      var moves = phones.map(function (p) {
-        var from = getComputedStyle(p).transform, s = slotOf(p);
-        return { p: p, s: s, from: from };
-      });
-      moves.forEach(function (m) { m.p.classList.remove(m.s); m.p.classList.add(TURN[m.s]); });
-      if (!phones[0].animate) return; // no Web Animations: the phones just swap places
-      var sc = parseFloat(getComputedStyle(reel).getPropertyValue('--s')) || .85;
-      moves.forEach(function (m) {
-        var to = getComputedStyle(m.p).transform;
-        var frames = [{ transform: m.from }, { transform: to }];
-        if (m.s === 'slot-left') {
-          // round the back: it shrinks and dims as it passes behind the front phone
-          var lift = -.04 * m.p.offsetWidth;
-          frames = [
-            { transform: m.from, opacity: 1 },
-            { transform: 'translateX(-50%) translateY(' + lift.toFixed(1) + 'px) scale(' + (sc * .72).toFixed(3) + ')', opacity: .45, offset: .5 },
-            { transform: to, opacity: 1 }
-          ];
-        }
-        m.p.animate(frames, { duration: MOVE, easing: 'cubic-bezier(.5, 0, .2, 1)' });
-      });
+    var measure = function () { // layout reads: only here, on start and on resize
+      var cs = getComputedStyle(reel), pw = phones[0].offsetWidth;
+      geo = {
+        pw: pw,
+        dx: pw * (parseFloat(cs.getPropertyValue('--kx')) || .8),
+        dy: parseFloat(cs.getPropertyValue('--dy')) || 60,
+        s: parseFloat(cs.getPropertyValue('--s')) || .86,
+        r: parseFloat(cs.getPropertyValue('--r')) || 7
+      };
+    };
+    var theta = function (i) { return ((BASE[i] - angle) % 360 + 540) % 360 - 180; }; // -180..180, 0 = front
+    var place = function () {
+      for (var i = 0; i < phones.length; i++) {
+        var rad = theta(i) * Math.PI / 180, sn = Math.sin(rad), cs = Math.cos(rad);
+        var t = (1 - cs) / 1.5; // 0 at the front, 1 at a side, 1.33 straight behind
+        var x = geo.dx * sn / SIN;
+        var sc = t <= 1 ? 1 - (1 - geo.s) * t : geo.s - (t - 1) * .6;
+        var y = t <= 1 ? geo.dy * t : geo.dy * (1 - (t - 1) * 1.5);
+        var rot = geo.r * sn / SIN;
+        phones[i].style.transform = 'translate3d(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px,0) rotate(' + rot.toFixed(3) + 'deg) scale(' + sc.toFixed(4) + ')';
+        phones[i].style.zIndex = String(Math.round((cs + 1) * 50) + 1);
+      }
+    };
+    var frontIndex = function () {
+      var best = 0;
+      for (var i = 1; i < phones.length; i++) if (Math.abs(theta(i)) < Math.abs(theta(best))) best = i;
+      return best;
+    };
+    var inOut = function (k) { return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; };
+    var out = function (k) { return 1 - Math.pow(1 - k, 3); };
+    var turnTo = function (target, ms, ease, done) {
+      cancelAnimationFrame(anim); anim = 0;
+      var from = angle, d = target - from, t0 = null;
+      if (!d || !ms) { angle = target; place(); if (done) done(); return; }
+      var frame = function (now) {
+        if (t0 === null) t0 = now;
+        var k = Math.min(1, (now - t0) / ms);
+        angle = from + d * ease(k);
+        place();
+        if (k < 1) anim = requestAnimationFrame(frame);
+        else { anim = 0; angle = target; if (done) done(); }
+      };
+      anim = requestAnimationFrame(frame);
     };
 
+    var vid = function (p) { return p.querySelector('video'); };
+    var arm = function (ms) { clearTimeout(timer); timer = setTimeout(advance, ms); };
     var play = function (fromStart) {
-      if (!ready || !onScreen || document.hidden || moving) return;
-      var p = inSlot('slot-front'), v = vid(p);
-      if (blocked || !v) { arm(HOLD); return; }
+      if (!ready || !onScreen || document.hidden || (drag && drag.moved) || anim) return;
+      var v = vid(phones[cur]);
+      if (blocked || !v) { if (!reduce) arm(HOLD); return; }
       if (fromStart) { try { v.currentTime = 0; } catch (e) { /* not loaded yet: it starts at 0 anyway */ } }
       var pr = v.play();
       if (pr && pr.catch) {
@@ -73,20 +98,43 @@
         });
       }
       arm(12000); // a clip that never starts (slow network) doesn't hold the reel up
-      // warm up the one that comes next
-      var n = vid(inSlot('slot-right'));
+      var n = null; // warm up the next one: the phone on the right
+      for (var i = 0; i < phones.length; i++) if (Math.round(theta(i)) === STEP) n = vid(phones[i]);
       if (n && n.preload !== 'auto') { n.preload = 'auto'; try { n.load(); } catch (e) { /* fine */ } }
     };
-
-    var next = function () {
+    var hold = function () { // stop the front clip where it is
       clearTimeout(timer);
-      var p = inSlot('slot-front'), v = vid(p);
+      var v = vid(phones[cur]);
       if (v) v.pause();
-      p.classList.remove('playing'); // back to its poster (the clip's first frame) as it moves
-      setTimeout(function () { if (v && !p.classList.contains('slot-front')) { try { v.currentTime = 0; } catch (e) { /* fine */ } } }, 300);
-      moving = true;
-      turn();
-      setTimeout(function () { moving = false; play(true); }, MOVE - 150);
+    };
+    // after a turn: classes follow the circle (the no-JS layout and the entrance
+    // use them), the old front goes back to its poster, the new one plays
+    var land = function () {
+      var f = frontIndex();
+      phones.forEach(function (p, i) {
+        var th = theta(i);
+        p.classList.toggle('slot-front', i === f);
+        p.classList.toggle('slot-right', i !== f && th > 0);
+        p.classList.toggle('slot-left', i !== f && th <= 0);
+      });
+      if (f !== cur) {
+        var old = phones[cur], ov = vid(old);
+        old.classList.remove('playing');
+        if (ov) { ov.pause(); setTimeout(function () { if (old !== phones[cur]) { try { ov.currentTime = 0; } catch (e) { /* fine */ } } }, 300); }
+        cur = f;
+        play(true);
+      } else {
+        play(false);
+      }
+    };
+    var settle = function (target, ms, ease) {
+      // the clip leaving the front fades to its poster as the turn starts
+      if (Math.round(((BASE[cur] - target) % 360 + 540) % 360 - 180) !== 0) { hold(); phones[cur].classList.remove('playing'); }
+      turnTo(target, reduce ? 0 : ms, ease, land);
+    };
+    var advance = function () {
+      if ((drag && drag.moved) || anim) { arm(1000); return; }
+      settle(Math.round(angle / STEP) * STEP + STEP, MOVE, inOut);
     };
 
     phones.forEach(function (p) {
@@ -94,19 +142,66 @@
       if (!v) return;
       v.muted = true; // the attribute alone isn't always enough for inline autoplay
       v.addEventListener('playing', function () {
-        if (!p.classList.contains('slot-front')) { v.pause(); return; }
+        if (p !== phones[cur] || (drag && drag.moved) || anim) { v.pause(); return; }
         p.classList.add('playing');
         var left = (isFinite(v.duration) ? v.duration - v.currentTime : 8) + 2.5;
         arm(left * 1000); // in case 'ended' never comes
       });
-      v.addEventListener('ended', function () { if (p.classList.contains('slot-front')) next(); });
+      v.addEventListener('ended', function () { if (p === phones[cur]) advance(); });
     });
 
-    var pause = function () {
-      clearTimeout(timer);
-      var v = vid(inSlot('slot-front'));
-      if (v) v.pause();
+    /* Swipe and drag. Vertical moves stay the page's (touch-action: pan-y); a
+       sideways one turns the circle under the finger, about a third of a turn per
+       phone width. On release it settles a step either way by distance or flick. */
+    var per = function () { return STEP / (geo.pw * 1.1); };
+    reel.addEventListener('pointerdown', function (e) {
+      if ((e.pointerType === 'mouse' && e.button !== 0) || !e.isPrimary || !e.target.closest('.phone')) return;
+      drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, lx: e.clientX, lt: e.timeStamp, v: 0, phone: e.target.closest('.phone') };
+    });
+    reel.addEventListener('pointermove', function (e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+      if (!drag.moved) {
+        if (Math.abs(dx) < 7 && Math.abs(dy) < 7) return;
+        if (Math.abs(dy) > Math.abs(dx)) { drag = null; return; } // a scroll, not a swipe: leave the reel alone
+        drag.moved = true;
+        if (anim) { cancelAnimationFrame(anim); anim = 0; } // caught mid-turn: the finger takes it from here
+        drag.start = angle;
+        drag.a0 = Math.round(angle / STEP) * STEP;
+        drag.x0 = e.clientX;
+        try { reel.setPointerCapture(e.pointerId); } catch (err) { /* fine */ }
+        reel.classList.add('dragging');
+        hold();
+      }
+      var dt = e.timeStamp - drag.lt;
+      if (dt > 0) drag.v = drag.v * .5 + ((e.clientX - drag.lx) / dt) * .5; // px per ms
+      drag.lx = e.clientX; drag.lt = e.timeStamp;
+      angle = drag.start - (e.clientX - drag.x0) * per();
+      if (!anim) anim = requestAnimationFrame(function () { anim = 0; place(); });
+    });
+    var release = function (e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      var d = drag;
+      drag = null;
+      reel.classList.remove('dragging');
+      if (!d.moved) {
+        // a tap on a side phone brings it round; a tap on the front does nothing
+        var i = phones.indexOf(d.phone);
+        if (e.type === 'pointerup' && !anim && i !== cur) settle(Math.round(angle / STEP) * STEP + (theta(i) > 0 ? STEP : -STEP), MOVE, inOut);
+        return;
+      }
+      if (anim) { cancelAnimationFrame(anim); anim = 0; } // the last move's pending frame
+      var flung = angle - d.v * 160 * per(); // where a flick would carry it
+      var target = Math.round(flung / STEP) * STEP;
+      if (target === d.a0 && Math.abs(angle - d.a0) > STEP * .15) target = d.a0 + (angle > d.a0 ? STEP : -STEP);
+      target = Math.max(d.a0 - STEP, Math.min(d.a0 + STEP, target)); // one phone per swipe
+      settle(target, Math.max(320, MOVE * Math.abs(target - angle) / STEP), out);
     };
+    reel.addEventListener('pointerup', release);
+    reel.addEventListener('pointercancel', release);
+    reel.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+    var pause = function () { clearTimeout(timer); var v = vid(phones[cur]); if (v) v.pause(); };
     document.addEventListener('visibilitychange', function () { if (document.hidden) pause(); else play(false); });
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (e) {
@@ -114,6 +209,9 @@
         if (onScreen) play(false); else pause();
       }, { threshold: 0.25 }).observe(reel);
     }
+    window.addEventListener('resize', function () { measure(); place(); });
+    measure();
+    place();
     setTimeout(function () { ready = true; play(true); }, 700); // after the phones have risen
   }
 
