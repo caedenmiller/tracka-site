@@ -32,32 +32,43 @@
   var reel = stage && stage.hasAttribute('data-reel') ? stage : null;
   if (reel) {
     var phones = [].slice.call(reel.querySelectorAll('.phone'));
-    var STEP = 120, MOVE = 850, HOLD = 5000, SIN = Math.sin(Math.PI / 3);
+    var STEP = 120, MOVE = 850, HOLD = 5000;
     // where each phone sits on the circle when angle is 0: front 0, right +120, left -120
     var BASE = phones.map(function (p) { return p.classList.contains('slot-right') ? STEP : p.classList.contains('slot-left') ? -STEP : 0; });
     var angle = 0, geo = null, anim = 0, cur = BASE.indexOf(0);
     var timer = null, blocked = reduce, onScreen = true, ready = false, drag = null;
 
     var measure = function () { // layout reads: only here, on start and on resize
-      var cs = getComputedStyle(reel), pw = phones[0].offsetWidth;
+      var cs = getComputedStyle(reel), pw = phones[0].offsetWidth, W = reel.clientWidth;
+      var sc = parseFloat(cs.getPropertyValue('--s')) || .86, r = parseFloat(cs.getPropertyValue('--r')) || 7;
+      // a side phone's half width once scaled and tilted (the frame is 2.094 times as tall as wide)
+      var rr = r * Math.PI / 180, half = pw * sc / 2 * Math.cos(rr) + pw * 2.094 * sc / 2 * Math.sin(rr);
       geo = {
         pw: pw,
-        dx: pw * (parseFloat(cs.getPropertyValue('--kx')) || .8),
+        // as far out as the CSS asks, but never past the screen's edge (10px inside it)
+        dx: Math.max(pw * .35, Math.min(pw * (parseFloat(cs.getPropertyValue('--kx')) || .8), W / 2 - 10 - half)),
         dy: parseFloat(cs.getPropertyValue('--dy')) || 60,
-        s: parseFloat(cs.getPropertyValue('--s')) || .86,
-        r: parseFloat(cs.getPropertyValue('--r')) || 7
+        s: sc,
+        r: r
       };
     };
     var theta = function (i) { return ((BASE[i] - angle) % 360 + 540) % 360 - 180; }; // -180..180, 0 = front
+    // sideways reach on the circle: 0 at the front, out to exactly 1 at a side
+    // (120 degrees), back to 0 straight behind, and never past 1, so no phone ever
+    // swings wider than the side slots (and so never past the screen's edge). It
+    // gets most of the way out early (.875 at 60 degrees), so the two phones that
+    // swap places are clear of each other when they cross and their order flips.
+    var reach = function (th) {
+      var a = Math.abs(th), f = a <= STEP ? 1 - Math.pow(1 - a / STEP, 3) : Math.cos((a - STEP) / (180 - STEP) * Math.PI / 2);
+      return th < 0 ? -f : f;
+    };
     var place = function () {
       for (var i = 0; i < phones.length; i++) {
-        var rad = theta(i) * Math.PI / 180, sn = Math.sin(rad), cs = Math.cos(rad);
+        var th = theta(i), f = reach(th), cs = Math.cos(th * Math.PI / 180);
         var t = (1 - cs) / 1.5; // 0 at the front, 1 at a side, 1.33 straight behind
-        var x = geo.dx * sn / SIN;
-        var sc = t <= 1 ? 1 - (1 - geo.s) * t : geo.s - (t - 1) * .6;
+        var sc = t <= 1 ? 1 - (1 - geo.s) * Math.sqrt(t) : geo.s - (t - 1) * .6;
         var y = t <= 1 ? geo.dy * t : geo.dy * (1 - (t - 1) * 1.5);
-        var rot = geo.r * sn / SIN;
-        phones[i].style.transform = 'translate3d(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px,0) rotate(' + rot.toFixed(3) + 'deg) scale(' + sc.toFixed(4) + ')';
+        phones[i].style.transform = 'translate3d(' + (geo.dx * f).toFixed(2) + 'px,' + y.toFixed(2) + 'px,0) rotate(' + (geo.r * f).toFixed(3) + 'deg) scale(' + sc.toFixed(4) + ')';
         phones[i].style.zIndex = String(Math.round((cs + 1) * 50) + 1);
       }
     };
@@ -155,7 +166,8 @@
        phone width. On release it settles a step either way by distance or flick. */
     var per = function () { return STEP / (geo.pw * 1.1); };
     reel.addEventListener('pointerdown', function (e) {
-      if ((e.pointerType === 'mouse' && e.button !== 0) || !e.isPrimary || !e.target.closest('.phone')) return;
+      // anywhere on the stage, gaps between the phones included
+      if ((e.pointerType === 'mouse' && e.button !== 0) || !e.isPrimary) return;
       drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, lx: e.clientX, lt: e.timeStamp, v: 0, phone: e.target.closest('.phone') };
     });
     reel.addEventListener('pointermove', function (e) {
@@ -176,7 +188,9 @@
       var dt = e.timeStamp - drag.lt;
       if (dt > 0) drag.v = drag.v * .5 + ((e.clientX - drag.lx) / dt) * .5; // px per ms
       drag.lx = e.clientX; drag.lt = e.timeStamp;
-      angle = drag.start - (e.clientX - drag.x0) * per();
+      // follows the finger for one phone either way, then stiffens (one phone per swipe)
+      var want = drag.start - (e.clientX - drag.x0) * per(), lo = drag.a0 - STEP, hi = drag.a0 + STEP;
+      angle = want > hi ? hi + (want - hi) * .2 : want < lo ? lo + (want - lo) * .2 : want;
       if (!anim) anim = requestAnimationFrame(function () { anim = 0; place(); });
     });
     var release = function (e) {
@@ -187,7 +201,7 @@
       if (!d.moved) {
         // a tap on a side phone brings it round; a tap on the front does nothing
         var i = phones.indexOf(d.phone);
-        if (e.type === 'pointerup' && !anim && i !== cur) settle(Math.round(angle / STEP) * STEP + (theta(i) > 0 ? STEP : -STEP), MOVE, inOut);
+        if (e.type === 'pointerup' && !anim && i >= 0 && i !== cur) settle(Math.round(angle / STEP) * STEP + (theta(i) > 0 ? STEP : -STEP), MOVE, inOut);
         return;
       }
       if (anim) { cancelAnimationFrame(anim); anim = 0; } // the last move's pending frame
@@ -208,6 +222,11 @@
         onScreen = e[0].isIntersecting;
         if (onScreen) play(false); else pause();
       }, { threshold: 0.25 }).observe(reel);
+    }
+    var cue = reel.parentNode.querySelector('.reel-cue');
+    if (cue) {
+      cue.hidden = false;
+      cue.addEventListener('click', function () { if (!anim && !(drag && drag.moved)) settle(Math.round(angle / STEP) * STEP + STEP, MOVE, inOut); });
     }
     window.addEventListener('resize', function () { measure(); place(); });
     measure();
