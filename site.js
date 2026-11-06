@@ -13,9 +13,108 @@
   var stage = document.querySelector('.hero-stage');
   if (stage) {
     var start = function () { stage.classList.add('go'); };
-    var center = stage.querySelector('.p-center img');
+    var center = stage.querySelector('.slot-front img');
     if (center && center.decode) center.decode().then(start, start); else start();
     setTimeout(start, 1600); // never leave the hero empty on a slow image
+  }
+
+  /* The hero reel (11-06): only the FRONT phone plays its clip (profile, binder,
+     shows). When it ends, the phones turn: the right one swings to the front and
+     plays, the front one steps to the left, the left one goes round the back to
+     the right. Muted + playsinline, started from here (no autoplay attribute, so
+     reduced motion never starts it). If the browser refuses to play (iPhone Low
+     Power Mode, an in-app browser that blocks it), the posters still turn every
+     HOLD ms. Stops while the hero is off screen or the tab is hidden. */
+  var reel = stage && stage.hasAttribute('data-reel') ? stage : null;
+  if (reel && !reduce) {
+    var phones = [].slice.call(reel.querySelectorAll('.phone'));
+    var HOLD = 5000, MOVE = 900;
+    var timer = null, blocked = false, onScreen = true, moving = false, ready = false;
+    var vid = function (p) { return p.querySelector('video'); };
+    var inSlot = function (s) { return phones.filter(function (p) { return p.classList.contains(s); })[0]; };
+    var arm = function (ms) { clearTimeout(timer); timer = setTimeout(next, ms); };
+    var slotOf = function (p) { return p.classList.contains('slot-front') ? 'slot-front' : p.classList.contains('slot-right') ? 'slot-right' : 'slot-left'; };
+    var TURN = { 'slot-right': 'slot-front', 'slot-front': 'slot-left', 'slot-left': 'slot-right' };
+
+    var turn = function () {
+      var moves = phones.map(function (p) {
+        var from = getComputedStyle(p).transform, s = slotOf(p);
+        return { p: p, s: s, from: from };
+      });
+      moves.forEach(function (m) { m.p.classList.remove(m.s); m.p.classList.add(TURN[m.s]); });
+      if (!phones[0].animate) return; // no Web Animations: the phones just swap places
+      var sc = parseFloat(getComputedStyle(reel).getPropertyValue('--s')) || .85;
+      moves.forEach(function (m) {
+        var to = getComputedStyle(m.p).transform;
+        var frames = [{ transform: m.from }, { transform: to }];
+        if (m.s === 'slot-left') {
+          // round the back: it shrinks and dims as it passes behind the front phone
+          var lift = -.04 * m.p.offsetWidth;
+          frames = [
+            { transform: m.from, opacity: 1 },
+            { transform: 'translateX(-50%) translateY(' + lift.toFixed(1) + 'px) scale(' + (sc * .72).toFixed(3) + ')', opacity: .45, offset: .5 },
+            { transform: to, opacity: 1 }
+          ];
+        }
+        m.p.animate(frames, { duration: MOVE, easing: 'cubic-bezier(.5, 0, .2, 1)' });
+      });
+    };
+
+    var play = function (fromStart) {
+      if (!ready || !onScreen || document.hidden || moving) return;
+      var p = inSlot('slot-front'), v = vid(p);
+      if (blocked || !v) { arm(HOLD); return; }
+      if (fromStart) { try { v.currentTime = 0; } catch (e) { /* not loaded yet: it starts at 0 anyway */ } }
+      var pr = v.play();
+      if (pr && pr.catch) {
+        pr.catch(function (err) {
+          // NotAllowed: this browser won't play it. AbortError is just our own pause.
+          if (err && err.name === 'NotAllowedError') { blocked = true; arm(HOLD); }
+        });
+      }
+      arm(12000); // a clip that never starts (slow network) doesn't hold the reel up
+      // warm up the one that comes next
+      var n = vid(inSlot('slot-right'));
+      if (n && n.preload !== 'auto') { n.preload = 'auto'; try { n.load(); } catch (e) { /* fine */ } }
+    };
+
+    var next = function () {
+      clearTimeout(timer);
+      var p = inSlot('slot-front'), v = vid(p);
+      if (v) v.pause();
+      p.classList.remove('playing'); // back to its poster (the clip's first frame) as it moves
+      setTimeout(function () { if (v && !p.classList.contains('slot-front')) { try { v.currentTime = 0; } catch (e) { /* fine */ } } }, 300);
+      moving = true;
+      turn();
+      setTimeout(function () { moving = false; play(true); }, MOVE - 150);
+    };
+
+    phones.forEach(function (p) {
+      var v = vid(p);
+      if (!v) return;
+      v.muted = true; // the attribute alone isn't always enough for inline autoplay
+      v.addEventListener('playing', function () {
+        if (!p.classList.contains('slot-front')) { v.pause(); return; }
+        p.classList.add('playing');
+        var left = (isFinite(v.duration) ? v.duration - v.currentTime : 8) + 2.5;
+        arm(left * 1000); // in case 'ended' never comes
+      });
+      v.addEventListener('ended', function () { if (p.classList.contains('slot-front')) next(); });
+    });
+
+    var pause = function () {
+      clearTimeout(timer);
+      var v = vid(inSlot('slot-front'));
+      if (v) v.pause();
+    };
+    document.addEventListener('visibilitychange', function () { if (document.hidden) pause(); else play(false); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) {
+        onScreen = e[0].isIntersecting;
+        if (onScreen) play(false); else pause();
+      }, { threshold: 0.25 }).observe(reel);
+    }
+    setTimeout(function () { ready = true; play(true); }, 700); // after the phones have risen
   }
 
   /* Scroll drift: hero phones by their data-depth, feature phones by their

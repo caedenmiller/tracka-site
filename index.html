@@ -28,9 +28,9 @@
 <meta name="twitter:image" content="https://gettracka.com/og.jpg?v=10">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/plus-jakarta-sans-latin.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/instrument-serif-italic-latin.woff2">
-<link rel="preload" as="image" href="/shots/home-720.webp?v=1" imagesrcset="/shots/home-360.webp?v=1 360w, /shots/home-540.webp?v=1 540w, /shots/home-720.webp?v=1 720w" imagesizes="(max-width:560px) 176px, 264px" fetchpriority="high">
+<link rel="preload" as="image" href="/clips/hero-profile.jpg?v=1" fetchpriority="high">
 <script>document.documentElement.className="js";addEventListener("load",function(){if(!(window.tcgvMain&&window.tcgvSite))document.documentElement.className=""})</script>
-<link rel="stylesheet" href="/site.css?v=37">
+<link rel="stylesheet" href="/site.css?v=38">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -81,9 +81,10 @@
   <div class="wrap nav-in">
     <a class="brand" href="/" aria-label="Tracka home" translate="no"><img src="/art/v2/icon.png?v=3" width="30" height="30" alt="">Tracka</a>
     <nav class="nav-links" aria-label="Primary">
+      <a href="#binders">Binders</a>
       <a href="#shows">Shows</a>
       <a href="#scan">Scan</a>
-      <a href="#collection">Collection</a>
+      <a href="#prices">Prices</a>
       <a href="#vendors">Vendors</a>
       <a href="#pro">Pro</a>
       <a href="#faq">FAQ</a>
@@ -92,9 +93,10 @@
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Open menu"><span></span><span></span></button>
   </div>
   <nav class="menu" id="menu" aria-label="Menu" hidden>
+    <a href="#binders">Binders</a>
     <a href="#shows">Shows</a>
     <a href="#scan">Scan</a>
-    <a href="#collection">Collection</a>
+    <a href="#prices">Prices</a>
     <a href="#vendors">Vendors</a>
     <a href="#pro">Pro</a>
     <a href="#faq">FAQ</a>
@@ -109,34 +111,53 @@
     <canvas class="hero-shader" aria-hidden="true"></canvas>
     <div class="wrap hero-copy">
       <p class="chip">FREE ON IPHONE</p>
-      <h1>Know the floor <span class="it">before you walk it.</span></h1>
-      <p class="lede"><span class="lede-lead">The all-in-one TCG app.</span> <span class="lede-rest">Find shows, see the tables, scan your cards and track what they’re worth.</span><span class="lede-short">Find shows, see the tables, track your cards.</span></p>
+      <h1>The all-in-one <span class="it">TCG app.</span></h1>
+      <p class="lede">Find shows, see the tables, track your cards.</p>
       <div class="cta-row">
         <a class="store" href="https://apps.apple.com/us/app/id6778956833" aria-label="Download Tracka on the App Store">
           <svg aria-hidden="true"><use href="#i-apple"/></svg>
           <span><small>Download on the</small><b>App Store</b></span>
         </a>
-        <a class="see" href="#shows">See how<svg aria-hidden="true"><use href="#i-right"/></svg></a>
+        <a class="see" href="#binders">See how<svg aria-hidden="true"><use href="#i-right"/></svg></a>
       </div>
       <p class="fine">Made for iPhone · Pokémon English and Japanese</p>
     </div>
-    <div class="hero-stage" role="group" aria-label="Tracka on iPhone">
+    <!-- Three phones on a turntable (site.js): only the front one plays its clip;
+         when it ends, the next swings round to the front. Clips and posters come
+         from scripts/make-hero-clips.sh. -->
+    <div class="hero-stage" role="group" aria-label="Tracka on iPhone" data-reel>
       <svg class="orbit" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="600" cy="260" rx="580" ry="230" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1" vector-effect="non-scaling-stroke"/></svg>
       <img class="float float-a" src="/art/v2/card-umbreon.webp" width="260" height="362" alt="" aria-hidden="true" data-depth="-.5">
       <img class="float float-b" src="/art/v2/card-blastoise.webp" width="260" height="363" alt="" aria-hidden="true" data-depth=".6">
-      <div class="phone p-left" data-depth=".35">
-        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/shows-720.webp?v=1" srcset="/shots/shows-360.webp?v=1 360w, /shots/shows-540.webp?v=1 540w, /shots/shows-720.webp?v=1 720w" sizes="(max-width:560px) 140px, 229px" width="720" height="1565" alt="The Shows tab: upcoming card shows with their flyers, dates and hours."></div></div></div><span class="island"></span>
+      <div class="phone slot-front">
+        <div class="rim"><div class="bezel"><div class="screen"><img src="/clips/hero-profile.jpg?v=1" width="540" height="1174" alt="Home: your portfolio's value, its graph and your top movers." fetchpriority="high"><video src="/clips/hero-profile.mp4?v=1" muted playsinline webkit-playsinline disablepictureinpicture preload="auto" aria-hidden="true" tabindex="-1"></video></div></div></div><span class="island"></span>
       </div>
-      <div class="phone p-right" data-depth=".35">
-        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/chart-720.webp?v=1" srcset="/shots/chart-360.webp?v=1 360w, /shots/chart-540.webp?v=1 540w, /shots/chart-720.webp?v=1 720w" sizes="(max-width:560px) 140px, 229px" width="720" height="1565" alt="Gengar VMAX price history: $1,027, up $705.85 since 2024."></div></div></div><span class="island"></span>
+      <div class="phone slot-right">
+        <div class="rim"><div class="bezel"><div class="screen"><img src="/clips/hero-binder.jpg?v=1" width="540" height="1174" alt="A master set binder, page by page."><video src="/clips/hero-binder.mp4?v=1" muted playsinline webkit-playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1"></video></div></div></div><span class="island"></span>
       </div>
-      <div class="phone p-center" data-depth="0">
-        <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/home-720.webp?v=1" srcset="/shots/home-360.webp?v=1 360w, /shots/home-540.webp?v=1 540w, /shots/home-720.webp?v=1 720w" sizes="(max-width:560px) 176px, 264px" width="720" height="1565" alt="Home: a $166,799 portfolio with its 30-day graph and top movers." fetchpriority="high"></div></div></div><span class="island"></span>
+      <div class="phone slot-left">
+        <div class="rim"><div class="bezel"><div class="screen"><img src="/clips/hero-shows.jpg?v=1" width="540" height="1174" alt="A card show: its flyer, hours and the tables coming."><video src="/clips/hero-shows.mp4?v=1" muted playsinline webkit-playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1"></video></div></div></div><span class="island"></span>
       </div>
     </div>
   </section>
 
   <div class="band">
+
+    <section class="feat flip" id="binders">
+      <div class="wrap feat-in">
+        <div class="feat-art reveal">
+          <svg class="well" viewBox="0 0 560 560" aria-hidden="true"><circle cx="280" cy="280" r="210" fill="var(--well)"/><circle cx="280" cy="280" r="272" fill="none" stroke="var(--ring)"/></svg>
+          <div class="phone" data-float>
+            <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/binder-720.webp?v=1" srcset="/shots/binder-360.webp?v=1 360w, /shots/binder-540.webp?v=1 540w, /shots/binder-720.webp?v=1 720w" sizes="(max-width:560px) 200px, 232px" width="720" height="1566" loading="lazy" decoding="async" alt="The 151 master set binder open on its last page: Charizard ex, Blastoise ex, Alakazam ex, Zapdos ex, Mew ex and more in their pockets, 120 of 207 cards."></div></div></div><span class="island"></span>
+          </div>
+        </div>
+        <div class="feat-copy reveal">
+          <p class="eyebrow">Binders</p>
+          <h2>Every set, <span class="it">pocket by pocket.</span></h2>
+          <p class="body">Master sets show every card in its pocket, and what it costs to finish.</p>
+        </div>
+      </div>
+    </section>
 
     <section class="strip" id="tables" aria-labelledby="tables-h">
       <div class="wrap strip-head">
@@ -273,22 +294,34 @@
       </div>
     </section>
 
-    <section class="feat" id="collection">
+    <section class="feat" id="base">
       <div class="wrap feat-in">
-        <div class="feat-art reveal" data-graph>
+        <div class="feat-art reveal">
           <svg class="well" viewBox="0 0 560 560" aria-hidden="true"><circle cx="280" cy="280" r="210" fill="var(--well)"/><circle cx="280" cy="280" r="272" fill="none" stroke="var(--ring)"/></svg>
           <div class="phone" data-float>
-            <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/sales-720.webp?v=1" srcset="/shots/sales-360.webp?v=1 360w, /shots/sales-540.webp?v=1 540w, /shots/sales-720.webp?v=1 720w" sizes="(max-width:560px) 200px, 232px" width="720" height="1565" loading="lazy" decoding="async" alt="Gengar VMAX PSA 10: its recent sales, newest first."></div></div></div><span class="island"></span>
-            <img class="pop-graph" src="/art/v2/pop-graph.webp?v=2" width="720" height="522" loading="lazy" decoding="async" alt="" aria-hidden="true">
-            <svg class="pop-arrow" viewBox="0 0 300 300" aria-hidden="true"><path class="line shaft" pathLength="1" d="M262 196Q150 18 48 148"/><path class="line head" pathLength="1" d="M88 131L48 148L56 105"/></svg>
-            <svg class="pop-arrow-m" viewBox="0 0 440 320" aria-hidden="true"><path class="line shaft" pathLength="1" d="M70 280C300 280 400 210 400 30"/><path class="line head" pathLength="1" d="M365 65L400 30L435 65"/></svg>
+            <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/base-720.webp?v=1" srcset="/shots/base-360.webp?v=1 360w, /shots/base-540.webp?v=1 540w, /shots/base-720.webp?v=1 720w" sizes="(max-width:560px) 200px, 232px" width="720" height="1565" loading="lazy" decoding="async" alt="A base: a pixel room with three cards framed on the wall, their Pokémon standing in the room, and a row of badges."></div></div></div><span class="island"></span>
           </div>
         </div>
         <div class="feat-copy reveal">
-          <p class="eyebrow">Your collection</p>
+          <p class="eyebrow">Your base</p>
+          <h2>A room for <span class="it">your best cards.</span></h2>
+          <p class="body">Your top cards hang on the wall. Other collectors can visit.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="feat flip" id="prices">
+      <div class="wrap feat-in">
+        <div class="feat-art reveal">
+          <svg class="well" viewBox="0 0 560 560" aria-hidden="true"><circle cx="280" cy="280" r="210" fill="var(--well)"/><circle cx="280" cy="280" r="272" fill="none" stroke="var(--ring)"/></svg>
+          <div class="phone" data-float>
+            <div class="rim"><div class="bezel"><div class="screen"><img src="/shots/chart-720.webp?v=1" srcset="/shots/chart-360.webp?v=1 360w, /shots/chart-540.webp?v=1 540w, /shots/chart-720.webp?v=1 720w" sizes="(max-width:560px) 200px, 232px" width="720" height="1565" loading="lazy" decoding="async" alt="Gengar VMAX price history: $1,027, up $705.85 since 2024."></div></div></div><span class="island"></span>
+          </div>
+        </div>
+        <div class="feat-copy reveal">
+          <p class="eyebrow">Price history</p>
           <h2>Know what it’s worth. <span class="it">Every single day.</span></h2>
-          <p class="body">Raw cards follow the live market. Slabs are priced from real sales data, and you can see every one.</p>
-          <p class="note">Singles, slabs and sealed in one number.</p>
+          <p class="body">Raw by condition, graded by grade, charted every day.</p>
         </div>
       </div>
     </section>
@@ -414,8 +447,8 @@
 </footer>
 
 <script src="/main.js?v=82" defer></script>
-<script src="/site.js?v=5" defer></script>
-<script src="/escape.js?v=7" defer></script>
-<script src="/android.js?v=4" defer></script>
+<script src="/site.js?v=6" defer></script>
+<script src="/escape.js?v=8" defer></script>
+<script src="/android.js?v=5" defer></script>
 </body>
 </html>

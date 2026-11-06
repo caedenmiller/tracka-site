@@ -9,9 +9,13 @@
    through track.js, never the email.
    On the homepage the hero badge reads "On Android? Get notified" and the
    "Get the app" pills read "Get notified" (relabel below).
-   Loaded on every site page and every /go page; does nothing off Android. */
+   Loaded on every site page and every /go page; does nothing off Android.
+   11-06: the sheet is just the waitlist: a label, the email and a button.
+   PREVIEW ONLY: ?preview_android=1 runs this in any browser so it can be looked
+   at; nothing is tracked in a preview (a submit still really saves). */
 (function () {
-  if (!/Android/i.test(navigator.userAgent)) return;
+  var preview = /[?&]preview_android=1(&|$)/.test(location.search);
+  if (!preview && !/Android/i.test(navigator.userAgent)) return;
 
   var ENDPOINT = 'https://xnqpgtpgzpctuyretdwe.supabase.co/functions/v1/android-waitlist';
   var inApp = /TikTok|musical_ly|BytedanceWebview|trill_/i.test(navigator.userAgent) ? 'tiktok'
@@ -24,7 +28,7 @@
   var styled = false;
 
   function track(event, props) {
-    if (window.tvTrack) window.tvTrack(event, props || {});
+    if (window.tvTrack && !preview) window.tvTrack(event, props || {});
   }
 
   function css() {
@@ -40,18 +44,17 @@
       '.aw-scrim.on{opacity:1}' +
       '.aw-sheet{position:relative;background:#101013;border-top:1px solid rgba(255,255,255,.12);border-radius:20px 20px 0 0;padding:24px 24px max(24px,env(safe-area-inset-bottom));color:#fff;font:500 16px/1.45 "Plus Jakarta Sans",-apple-system,system-ui,sans-serif;transform:translateY(16px);transition:transform .24s ease-out}' +
       '.aw-scrim.on .aw-sheet{transform:none}' +
-      '.aw-head{display:flex;align-items:center;gap:12px;margin:0 0 12px}' +
-      '.aw-head img{width:44px;height:44px;border-radius:10px;flex:none}' +
-      '.aw-sheet h2{margin:0;font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.2}' +
-      '.aw-sheet p{margin:0 0 18px;color:#C5C9CF}' +
+      '.aw-head{display:flex;align-items:center;gap:12px;margin:0 0 16px}' +
+      '.aw-head img{width:40px;height:40px;border-radius:10px;flex:none}' +
+      '.aw-sheet h2{flex:1;margin:0;font-size:21px;font-weight:800;letter-spacing:-.01em;line-height:1.2}' +
       '.aw-form{display:grid;gap:10px}' +
       '.aw-input{width:100%;box-sizing:border-box;height:50px;padding:0 16px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:#19191E;color:#fff;font:500 16px "Plus Jakarta Sans",-apple-system,system-ui,sans-serif}' +
       '.aw-input::placeholder{color:#7E858E}' +
       '.aw-input:focus{outline:none;border-color:rgb(147,197,240)}' +
-      '.aw-go,.aw-close{display:flex;width:100%;height:50px;border:0;border-radius:999px;font:700 16px "Plus Jakarta Sans",-apple-system,system-ui,sans-serif;align-items:center;justify-content:center}' +
-      '.aw-go{background:#fff;color:#08080A}' +
+      '.aw-go{display:flex;width:100%;height:50px;border:0;border-radius:999px;font:700 16px "Plus Jakarta Sans",-apple-system,system-ui,sans-serif;align-items:center;justify-content:center;background:#fff;color:#08080A}' +
       '.aw-go:disabled{opacity:.5}' +
-      '.aw-close{margin-top:10px;background:rgba(255,255,255,.1);color:#fff}' +
+      '.aw-close{flex:none;width:44px;height:44px;margin:-6px -10px -6px 0;border:0;border-radius:999px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center}' +
+      '.aw-close svg{width:16px;height:16px}' +
       '.aw-go:focus,.aw-close:focus{outline:none}.aw-close:active{background:rgba(255,255,255,.16)}' +
       '.aw-err{min-height:20px;margin:0;color:#F2A7A7;font-size:14px}' +
       '.aw-open{display:inline-flex;margin-top:14px;padding:12px 20px;border:0;border-radius:999px;background:#fff;color:#08080A;font:700 15px "Plus Jakarta Sans",-apple-system,system-ui,sans-serif}' +
@@ -68,14 +71,13 @@
     sheet.setAttribute('aria-labelledby', 'aw-title');
     sheet.innerHTML =
       '<div class="aw-sheet">' +
-        '<div class="aw-head"><img src="/go/icon.png?v=3" alt=""><h2 id="aw-title">Tracka is iPhone only for now</h2></div>' +
-        '<p id="aw-text">Leave your email and we’ll tell you the day it’s on Android. One email, nothing else.</p>' +
+        '<div class="aw-head"><img src="/go/icon.png?v=3" alt=""><h2 id="aw-title">Android waitlist</h2>' +
+          '<button class="aw-close" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
         '<form class="aw-form" novalidate>' +
           '<input class="aw-input" type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@email.com" aria-label="Email" required>' +
           '<p class="aw-err" role="status" aria-live="polite"></p>' +
-          '<button class="aw-go" type="submit">Tell me when it’s on Android</button>' +
+          '<button class="aw-go" type="submit">Join</button>' +
         '</form>' +
-        '<button class="aw-close" type="button">Not now</button>' +
       '</div>';
     sheet.addEventListener('click', function (e) {
       if (e.target === sheet || e.target.closest('.aw-close')) hide();
@@ -86,9 +88,8 @@
 
   function done() {
     sheet.querySelector('#aw-title').textContent = 'You’re on the list';
-    sheet.querySelector('#aw-text').textContent = 'We’ll email you once, the day Tracka is on Android.';
     sheet.querySelector('form').hidden = true;
-    sheet.querySelector('.aw-close').textContent = 'Done';
+    sheet.querySelector('.aw-head').style.margin = '0';
   }
 
   function submit(e) {
@@ -119,7 +120,7 @@
       })
       .catch(function (x) {
         btn.disabled = false;
-        btn.textContent = 'Tell me when it’s on Android';
+        btn.textContent = 'Join';
         err.textContent = x && x.message && x.message !== 'failed' && x.message !== 'Failed to fetch'
           ? x.message
           : 'Couldn’t save that. Check your connection and try again.';
