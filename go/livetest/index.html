@@ -33,10 +33,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.5 var(--font
 .tp small{margin-left:3px;font-size:9.5px;font-weight:600;letter-spacing:0;color:var(--ink-2)}
 .ts{font-size:10.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:34px max(24px,env(safe-area-inset-left)) max(56px,env(safe-area-inset-bottom))}
-.icon{width:96px;height:96px;border-radius:22px;margin-bottom:20px}
-h1{font-size:26px;font-weight:800;line-height:1;letter-spacing:.14em;text-transform:uppercase;margin:0 0 14px;padding-left:.14em}
+.icon{width:96px;height:96px;border-radius:22px;margin-bottom:22px;border:1.5px solid rgba(255,255,255,.22);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 12px 34px rgba(139,116,255,.2)}
+h1{font-size:26px;font-weight:800;line-height:1;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px;padding-left:.18em}
 p{margin:0;color:var(--ink-2);max-width:30ch}
 p span{color:var(--blue)}
+/* The slogan in the T's own foil (site.css --foil-true; Caeden 11-05). Browsers without text clipping keep the blue. */
+.foil{font-weight:700}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){.foil{background-image:linear-gradient(105deg,#cd65e5,#8976ff,#2f9aff,#9cecff,#c2f7ff,#00decd,#00c8ec,#01b0fb,#4998ff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}}
 .badge{display:inline-flex;align-items:center;gap:10px;margin-top:30px;height:60px;padding:0 20px 0 16px;border-radius:12px;background:#000;border:1px solid rgba(255,255,255,.55);color:#fff;text-decoration:none;text-align:left;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;transition:border-color .18s}
 .badge:active{border-color:#fff}
 .badge svg{width:26px;height:26px;flex:none;margin-top:-2px}
@@ -48,13 +51,11 @@ p span{color:var(--blue)}
 .wrap{animation:in .32s ease-out both}
 @media(prefers-reduced-motion:reduce){.wrap{animation:none}}
 [hidden]{display:none!important}
-.code{margin-top:22px;padding:12px 20px;border:1px solid var(--line);border-radius:12px;display:grid;gap:2px;justify-items:center}
-.code small{font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.code{margin-top:26px;padding:14px 24px 16px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.03);display:grid;gap:4px;justify-items:center}
+.code small{font-size:10.5px;font-weight:700;letter-spacing:.26em;padding-left:.26em;text-transform:uppercase;color:var(--ink-3)}
 .code{max-width:100%}
 .code b{font-size:min(44px,calc((100vw - 88px) / 6.88));line-height:1.2;font-weight:800;letter-spacing:.06em;overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}
 .strip{display:none}
-.foil{font-weight:700;color:var(--blue)}
-@supports ((-webkit-background-clip:text) or (background-clip:text)){.foil{background-image:linear-gradient(105deg,#cd65e5,#8976ff,#2f9aff,#9cecff,#c2f7ff,#00decd,#00c8ec,#01b0fb,#4998ff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}}
 @media(max-height:559px){main{padding-top:18px;padding-bottom:12px}.icon{width:72px;height:72px;border-radius:16px;margin-bottom:12px}h1{font-size:22px;margin-bottom:8px}.code{margin-top:12px;padding:6px 16px}.badge{margin-top:16px}.sub{margin-top:6px}.foot{position:static;padding:8px 24px max(12px,env(safe-area-inset-bottom))}}
 </style>
 </head>
