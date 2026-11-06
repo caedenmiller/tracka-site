@@ -47,7 +47,7 @@
         pw: pw,
         // as far out as the CSS asks, but each side phone stays whole on screen, 12px
         // inside its edge (the phone size itself follows the screen width in CSS)
-        dx: Math.max(pw * .3, Math.min(pw * (parseFloat(cs.getPropertyValue('--kx')) || .8), W / 2 - 14 - half)),
+        dx: Math.max(pw * .3, Math.min(pw * (parseFloat(cs.getPropertyValue('--kx')) || .8), W / 2 - 16 - half)),
         dy: parseFloat(cs.getPropertyValue('--dy')) || 60,
         s: sc,
         r: r
@@ -69,7 +69,8 @@
         var t = (1 - cs) / 1.5; // 0 at the front, 1 at a side, 1.33 straight behind
         var sc = t <= 1 ? 1 - (1 - geo.s) * Math.sqrt(t) : geo.s - (t - 1) * .6;
         var y = t <= 1 ? geo.dy * t : geo.dy * (1 - (t - 1) * 1.5);
-        phones[i].style.transform = 'translate3d(' + (geo.dx * f).toFixed(2) + 'px,' + y.toFixed(2) + 'px,0) rotate(' + (geo.r * f).toFixed(3) + 'deg) scale(' + sc.toFixed(4) + ')';
+        var g = geo.g || 1; // the whole group's scale: 1 unless the screen is too narrow
+        phones[i].style.transform = 'translate3d(' + (geo.dx * f * g).toFixed(2) + 'px,' + (y * g).toFixed(2) + 'px,0) rotate(' + (geo.r * f).toFixed(3) + 'deg) scale(' + (sc * g).toFixed(4) + ')';
         phones[i].style.zIndex = String(Math.round((cs + 1) * 50) + 1);
       }
     };
@@ -229,9 +230,69 @@
       cue.hidden = false;
       cue.addEventListener('click', function () { if (!anim && !(drag && drag.moved)) settle(Math.round(angle / STEP) * STEP + STEP, MOVE, inOut); });
     }
-    window.addEventListener('resize', function () { measure(); place(); });
-    measure();
-    place();
+    /* Fit to the screen. The CSS sizes and the math above give the layout; then the
+       phones' REAL rects (after every transform) are checked against the viewport,
+       12px in from each edge, pulling the side phones in, and shrinking the whole
+       group as a last resort. 11-06: on Caeden's iPhone (Safari opened from another
+       app) the first measure ran before the page had its phone width, read the
+       desktop numbers, and nothing measured again: both side phones ran off the
+       screen. So it re-fits on every size change there is. */
+    var EDGE = 12;
+    var fit = function () {
+      measure();
+      place();
+      var W = document.documentElement.clientWidth || window.innerWidth;
+      for (var pass = 0; pass < 4; pass++) {
+        var over = 0;
+        for (var i = 0; i < phones.length; i++) {
+          var b = phones[i].getBoundingClientRect();
+          over = Math.max(over, EDGE - b.left, b.right - (W - EDGE));
+        }
+        if (over <= .5) break;
+        var minDx = geo.pw * .3;
+        if (geo.dx - over - .5 >= minDx) geo.dx -= over + .5;
+        else { geo.dx = minDx; geo.g = (geo.g || 1) * Math.max(.5, 1 - (over + 1) / (W / 2)); }
+        place();
+      }
+      if (dbg) show();
+    };
+    var fitting = 0;
+    var refit = function () { if (!fitting) fitting = requestAnimationFrame(function () { fitting = 0; fit(); }); };
+    window.addEventListener('resize', refit);
+    window.addEventListener('orientationchange', refit);
+    window.addEventListener('load', refit);
+    window.addEventListener('pageshow', refit);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', refit);
+    if (window.ResizeObserver) new ResizeObserver(refit).observe(reel);
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(max-width: 560px)');
+      if (mq.addEventListener) mq.addEventListener('change', refit); else if (mq.addListener) mq.addListener(refit);
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+    phones.forEach(function (p) { var im = p.querySelector('img'); if (im && !im.complete) im.addEventListener('load', refit); });
+    setTimeout(refit, 500);
+    setTimeout(refit, 1500);
+
+    /* PREVIEW ONLY: ?debug_hero=1 shows the numbers the fit works from */
+    var dbg = /[?&]debug_hero=1(&|$)/.test(location.search) ? document.createElement('pre') : null;
+    var show = function () {
+      var vv = window.visualViewport, L = [
+        'innerWidth ' + window.innerWidth + '  clientWidth ' + document.documentElement.clientWidth,
+        'visualViewport ' + (vv ? vv.width.toFixed(1) + ' x' + vv.scale.toFixed(2) : 'none') + '  stage ' + reel.clientWidth,
+        'pw ' + geo.pw + '  dx ' + geo.dx.toFixed(1) + '  s ' + geo.s + '  r ' + geo.r + '  g ' + (geo.g || 1).toFixed(3)
+      ];
+      phones.forEach(function (p, i) {
+        var b = p.getBoundingClientRect(), v = p.querySelector('video');
+        L.push((v ? v.src.split('/').pop().split('.')[0] : i) + '  left ' + b.left.toFixed(1) + '  right ' + b.right.toFixed(1) + '  w ' + b.width.toFixed(1));
+      });
+      dbg.textContent = L.join('\n');
+    };
+    if (dbg) {
+      dbg.style.cssText = 'position:fixed;left:6px;right:6px;bottom:96px;z-index:9999;margin:0;padding:8px;border-radius:8px;background:rgba(0,0,0,.82);color:#fff;font:11px/1.35 ui-monospace,Menlo,monospace;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(dbg);
+      setInterval(show, 500);
+    }
+    fit();
     setTimeout(function () { ready = true; play(true); }, 700); // after the phones have risen
   }
 
