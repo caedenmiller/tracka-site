@@ -6,6 +6,8 @@
                     in-app browser it opened in: tiktok, instagram, facebook,
                     threads, or none)
      web_store_tap  a tap on any App Store or /go link
+     web_link_tap   a tap on any other link (11-06)
+     web_page_leave the page hiding: deepest scroll % and seconds (11-06)
    android.js adds web_android_sheet_shown (trigger) and
    web_android_waitlist_joined through window.tvTrack (never the email).
    No library, no cookies, no person profiles. The id lives in sessionStorage,
@@ -66,10 +68,37 @@
     var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
     if (!a) return;
     var href = a.getAttribute('href');
-    if (!/apps\.apple\.com|^\/go\//.test(href)) return;
+    if (!/apps\.apple\.com|^\/go\//.test(href)) {
+      // Any other link (See how, the menu, footer): which ones people try.
+      send('web_link_tap', { href: href.slice(0, 200) });
+      return;
+    }
     var ct = /[?&]ct=([^&]+)/.exec(href);
     send('web_store_tap', { href: href, ct: ct ? ct[1] : null });
   }, true);
+
+  // How far a visit got (11-06): about 85% of TikTok visitors leave the
+  // homepage without a store tap, and a pageview plus a tap can't say where.
+  // web_page_leave goes out each time the page hides: the deepest scroll so far
+  // (% of the page) and seconds since load. Read the max per visit id.
+  var maxPct = 0, start = Date.now(), hidden = false;
+  function depth() {
+    var room = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = room > 0 ? Math.round((100 * window.scrollY) / room) : 100;
+    if (pct > maxPct) maxPct = Math.min(100, pct);
+  }
+  window.addEventListener('scroll', depth, { passive: true });
+  function leave() {
+    if (hidden) return;
+    hidden = true;
+    depth();
+    send('web_page_leave', { max_scroll_pct: maxPct, seconds: Math.round((Date.now() - start) / 1000) });
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') leave();
+    else hidden = false;
+  });
+  window.addEventListener('pagehide', leave);
 
   // For the other page scripts (android.js): same id, same in_app/os props.
   window.tvTrack = send;
