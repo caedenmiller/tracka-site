@@ -16,7 +16,8 @@
 # where a fast scroll doesn't smear (CRF 22, up to 5 Mbit/s).
 #
 # Optional settings (seconds or fractions of the height):
-#   START=0.8 DUR=7            for all three, or per clip:
+#   START=0.8 DUR=4            for all three, or per clip (4 s: the reel turns
+#                              to the next phone when a clip ends):
 #   START_PROFILE, DUR_PROFILE, START_BINDER, DUR_BINDER, START_SHOWS, DUR_SHOWS
 #   TOP=0.064 BOTTOM=0.03      how much of the top and bottom to black out
 #   TOP_PROFILE, TOP_BINDER, TOP_SHOWS   per clip
@@ -59,7 +60,7 @@ make() { # name input start dur top
     "$("$FFPROBE" -v error -show_entries format=duration -of csv=p=0 "$mp4" 2>/dev/null | cut -c1-4)" "$fps"
 }
 
-make profile "$1" "${START_PROFILE:-${START:-0.8}}" "${DUR_PROFILE:-${DUR:-7}}" "${TOP_PROFILE:-${TOP:-0.064}}"
-make binder  "$2" "${START_BINDER:-${START:-0.8}}"  "${DUR_BINDER:-${DUR:-7}}"  "${TOP_BINDER:-${TOP:-0.064}}"
-make shows   "$3" "${START_SHOWS:-${START:-0.8}}"   "${DUR_SHOWS:-${DUR:-7}}"   "${TOP_SHOWS:-${TOP:-0.064}}"
+make profile "$1" "${START_PROFILE:-${START:-0.8}}" "${DUR_PROFILE:-${DUR:-4}}" "${TOP_PROFILE:-${TOP:-0.064}}"
+make binder  "$2" "${START_BINDER:-${START:-0.8}}"  "${DUR_BINDER:-${DUR:-4}}"  "${TOP_BINDER:-${TOP:-0.064}}"
+make shows   "$3" "${START_SHOWS:-${START:-0.8}}"   "${DUR_SHOWS:-${DUR:-4}}"   "${TOP_SHOWS:-${TOP:-0.064}}"
 echo "Wrote $OUT. Bump the hero ?v= in index.html, then look at it on a phone."

@@ -32,7 +32,7 @@
   var reel = stage && stage.hasAttribute('data-reel') ? stage : null;
   if (reel) {
     var phones = [].slice.call(reel.querySelectorAll('.phone'));
-    var STEP = 120, MOVE = 850, HOLD = 5000;
+    var STEP = 120, MOVE = 850, HOLD = 4000; // a phone holds about 4 s (Caeden 11-06), the clips are 4 s
     // where each phone sits on the circle when angle is 0: front 0, right +120, left -120
     var BASE = phones.map(function (p) { return p.classList.contains('slot-right') ? STEP : p.classList.contains('slot-left') ? -STEP : 0; });
     var angle = 0, geo = null, anim = 0, cur = BASE.indexOf(0);
@@ -45,8 +45,9 @@
       var rr = r * Math.PI / 180, half = pw * sc / 2 * Math.cos(rr) + pw * 2.094 * sc / 2 * Math.sin(rr);
       geo = {
         pw: pw,
-        // as far out as the CSS asks, but never past the screen's edge (10px inside it)
-        dx: Math.max(pw * .35, Math.min(pw * (parseFloat(cs.getPropertyValue('--kx')) || .8), W / 2 - 10 - half)),
+        // as far out as the CSS asks, but each side phone stays whole on screen, 12px
+        // inside its edge (the phone size itself follows the screen width in CSS)
+        dx: Math.max(pw * .3, Math.min(pw * (parseFloat(cs.getPropertyValue('--kx')) || .8), W / 2 - 14 - half)),
         dy: parseFloat(cs.getPropertyValue('--dy')) || 60,
         s: sc,
         r: r

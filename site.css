@@ -214,11 +214,22 @@ p { margin: 0; }
 .feat-art .rim { box-shadow: var(--phone-shadow); }
 .feat-copy h2 { font-size: clamp(32px, 3.6vw, 51px); line-height: 1; }
 .feat-copy h2 .it { display: block; color: var(--accent); }
+/* a short heading stays on one line, the italic word inline (Caeden 11-06) */
+.feat-copy h2.one { white-space: nowrap; }
+.feat-copy h2.one .it { display: inline; }
 .feat-copy .eyebrow { margin-bottom: 16px; }
 .feat-copy .body { margin-top: 20px; max-width: 380px; font-size: 15px; color: var(--ink-sub); }
 .feat-copy .note { margin-top: 18px; font-size: 13px; color: var(--ink-faint); }
-/* desktop: the section phones a size up, the same in every section (Caeden 11-06) */
+/* desktop: the section phones a size up, the same in every section, and the text
+   and its phone as one centered group: the art column only as wide as the phone
+   and its pop-outs need, the text beside it (hugging the phone on flipped rows)
+   (Caeden 11-06) */
 @media (min-width: 901px) {
+  .feat-in { grid-template-columns: auto minmax(0, 500px); justify-content: center; column-gap: 72px; }
+  .feat.flip .feat-in { grid-template-columns: minmax(0, 500px) auto; }
+  .feat-art { width: 360px; }
+  .feat-art[data-pluck], .feat-art[data-scanfx] { width: 560px; }
+  .feat.flip .feat-copy { justify-self: end; }
   .feat-art { height: 640px; }
   .feat-art .phone { --w: 290px; }
   .feat-art .well { width: 540px; height: 540px; }
@@ -528,11 +539,11 @@ p { margin: 0; }
   .store b { font-size: 15px; }
   .see { height: 44px; padding: 0 14px 0 18px; font-size: 13px; }
   .fine { margin-top: 12px; font-size: 11px; }
-  .hero-stage { height: 366px; margin-top: 28px; }
+  /* phones: the group is sized from the screen width (the front phone 44vw, up to
+     176px) and site.js keeps both side phones whole, 12px inside the edges */
+  .hero-stage { height: calc(var(--pw) * 2.094 + 8px); margin-top: 28px; }
   .orbit { top: 70px; height: 240px; }
-  /* phones: the front one centered, both side ones well in view behind it; site.js
-     pulls them in further on a narrow screen so nothing reaches the edge */
-  .hero-stage { --pw: min(168px, 43vw); --kx: .66; --dy: 24; --s: .78; --r: 6; }
+  .hero-stage { --pw: min(176px, 44vw); --kx: .66; --dy: 22; --s: .76; --r: 5; }
   .hero-stage .phone { top: 0; }
   .float { display: none; }
   .strip { padding: 32px 0 24px; }
@@ -549,6 +560,7 @@ p { margin: 0; }
   .feat-art .phone { --w: 200px; }
   .feat-art[data-graph] .well { left: 104px; }
   .feat-copy h2 { font-size: 34px; }
+  .feat-copy h2.one { font-size: min(34px, 8.6vw); }
   .feat.big .feat-copy h2 { font-size: 44px; }
   .feat-copy .body { margin-top: 14px; font-size: 14px; text-wrap: balance; }
   /* no room beside a phone-width phone: the sheet already shows the card */
@@ -652,6 +664,7 @@ body:has(.doc, .lost) .nav { position: sticky; }
   .pf-hub h3 .it { background-image: var(--foil-teal); }
   .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it { background-image: var(--foil-light); }
   .feat-copy h2 .it, .vendors h2 .it, .close h2 .it { width: fit-content; margin-left: -.04em; }
+  .feat-copy h2.one .it { margin-left: 0; padding-left: .02em; }
 }
 @media (forced-colors: active) {
   .hero h1 .it, .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it, .pf-hub h3 .it { background-image: none; color: CanvasText; -webkit-text-fill-color: CanvasText; }
