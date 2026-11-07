@@ -37,6 +37,17 @@
     var BASE = phones.map(function (p) { return p.classList.contains('slot-right') ? STEP : p.classList.contains('slot-left') ? -STEP : 0; });
     var angle = 0, geo = null, anim = 0, cur = BASE.indexOf(0);
     var timer = null, blocked = reduce, onScreen = true, ready = false, drag = null;
+    // First view (Caeden 11-06): the home phone stands still about a second, then the
+    // reel turns by itself to the binder, which is the first clip anyone sees play.
+    // Home plays in full when it comes round again. Any turn ends the intro.
+    var intro = !reduce, INTRO = 1000;
+    // How the clips fared, once per page (11-06: in TikTok's browser they didn't play)
+    var told = false;
+    var tell = function (state, err) {
+      if (told) return;
+      told = true;
+      try { if (window.tvTrack) window.tvTrack('web_hero_video', { state: state, error: err || null }); } catch (e) { /* fine */ }
+    };
 
     var measure = function () { // layout reads: only here, on start and on resize
       var cs = getComputedStyle(reel), pw = phones[0].offsetWidth, W = reel.clientWidth;
@@ -100,6 +111,7 @@
     var arm = function (ms) { clearTimeout(timer); timer = setTimeout(advance, ms); };
     var play = function (fromStart) {
       if (!ready || !onScreen || document.hidden || (drag && drag.moved) || anim) return;
+      if (intro) { warm(); arm(INTRO); return; }
       var v = vid(phones[cur]);
       if (blocked || !v) { if (!reduce) arm(HOLD); return; }
       if (fromStart) { try { v.currentTime = 0; } catch (e) { /* not loaded yet: it starts at 0 anyway */ } }
@@ -110,12 +122,18 @@
           // AbortError is just our own pause. Anything else (missing or bad file):
           // this phone shows its still for the usual time instead of 12 s.
           if (!err || err.name === 'AbortError') return;
-          if (err.name === 'NotAllowedError') blocked = true;
+          if (err.name === 'NotAllowedError') { blocked = true; unlockOnTap(); }
+          tell('blocked', err.name);
           if (v === vid(phones[cur])) arm(HOLD);
         });
       }
       arm(12000); // a clip that never starts (slow network) doesn't hold the reel up
-      var n = null; // warm up the next one: the phone on the right
+      var vv = v;
+      setTimeout(function () { if (vv.paused && vv === vid(phones[cur]) && !blocked) tell('stalled'); }, 6000);
+      warm();
+    };
+    var warm = function () { // load the next clip ahead: the phone on the right
+      var n = null;
       for (var i = 0; i < phones.length; i++) if (Math.round(theta(i)) === STEP) n = vid(phones[i]);
       if (n && n.preload !== 'auto') { n.preload = 'auto'; try { n.load(); } catch (e) { /* fine */ } }
     };
@@ -145,6 +163,7 @@
       }
     };
     var settle = function (target, ms, ease) {
+      intro = false;
       // the clip leaving the front fades to its poster as the turn starts
       if (Math.round(((BASE[cur] - target) % 360 + 540) % 360 - 180) !== 0) { hold(); phones[cur].classList.remove('playing'); }
       turnTo(target, reduce ? 0 : ms, ease, land);
@@ -154,11 +173,57 @@
       settle(Math.round(angle / STEP) * STEP + STEP, MOVE, inOut);
     };
 
+    /* Some in-app browsers (TikTok's) refuse to start video until the visitor has
+       touched the page. On the first tap anywhere: ask every clip once, inside
+       that tap, then pause all but the front one. If any is allowed, the reel
+       plays from then on. Up to three taps. */
+    var tries = 0, armed = false, busy = false;
+    var unlockOnTap = function () {
+      if (armed || reduce) return;
+      armed = true;
+      var go = function () {
+        if (busy || !blocked) return;                  // one tap fires touchend and click
+        busy = true;
+        tries++;
+        var ok = false, pending = 0;
+        var done = function () {
+          if (--pending > 0) return;
+          busy = false;
+          if (ok) {
+            blocked = false;
+            document.removeEventListener('touchend', go, true);
+            document.removeEventListener('click', go, true);
+            try { if (window.tvTrack) window.tvTrack('web_hero_video', { state: 'unlocked', tries: tries }); } catch (e) { /* fine */ }
+            if (!intro && !(drag && drag.moved) && !anim) play(true);
+          } else if (tries >= 3) {
+            document.removeEventListener('touchend', go, true);
+            document.removeEventListener('click', go, true);
+          }
+        };
+        phones.forEach(function (p) {
+          var v = vid(p);
+          if (!v) return;
+          v.muted = true;
+          var pr;
+          try { pr = v.play(); } catch (e) { pr = null; }
+          if (!pr || !pr.then) return;
+          pending++;
+          pr.then(function () { ok = true; v.pause(); try { v.currentTime = 0; } catch (e) { /* fine */ } done(); },
+                  function () { done(); });
+        });
+        if (!pending) done();
+      };
+      document.addEventListener('touchend', go, { capture: true, passive: true });
+      document.addEventListener('click', go, true);
+    };
+
     phones.forEach(function (p) {
       var v = vid(p);
       if (!v) return;
       v.muted = true; // the attribute alone isn't always enough for inline autoplay
       v.addEventListener('playing', function () {
+        tell('playing');
+        if (intro) { v.pause(); return; }               // nothing plays before the first turn
         if (p !== phones[cur] || (drag && drag.moved) || anim) { v.pause(); return; }
         p.classList.add('playing');
         var left = (isFinite(v.duration) ? v.duration - v.currentTime : 8) + 2.5;
