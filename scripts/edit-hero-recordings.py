@@ -1,6 +1,5 @@
 """(Kept for redoing the 11-06 hero edit. Needs opencv-python-headless, numpy, pillow in a venv;
-the recordings it reads are in ~/Downloads.)
-Edit the three hero recordings into demo clips.
+the recordings it reads are in ~/Downloads. Then: START=0 DUR=30 scripts/make-hero-clips.sh out/home.mp4 out/binder.mp4 out/shows.mp4)
 usage: render.py <which: home|shows|binder|all> <outdir>
 Works at half resolution (603 x 1311), writes <outdir>/<name>.mp4 at 60 fps
 (near-lossless) for make-hero-clips.sh to finish (status bar, scale, encode)."""
@@ -49,6 +48,25 @@ def cut(frames, t0, t1):
     """play [t0, t1) at its own speed, resampled to 60 fps"""
     n = max(1, int(round((t1 - t0) * FPS)))
     return [at(frames, t0 + k / FPS) for k in range(n)]
+
+
+def at_blend(frames, t):
+    """the picture at time t: the two source frames around it, mixed by time
+    (only where the recording dropped to fewer than 60 frames a second)"""
+    for i in range(len(frames) - 1):
+        t0, t1 = frames[i][0], frames[i + 1][0]
+        if t0 <= t + 1e-4 < t1:
+            gap = t1 - t0
+            if gap < 0.02:
+                return frames[i][1] if (t - t0) < gap / 2 else frames[i + 1][1]
+            w = (t - t0) / gap
+            return cv2.addWeighted(frames[i][1], 1 - w, frames[i + 1][1], w, 0)
+    return frames[-1][1] if t >= frames[-1][0] else frames[0][1]
+
+
+def cut_blend(frames, t0, t1):
+    n = max(1, int(round((t1 - t0) * FPS)))
+    return [at_blend(frames, t0 + k / FPS) for k in range(n)]
 
 
 def hold(frame, secs):
@@ -156,26 +174,37 @@ def smooth_scroll(frames, Y0, Y1, fixed=None, y_track=None, still=1.2, sigma=9, 
     return out, c
 
 
+def shift_rows_f(img, r, Y0, Y1):
+    """shift_rows for a fractional r: the two whole-pixel shifts around it, mixed"""
+    lo = int(np.floor(r))
+    w = r - lo
+    A = shift_rows(img, lo, Y0, Y1)
+    if w < 0.02:
+        return A
+    B = shift_rows(img, lo + 1, Y0, Y1)
+    return cv2.addWeighted(A, 1 - w, B, w, 0)
+
+
 def compose(imgs, c, T, Y0, Y1, fixed):
     a = int(np.searchsorted(c, T, side='right') - 1)
     a = max(0, min(a, len(c) - 1))
     b = min(a + 1, len(c) - 1)
-    ra = int(round(T - c[a]))
-    rb = int(round(T - c[b]))
+    fa, fb = T - c[a], T - c[b]
+    ra, rb = int(np.ceil(fa)), int(np.floor(fb))
     o = imgs[a].copy()
-    A = shift_rows(imgs[a], ra, Y0, Y1)
-    Bm = shift_rows(imgs[b], rb, Y0, Y1)
+    A = shift_rows_f(imgs[a], fa, Y0, Y1)
+    Bm = shift_rows_f(imgs[b], fb, Y0, Y1)
     reg = A.copy()
     hgt = Y1 - Y0
     if ra > 0:
         reg[hgt - ra:] = Bm[hgt - ra:]
     if fixed is not None:
         f = fixed[Y0:Y1]
-        ghostA = shift_mask(f, ra)
-        ghostB = shift_mask(f, rb)
+        ghostA = shift_mask(f, ra) | shift_mask(f, max(ra - 1, 0))
+        ghostB = shift_mask(f, rb) | shift_mask(f, min(rb + 1, 0))
         useB = ghostA & ~ghostB
         reg[useB] = Bm[useB]
-        near = a if abs(ra) <= abs(rb) else b            # the closer real frame
+        near = a if abs(fa) <= abs(fb) else b
         reg[f] = imgs[near][Y0:Y1][f]
     o[Y0:Y1] = reg
     return o
@@ -340,14 +369,139 @@ def build_home():
     return out, fr
 
 
+def binder_green(f):
+    """the binder's red change line, in the up colour, minus -> plus"""
+    x0, y0, x1, y1 = 206, 275, 398, 300
+    seg = f[y0:y1, x0:x1]
+    red = (seg[..., 2].astype(int) - seg[..., 0]) > 60
+    if red.sum() < 30:
+        return f
+    rec, _ = recolor_text(seg)
+    ys, xs = np.nonzero(red)
+    cols = sorted(set(xs)); run = [cols[0]]
+    for cc in cols[1:]:
+        if cc == run[-1] + 1: run.append(cc)
+        else: break
+    sel = (xs >= run[0]) & (xs <= run[-1])
+    mx0, mx1, my0, my1 = run[0], run[-1] + 1, ys[sel].min(), ys[sel].max() + 1
+    th = max(1, my1 - my0); cx = (mx0 + mx1) / 2; cy = (my0 + my1) / 2; half = (mx1 - mx0) / 2
+    S = 4
+    big = np.zeros((seg.shape[0] * S, seg.shape[1] * S), np.float32)
+    cv2.rectangle(big, (int((cx - th / 2) * S), int((cy - half) * S)), (int((cx + th / 2) * S), int((cy + half) * S)), 1.0, -1)
+    m = cv2.resize(big, (seg.shape[1], seg.shape[0]), interpolation=cv2.INTER_AREA)
+    rec = rec.astype(np.float32) * (1 - m[..., None]) + m[..., None] * UP_BGR
+    f = f.copy(); f[y0:y1, x0:x1] = rec.clip(0, 255).astype(np.uint8)
+    return f
+
+
+def unhitch(seq):
+    """smooth the recording's own hitches: frames repeated in the middle of a
+    motion are dropped (the motion runs on evenly), and a lone jump between two
+    still frames becomes a short dissolve"""
+    small = [cv2.resize(f, (W // 4, H // 4)).astype(np.int16) for f in seq]
+    d = [0.0] + [float(np.mean(np.abs(small[i] - small[i - 1]))) for i in range(1, len(seq))]
+    keep = []
+    for i in range(len(seq)):
+        moving_before = any(d[j] > 2 for j in range(max(1, i - 3), i))
+        moving_after = any(d[j] > 2 for j in range(i + 1, min(len(seq), i + 4)))
+        if d[i] < 0.15 and moving_before and moving_after:
+            continue                                   # a repeat inside motion
+        keep.append(i)
+    out = [seq[i] for i in keep]
+    dd = [d[i] for i in keep]
+    res = list(out)
+    for i in range(1, len(out) - 1):
+        if dd[i] > 12 and dd[i - 1] < 1 and (i + 1 >= len(dd) or dd[i + 1] < 1):
+            n = 5                                      # dissolve over the still frames before it
+            for k in range(1, n + 1):
+                j = i - n + k - 1
+                if j > 0:
+                    res[j] = cv2.addWeighted(out[i - n], 1 - k / (n + 1), out[i], k / (n + 1), 0)
+    return res
+
+
 def build_binder():
     fr = load(SRC['binder'], 1.0, 9.35)
     out = []
-    for s in (1.27, 2.39, 3.47, 4.61, 5.86):          # page turns start
-        out += cut(fr, s - 0.08, s + 0.62)
-    out += tighten(fr, 7.30, 8.72, keep=0.3)           # closes, then the shelf
+    for st in (1.27, 2.39, 3.47, 4.61, 5.86):          # page turns start
+        out += cut_blend(fr, st - 0.08, st + 0.62)
+    seq = cut_blend(fr, 7.30, 8.72)                    # closes, then the shelf
+    still = 0; prev = None
+    for f in seq:                                      # cap the still stretch
+        if prev is not None:
+            still = still + 1 if float(np.mean(cv2.absdiff(f, prev))) < 0.6 else 0
+        prev = f
+        if still <= 0.3 * FPS:
+            out.append(f)
     out += hold(out[-1], 0.45)                         # (Control Center comes at 8.75)
-    return out, fr
+    out = unhitch(out)
+    return [binder_green(f) for f in out], fr
+
+
+def overlay_mask(OV, F):
+    """the UI over the map: header, Maps label, List button, show card, tab bar.
+    Found as dark, colourless shapes below y 880 (the map is saturated teal and
+    blue), filled, padded a little."""
+    m = np.zeros((H, W), np.uint8)
+    for im in (OV, F):
+        hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+        ui = ((hsv[..., 1] < 60) | (hsv[..., 2] < 28)).astype(np.uint8)
+        ui[:880] = 0
+        ui = cv2.morphologyEx(ui, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+        cnts, _ = cv2.findContours(ui, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for c_ in cnts:
+            if cv2.contourArea(c_) > 1500:
+                cv2.drawContours(m, [c_], -1, 1, -1)
+    m[:196] = 1                                        # status bar and header
+    m[1165:] = 1                                       # tab bar (glass, tinted by the map) and below
+    cv2.rectangle(m, (6, 898), (160, 948), 1, -1)      # "Maps  Legal"
+    m = cv2.dilate(m, np.ones((7, 7), np.uint8))
+    return m.astype(bool)
+
+
+def clean_map(img, mask):
+    """the map with the UI areas filled in from around them (only ever seen
+    moving, at the edges of a zoom)"""
+    small = cv2.resize(img, (W // 2, H // 2), interpolation=cv2.INTER_AREA)
+    ms = cv2.resize(mask.astype(np.uint8), (W // 2, H // 2), interpolation=cv2.INTER_NEAREST)
+    fill = cv2.inpaint(small, ms, 9, cv2.INPAINT_TELEA)
+    fill = cv2.resize(fill, (W, H), interpolation=cv2.INTER_LINEAR)
+    out = img.copy(); out[mask] = fill[mask]
+    return out
+
+
+def align_zoom(OV, F):
+    """the scale s and the fixed screen point Z so that zooming OV by s about Z
+    lines it up with F (multi-scale template match on the map)"""
+    g = lambda im: cv2.GaussianBlur(cv2.cvtColor(im, cv2.COLOR_BGR2GRAY), (5, 5), 0)
+    go, gf = g(OV), g(F)
+    qy0, qy1, qx0, qx1 = 220, 860, 0, W                # F's map area used to match
+    best = (-2, None, None)
+    for s_ in np.arange(1.6, 5.01, 0.04):
+        tw, th = int((qx1 - qx0) / s_), int((qy1 - qy0) / s_)
+        t = cv2.resize(gf[qy0:qy1, qx0:qx1], (tw, th), interpolation=cv2.INTER_AREA)
+        r = cv2.matchTemplate(go[200:1000], t, cv2.TM_CCOEFF_NORMED)
+        _, mv, _, ml = cv2.minMaxLoc(r)
+        if mv > best[0]:
+            best = (mv, s_, (ml[0], ml[1] + 200))
+    mv, s_, (px, py) = best
+    print('match score', round(mv, 3))
+    # OV point P=(px,py) lands at screen Q=(qx0,qy0): Q = Z + s (P - Z)
+    Zx = (qx0 - s_ * px) / (1 - s_)
+    Zy = (qy0 - s_ * py) / (1 - s_)
+    return float(s_), (Zx, Zy)
+
+
+def Z_F(Z, s_):
+    return Z
+
+
+def zoom_frame(img, sc, Z, mask, clean=None):
+    """img zoomed by sc about screen point Z; the overlay UI stays put"""
+    M = np.float32([[sc, 0, Z[0] * (1 - sc)], [0, sc, Z[1] * (1 - sc)]])
+    z = cv2.warpAffine(img if clean is None else clean, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
+    z[mask] = img[mask]
+    return z
 
 
 def build_shows():
@@ -366,15 +520,34 @@ def build_shows():
     print('shows scroll px', c[-1])
     out += g
     out += tighten(fr, 4.0, 4.45, keep=0.12)          # the Map tap
-    ov = cut(fr, 4.78, 5.5)                            # loaded overview (grey loading cut)
-    out += ov
-    z = tighten(fr, 7.72, 9.2, keep=0.25)              # zoomed into DC, every pin
-    n = int(0.3 * FPS)                                 # blend overview into it
+    idx = lambda t: min(range(len(fr)), key=lambda i: abs(fr[i][0] - t))
+    OV = fr[idx(5.40)][1]                              # overview, every tile loaded
+    F = fr[idx(8.62)][1]                               # zoomed into DC, every pin
+    mask = overlay_mask(OV, F)
+    Zo, Zf = (360, 400), (400, 380)                    # the DC pins in each view
+    OVc, Fc = clean_map(OV, mask), clean_map(F, mask)
+    last = out[-1]
+    n = int(0.2 * FPS)                                 # list -> map, soft
     for k in range(n):
         u = ease((k + 1) / (n + 1))
-        out.append(cv2.addWeighted(ov[-1], 1 - u, z[0], u, 0))
-    out += z
-    out += hold(out[-1], 0.4)
+        out.append(cv2.addWeighted(last, 1 - u, OV, u, 0))
+    s0 = 1.03                                          # slow push-in on the overview
+    n = int(0.55 * FPS)
+    for k in range(n):
+        out.append(zoom_frame(OV, 1 + (s0 - 1) * (k / n), Zo, mask, OVc))
+    n = int(0.7 * FPS)                                 # zoom toward DC, the detailed view fades in
+    fz = lambda e: 1 + 0.05 * e                        # the detailed view's own push-in, all the way
+    total = n + int(1.0 * FPS)
+    for k in range(n):
+        u = (k + 1) / n
+        e = ease(u)
+        a_ = zoom_frame(OV, s0 * (2.4 / s0) ** (u ** 1.6), Zo, mask, OVc)
+        f_ = zoom_frame(F, fz(ease(k / total)), Zf, mask, Fc)
+        w = ease(min(1.0, max(0.0, (u - 0.15) / 0.7)))
+        out.append(cv2.addWeighted(a_, 1 - w, f_, w, 0))
+    for k in range(n, total):                          # settle
+        out.append(zoom_frame(F, fz(ease(k / total)), Zf, mask, Fc))
+    out += hold(out[-1], 0.25)
     return out, fr
 
 
