@@ -15,6 +15,8 @@
    Loaded on every page and every /go page; does nothing anywhere else.
    11-06: the sheet is one line under the arrow and a Close button (Caeden found
    the steps, the App Store line and the sheet panel too much).
+   11-07: a solid black screen instead of the see-through veil, same words, the
+   arrow in foil, and on a creator page the code repeated big (see css()).
    PREVIEW ONLY: ?preview_tiktok=1 shows it in any browser so it can be looked at
    without TikTok; nothing is tracked in a preview. */
 (function () {
@@ -38,17 +40,35 @@
     styled = true;
     var s = document.createElement('style');
     s.textContent =
-      '.tt-scrim{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);opacity:0;transition:opacity .2s ease-out;-webkit-tap-highlight-color:transparent}' +
+      // 11-07: a solid screen, not a dark veil. Over the black /go pages the old
+      // 88% scrim left the logo, the code and the store button greyed out behind
+      // the words, so the page looked broken and the code was the dimmest thing
+      // on screen; the page's own "Not opening?" line also ran under Close.
+      // Laid out as one column (no absolute positions), so nothing can overlap.
+      '.tt-sheet{position:fixed;inset:0;z-index:1000;box-sizing:border-box;display:flex;flex-direction:column;padding:max(4px,env(safe-area-inset-top)) 22px max(24px,env(safe-area-inset-bottom));background:#08080A;color:#fff;font-family:"Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif;text-align:center;overflow-y:auto;opacity:0;transition:opacity .2s ease-out;-webkit-tap-highlight-color:transparent}' +
       // a display rule here would beat the browser's own [hidden] rule, so a closed
       // sheet stayed as an invisible full-screen layer eating every tap (10-22)
-      '.tt-scrim[hidden]{display:none}' +
-      '.tt-scrim.on{opacity:1}' +
-      '.tt-arrow{position:absolute;top:max(2px,env(safe-area-inset-top));right:10px;width:56px;height:74px;color:#fff;animation:tt-nudge 1.4s ease-in-out infinite}' +
+      '.tt-sheet[hidden]{display:none}' +
+      '.tt-sheet.on{opacity:1}' +
+      '.tt-arrow{flex:none;align-self:flex-end;width:56px;height:74px;margin-right:-10px;animation:tt-nudge 1.4s ease-in-out infinite}' +
       '@keyframes tt-nudge{0%,100%{transform:translate(0,0)}50%{transform:translate(4px,-6px)}}' +
-      '.tt-tip{position:absolute;top:calc(max(2px,env(safe-area-inset-top)) + 86px);right:24px;left:24px;margin:0;text-align:right;color:#fff;font:700 25px/1.25 "Plus Jakarta Sans",-apple-system,system-ui,sans-serif;letter-spacing:-.02em}' +
-      '.tt-tip b{display:inline-block;padding:0 9px;border-radius:9px;background:#fff;color:#08080A;font-weight:800}' +
-      '.tt-close{position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);height:50px;padding:0 34px;border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font:700 16px "Plus Jakarta Sans",-apple-system,system-ui,sans-serif}' +
-      '.tt-close:focus{outline:none}.tt-close:active{background:rgba(255,255,255,.22)}' +
+      '.tt-tip{flex:none;margin:12px 0 0;max-width:none;text-align:right;color:#fff;font-size:29px;font-weight:800;line-height:1.32;letter-spacing:-.02em}' +
+      '.tt-tip b{display:inline-block;padding:0 10px;border-radius:10px;background:#fff;color:#08080A;line-height:1.22}' +
+      // the creator code, repeated big: the link doesn't carry it, so it has to be
+      // remembered through Safari and the App Store and typed at sign up
+      '.tt-code{flex:none;margin:auto 0;padding:20px 16px 18px;border:1.5px solid transparent;border-radius:20px;background:linear-gradient(#131316,#131316) padding-box,linear-gradient(115deg,#cd65e5,#8976ff 30%,#2f9aff 58%,#9cecff 80%,#00decd) border-box}' +
+      '.tt-code small{display:block;font-size:11px;font-weight:800;letter-spacing:.26em;padding-left:.26em;text-transform:uppercase;color:#969CA4}' +
+      '.tt-code b{display:block;margin:6px 0 4px;font-size:min(50px,calc((100vw - 84px) / var(--n,7) / .8));line-height:1.15;font-weight:800;letter-spacing:.06em;padding-left:.06em;white-space:nowrap;-webkit-user-select:all;user-select:all}' +
+      '.tt-code span{display:block;font-size:15px;font-weight:600;color:#C4C8CE}' +
+      // no code (homepage, other pages): the app's tile and name, so the middle
+      // isn't an empty black hole and they know what Safari will offer
+      '.tt-mark{flex:none;margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:16px}' +
+      '.tt-mark img{display:block;width:84px;height:84px;border-radius:20px;border:1.5px solid rgba(255,255,255,.22);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 12px 34px rgba(139,116,255,.22)}' +
+      '.tt-mark b{font-size:22px;font-weight:800;line-height:1;letter-spacing:.18em;padding-left:.18em;text-transform:uppercase}' +
+      '.tt-close{flex:none;align-self:center;margin-top:auto;height:52px;min-width:168px;padding:0 34px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:#1B1B20;color:#fff;font:700 16px "Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif}' +
+      '.tt-code+.tt-close,.tt-mark+.tt-close{margin-top:24px}' +
+      '.tt-close:focus{outline:none}.tt-close:active{background:#2A2A31}' +
+      '@media(max-height:600px){.tt-arrow{width:44px;height:58px}.tt-mark img{width:64px;height:64px;border-radius:15px}.tt-tip{font-size:25px;margin-top:6px}.tt-code{padding:14px 14px 12px}.tt-code b{font-size:min(42px,calc((100vw - 84px) / var(--n,7) / .8))}.tt-close{height:48px}}' +
       // the pinned bar: one line at a FIXED 40px, and the nav and the page sit 40px
       // lower. It used to be measured by script once on load (offsetHeight into
       // --ttb); in an iOS in-app browser sheet that number came out far too big and
@@ -60,22 +80,38 @@
       '.tt-bar svg{flex:none;width:20px;height:20px;color:#205e54;animation:tt-nudge 1.4s ease-in-out infinite}' +
       'html.tt-in body{padding-top:40px}' +
       'html.tt-in .nav{top:40px}' +
-      '@media(prefers-reduced-motion:reduce){.tt-arrow,.tt-bar svg{animation:none}.tt-scrim{transition:none}}';
+      '@media(prefers-reduced-motion:reduce){.tt-arrow,.tt-bar svg{animation:none}.tt-sheet{transition:none}}';
     document.head.appendChild(s);
+  }
+
+  // A creator page (/go/<code>/ with its code box) repeats the code on the sheet.
+  function codeCard() {
+    var el = onGo && document.querySelector('#code b');
+    var code = el && el.textContent.trim();
+    if (!code) return '<div class="tt-mark" aria-hidden="true"><img src="/go/icon.png?v=3" width="84" height="84" alt=""><b>Tracka</b></div>';
+    var t = document.createElement('i');
+    t.textContent = code;
+    return '<div class="tt-code"><small>Your code</small><b>' + t.innerHTML + '</b><span>Type it when you sign up</span></div>';
   }
 
   function build() {
     css();
     sheet = document.createElement('div');
-    sheet.className = 'tt-scrim';
+    sheet.className = 'tt-sheet';
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-modal', 'true');
     sheet.setAttribute('aria-labelledby', 'tt-title');
     sheet.innerHTML =
-      '<svg class="tt-arrow" viewBox="0 0 64 84" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      // the arrow in the page's foil, pointing up at TikTok's ⋯ (top right)
+      '<svg class="tt-arrow" viewBox="0 0 64 84" fill="none" stroke="url(#tt-foil)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<defs><linearGradient id="tt-foil" gradientUnits="userSpaceOnUse" x1="8" y1="76" x2="52" y2="2">' +
+          '<stop offset="0" stop-color="#cd65e5"/><stop offset=".35" stop-color="#8976ff"/><stop offset=".65" stop-color="#2f9aff"/><stop offset="1" stop-color="#9cecff"/></linearGradient></defs>' +
         '<path d="M8 72C12 40 26 18 48 4"/><path d="M30 3h19v19"/></svg>' +
       '<p class="tt-tip" id="tt-title">Tap <b>⋯</b> then<br><b>Open in browser</b></p>' +
+      codeCard() +
       '<button class="tt-close" type="button">Close</button>';
+    var b = sheet.querySelector('.tt-code b');
+    if (b) b.style.setProperty('--n', Math.max(7, b.textContent.length));
     sheet.addEventListener('click', function (e) {
       if (e.target === sheet || e.target.closest('.tt-close')) hide();
     });
