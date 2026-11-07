@@ -172,29 +172,8 @@ p { margin: 0; }
 /* ---------- the light page ---------- */
 .band { overflow: hidden; overflow: clip; background: linear-gradient(180deg, #cfe3da 0%, #cfe3da 18.0%, #d0e4db 20.2%, #d2e5dc 22.4%, #d6e7df 24.6%, #dae9e2 26.8%, #deece6 29.0%, #e3efe9 31.2%, #e7f1ec 33.4%, #ebf3ef 35.6%, #edf4f0 37.8%, #eef5f1 40.0%, #eef5f1 62.0%, #edf4f0 64.8%, #ebf3ef 67.6%, #e7f1ec 70.4%, #e3efe9 73.2%, #deece6 76.0%, #dae9e2 78.8%, #d6e7df 81.6%, #d2e5dc 84.4%, #d0e4db 87.2%, #cfe3da 90.0%, #cfe3da 100%); }
 
-/* On the tables: cards on upcoming tables (baked by scripts/website-tables.py) */
+/* .strip: the creator pages' header block (go/<code>/) */
 .strip { padding: 52px 0 32px; }
-.strip-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.strip-head h2 { font-size: clamp(24px, 2.4vw, 28px); letter-spacing: -.035em; }
-.strip-nav { display: flex; gap: 8px; }
-.round { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--ring); background: rgba(255, 255, 255, .5); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .16s, opacity .16s; }
-.round:hover { background: #fff; }
-.round:disabled { opacity: .35; cursor: default; }
-.round svg { width: 18px; height: 18px; }
-.tiles-wrap { max-width: var(--wrap); margin: 0 auto; }
-.tiles { list-style: none; margin: 24px 0 0; padding: 4px var(--gut-r) 20px var(--gut-l); display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gut-l) var(--gut-r); scrollbar-width: none; }
-.tiles::-webkit-scrollbar { display: none; }
-.tile { flex: none; width: 156px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 2px; }
-.tile img { width: 100%; height: auto; aspect-ratio: 440 / 612; object-fit: contain; border-radius: 9px; margin-bottom: 10px; filter: drop-shadow(0 10px 14px rgba(24, 62, 57, .18)); }
-.tile b { font-size: 14px; font-weight: 700; letter-spacing: -.01em; }
-.tile-meta { font-size: 13px; color: var(--ink-faint); }
-.tile-price { margin-bottom: 8px; font-size: 14px; font-weight: 700; }
-.tile-price small { font-size: 11px; font-weight: 600; color: var(--ink-faint); margin-left: 4px; }
-.tile-show { font-size: 12px; color: var(--ink-faint); line-height: 1.4; margin-top: 2px; }
-/* desktop: six across (five on a small laptop), so the last one is never cut off */
-@media (min-width: 901px) { .tiles { gap: 20px; } } /* gap = the side gutter, so the next card starts past the edge */
-@media (min-width: 1081px) { .tile { width: calc((100% - 5 * 20px) / 6); } }
-@media (min-width: 901px) and (max-width: 1080px) { .tile { width: calc((100% - 4 * 20px) / 5); } }
 
 /* the card row under the hero phones: real card art only, scrolls sideways */
 .cardrow { padding: 22px 0 8px; }
@@ -270,12 +249,12 @@ p { margin: 0; }
 .pop-map { position: absolute; left: -.84em; top: -.2em; width: .78em; border-radius: .035em; z-index: 4; opacity: 0; transform: translate(.4em, 0) scale(.5); transition: transform 720ms var(--spring), opacity .22s ease-out; box-shadow: 0 .06em .14em rgba(24, 62, 57, .38), 0 0 0 1px rgba(255, 255, 255, .1); }
 [data-pluck].mapped .pop-map { opacity: 1; transform: rotate(-3deg); }
 .map-arrow { position: absolute; left: -.22em; top: .45em; width: .5em; height: .45em; z-index: 5; overflow: visible; pointer-events: none; }
-.map-arrow path, .pop-arrow path, .map-arrow-m path, .pop-arrow-m path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.map-arrow path, .map-arrow-m path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
 /* both arrows: plain teal (their SVG units are both .001em) */
-.map-arrow .line, .pop-arrow .line, .map-arrow-m .line, .pop-arrow-m .line { stroke: var(--deep); stroke-width: 11; }
-.map-arrow-m, .pop-arrow-m { display: none; position: absolute; z-index: 5; overflow: visible; pointer-events: none; }
-[data-pluck].mapped .map-arrow-m .shaft, [data-graph].popped .pop-arrow-m .shaft { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.65, 0, .35, 1) .5s; }
-[data-pluck].mapped .map-arrow-m .head, [data-graph].popped .pop-arrow-m .head { stroke-dashoffset: 0; transition: stroke-dashoffset .2s ease-out .93s; }
+.map-arrow .line, .map-arrow-m .line { stroke: var(--deep); stroke-width: 11; }
+.map-arrow-m { display: none; position: absolute; z-index: 5; overflow: visible; pointer-events: none; }
+[data-pluck].mapped .map-arrow-m .shaft { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.65, 0, .35, 1) .5s; }
+[data-pluck].mapped .map-arrow-m .head { stroke-dashoffset: 0; transition: stroke-dashoffset .2s ease-out .93s; }
 [data-pluck].mapped .map-arrow .shaft { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.65, 0, .35, 1) .5s; }
 [data-pluck].mapped .map-arrow .head { stroke-dashoffset: 0; transition: stroke-dashoffset .2s ease-out .93s; }
 /* the bigger desktop phone (11-06) needs the room the margin gave: the phone steps
@@ -293,17 +272,6 @@ p { margin: 0; }
 }
 [data-pluck].plucked .pluck-tag { opacity: 1; transform: translate(-50%, -50%) rotate(4deg); transition-delay: .3s, .3s; }
 
-/* Know what it's worth: the Gengar PSA 10 price history (cut from the graded
-   chart screen) springs out beside the slab at the top of the sales screen
-   (slab center .442em down), then an arrow draws from the slab to it. Once.
-   The phone steps right to make room. */
-.feat-art[data-graph] .phone { margin-left: 220px; }
-.feat-art[data-graph] .well { left: calc(50% + 110px); }
-.pop-graph { position: absolute; left: -.98em; top: .145em; width: .82em; border-radius: .04em; z-index: 4; opacity: 0; transform: translate(.45em, 0) scale(.5); transition: transform 720ms var(--spring), opacity .22s ease-out; box-shadow: 0 .06em .14em rgba(24, 62, 57, .38), 0 0 0 1px rgba(255, 255, 255, .1); }
-[data-graph].popped .pop-graph { opacity: 1; transform: rotate(-3deg); }
-.pop-arrow { position: absolute; left: -.2em; top: .2em; width: .3em; height: .3em; z-index: 5; overflow: visible; pointer-events: none; }
-[data-graph].popped .pop-arrow .shaft { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.65, 0, .35, 1) .5s; }
-[data-graph].popped .pop-arrow .head { stroke-dashoffset: 0; transition: stroke-dashoffset .2s ease-out .93s; }
 
 /* Scan: the promo's scan art beside the phone, brackets always on. The light bar
    sweeps the card once each time it crosses the middle of the screen: down when
@@ -500,18 +468,6 @@ p { margin: 0; }
   .map-arrow-m .line { stroke-width: 12.5; }
   .feat-art[data-pluck] .phone { margin-left: 0; }
   .feat-art[data-pluck] .well { left: 50%; }
-  /* the phone slides to the left edge (24 px in; the margin is in phone em) and
-     the graph sits clear of it on the right, its bottom held at .822em (top
-     level with the slab's top at full size), no tilt. The arrow leaves the
-     phone beside the sales rows heading right, then curves up into the middle
-     of the graph's bottom (head opens at 90 degrees). */
-  .feat-art[data-graph] .phone { margin-left: 0; margin-right: calc(100vw - 1em - 48px); }
-  .feat-art[data-graph] .well { left: calc(4px + 116px); }
-  .pop-graph { left: calc(1em + 8px); width: min(.72em, calc(100vw - 40px - 1em)); top: calc(.822em - .725 * min(.72em, calc(100vw - 40px - 1em))); }
-  [data-graph].popped .pop-graph { transform: none; }
-  .pop-arrow { display: none; }
-  .pop-arrow-m { display: block; left: 1em; top: .84em; width: .44em; height: .32em; }
-  .pop-arrow-m .line { stroke-width: 12.5; }
   /* the Blastoise sits in the left margin over the phone's edge */
   .scanfx { width: 96px; transform: translate(calc(-50% - min(110px, 50vw - 54px)), -50%) rotate(-5deg); }
   .js .feat-art[data-scanfx]:not(.seen) .scanfx { transform: translate(calc(-50% - 150px), -46%) rotate(-16deg); }
@@ -547,18 +503,10 @@ p { margin: 0; }
   .hero-stage .phone { top: 0; }
   .float { display: none; }
   .strip { padding: 32px 0 24px; }
-  .tile { width: 146px; }
-  /* the strip title stays on the arrows' line: it scales with the screen
-     (its width is about 11.6x its size) and the arrows slim down a little */
-  .strip-head { align-items: center; }
-  .strip-head h2 { white-space: nowrap; font-size: min(22px, calc((100vw - 136px) / 11.6)); }
-  .strip-nav { gap: 6px; }
-  .strip-nav .round { width: 38px; height: 38px; }
   .feat { padding: 52px 0; }
   .feat .feat-art, .feat.flip .feat-art { height: 450px; }
   .feat-art .well { width: 300px; height: 300px; }
   .feat-art .phone { --w: 200px; }
-  .feat-art[data-graph] .well { left: 104px; }
   .feat-copy h2 { font-size: 34px; }
   .feat-copy h2.one { font-size: min(34px, 8.6vw); }
   .feat.big .feat-copy h2 { font-size: 44px; }
@@ -604,7 +552,7 @@ p { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .js .reveal, .js .hero-stage .phone, .js .hero-stage .float { opacity: 1 !important; translate: none !important; transition: none !important; }
-  .share-card, .base-phone .screen .share-screen, .store, .see svg, .pluck, .pluck-tag, .pop-graph, .pop-arrow path, .pop-map, .map-arrow path, .map-arrow-m path, .pop-arrow-m path, .scanfx, .pf-lines path { transition: none !important; }
+  .base-phone .screen .share-screen, .store, .see svg, .pluck, .pluck-tag, .pop-map, .map-arrow path, .map-arrow-m path, .scanfx, .pf-lines path { transition: none !important; }
   .scan-card .beam { display: none; }
   .reel-cue svg { animation: none; opacity: .5; }
   .hero-shader { display: none; }
