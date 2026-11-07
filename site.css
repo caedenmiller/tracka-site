@@ -105,11 +105,7 @@ p { margin: 0; }
 .chip { display: inline-block; padding: 7px 14px 7px 16px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .22); font-size: 11px; font-weight: 700; letter-spacing: .16em; color: var(--on-deep-sub); }
 .hero h1 { margin-top: 18px; font-size: clamp(40px, 4.8vw, 67px); line-height: 1; letter-spacing: -.045em; }
 .hero h1 .it { display: block; color: var(--light); }
-.lede-lead { display: block; font-size: 22px; font-weight: 600; letter-spacing: -.015em; line-height: 1.3; color: #fff; }
-.lede-rest { display: block; margin-top: 6px; text-wrap: balance; }
-/* phones get the short line (one row); desktop keeps the full one */
-.lede-short { display: none; }
-.lede { margin: 20px auto 0; max-width: 560px; font-size: 15px; line-height: 1.6; color: var(--on-deep-sub); }
+.lede { margin: 20px auto 0; max-width: 560px; font-size: 17px; line-height: 1.5; color: var(--on-deep-sub); }
 .cta-row { margin-top: 26px; display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; }
 .store { display: inline-flex; align-items: center; gap: 9px; height: 45px; padding: 0 20px 0 16px; border-radius: 999px; background: #000; color: #fff; border: 1px solid rgba(255, 255, 255, .18); transition: transform .3s var(--spring), box-shadow .25s; }
 .store:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0, 0, 0, .28); }
@@ -124,11 +120,32 @@ p { margin: 0; }
 
 .hero-stage { position: relative; max-width: 960px; height: 624px; margin: 44px auto 0; }
 .orbit { position: absolute; left: 0; top: 136px; width: 100%; height: 416px; pointer-events: none; }
-.hero-stage .phone { position: absolute; left: 50%; top: 120px; }
-.hero-stage .p-left { --w: 229px; transform: translateX(-146%) translateY(var(--py, 0px)) rotate(-7deg); }
-.hero-stage .p-right { --w: 229px; transform: translateX(46%) translateY(var(--py, 0px)) rotate(7deg); }
-.hero-stage .p-center { --w: 264px; top: 16px; transform: translateX(-50%); z-index: 2; }
+/* the turntable: three phones on one circle, each the front's size, the sides scaled
+   down, so every move is transform only (site.js turns the circle and follows a
+   swipe). These slots are the resting places and the no-JS layout: the sides sit
+   where the old 229px side phones sat, centers .832 of the front's width out and
+   67px lower. site.js reads --kx, --dy, --s and --r. */
+.hero-stage { --pw: 264px; --kx: .832; --dy: 67; --s: .867; --r: 7; touch-action: pan-y pinch-zoom; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.hero-stage .phone { --w: var(--pw); position: absolute; left: 50%; top: 16px; margin-left: -.5em; transform-origin: 50% 50%; will-change: transform; cursor: grab; }
+.hero-stage .phone img, .hero-stage .phone video { -webkit-user-drag: none; }
+.hero-stage .slot-front { transform: none; z-index: 3; }
+.hero-stage .slot-left { transform: translate(calc(var(--pw) * var(--kx) * -1), calc(var(--dy) * 1px)) rotate(calc(var(--r) * -1deg)) scale(var(--s)); z-index: 2; }
+.hero-stage .slot-right { transform: translate(calc(var(--pw) * var(--kx)), calc(var(--dy) * 1px)) rotate(calc(var(--r) * 1deg)) scale(var(--s)); z-index: 1; }
+.hero-stage.dragging .phone { cursor: grabbing; }
+/* the clip sits on its poster (the same first frame) and shows once it's playing */
+.hero-stage .screen img { object-fit: cover; }
+.hero-stage .screen video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .25s ease-out; pointer-events: none; background: transparent; }
+.hero-stage .phone.playing video { opacity: 1; }
 .hero-stage .rim { box-shadow: var(--hero-shadow); }
+/* under the phones: three chevrons in a slow wave, the way the phones turn (site.js
+   shows it; a tap turns them too) */
+.reel-cue { position: relative; z-index: 4; display: flex; justify-content: center; gap: 0; margin: 4px auto 0; padding: 8px 14px; border: 0; background: none; color: var(--accent); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.reel-cue[hidden] { display: none; }
+.reel-cue svg { width: 13px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; opacity: .22; animation: reel-cue 2.2s ease-in-out infinite; }
+.reel-cue svg:nth-child(3) { animation-delay: 0s; }
+.reel-cue svg:nth-child(2) { animation-delay: .18s; }
+.reel-cue svg:nth-child(1) { animation-delay: .36s; }
+@keyframes reel-cue { 0%, 55%, 100% { opacity: .22; transform: translateX(0); } 22% { opacity: .9; transform: translateX(-2px); } }
 .float { position: absolute; width: 80px; border-radius: 4px; box-shadow: 0 16px 22px rgba(21, 67, 59, .4), 0 2px 5px rgba(21, 67, 59, .25); }
 .float-a { left: 56px; top: 344px; transform: translateY(var(--py, 0px)) rotate(-12deg); }
 /* Blastoise mirrors the Umbreon across the oval: upper right, tilted the other
@@ -150,7 +167,7 @@ p { margin: 0; }
 .js .hero-stage.go .phone { translate: 0 0; }
 .js .hero-stage .float { translate: 0 40px; }
 .js .hero-stage.go .float { translate: 0 0; transition-delay: .18s; }
-.js .hero-stage.go .p-left, .js .hero-stage.go .p-right { transition-delay: .06s; }
+.js .hero-stage.go .slot-left, .js .hero-stage.go .slot-right { transition-delay: .06s; }
 
 /* ---------- the light page ---------- */
 .band { overflow: hidden; overflow: clip; background: linear-gradient(180deg, #cfe3da 0%, #cfe3da 18.0%, #d0e4db 20.2%, #d2e5dc 22.4%, #d6e7df 24.6%, #dae9e2 26.8%, #deece6 29.0%, #e3efe9 31.2%, #e7f1ec 33.4%, #ebf3ef 35.6%, #edf4f0 37.8%, #eef5f1 40.0%, #eef5f1 62.0%, #edf4f0 64.8%, #ebf3ef 67.6%, #e7f1ec 70.4%, #e3efe9 73.2%, #deece6 76.0%, #dae9e2 78.8%, #d6e7df 81.6%, #d2e5dc 84.4%, #d0e4db 87.2%, #cfe3da 90.0%, #cfe3da 100%); }
@@ -179,6 +196,14 @@ p { margin: 0; }
 @media (min-width: 1081px) { .tile { width: calc((100% - 5 * 20px) / 6); } }
 @media (min-width: 901px) and (max-width: 1080px) { .tile { width: calc((100% - 4 * 20px) / 5); } }
 
+/* the card row under the hero phones: real card art only, scrolls sideways */
+.cardrow { padding: 22px 0 8px; }
+.cardrow-list { list-style: none; margin: 0 auto; max-width: var(--wrap); padding: 10px var(--gut-r) 18px var(--gut-l); display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--gut-l); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.cardrow-list::-webkit-scrollbar { display: none; }
+.cardrow-list li { flex: none; width: 104px; scroll-snap-align: start; }
+.cardrow-list img { width: 100%; height: auto; aspect-ratio: 240 / 335; object-fit: contain; border-radius: 5px; filter: drop-shadow(0 6px 8px rgba(24, 62, 57, .16)); -webkit-user-drag: none; }
+@media (max-width: 560px) { .cardrow-list { gap: 9px; } .cardrow-list li { width: 76px; } .cardrow-list img { border-radius: 4px; } }
+
 /* features: one phone each, alternating sides */
 .feat { padding: 88px 0; }
 .feat-in { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
@@ -189,9 +214,26 @@ p { margin: 0; }
 .feat-art .rim { box-shadow: var(--phone-shadow); }
 .feat-copy h2 { font-size: clamp(32px, 3.6vw, 51px); line-height: 1; }
 .feat-copy h2 .it { display: block; color: var(--accent); }
+/* a short heading stays on one line, the italic word inline (Caeden 11-06) */
+.feat-copy h2.one { white-space: nowrap; }
+.feat-copy h2.one .it { display: inline; }
 .feat-copy .eyebrow { margin-bottom: 16px; }
 .feat-copy .body { margin-top: 20px; max-width: 380px; font-size: 15px; color: var(--ink-sub); }
 .feat-copy .note { margin-top: 18px; font-size: 13px; color: var(--ink-faint); }
+/* desktop: the section phones a size up, the same in every section, and the text
+   and its phone as one centered group: the art column only as wide as the phone
+   and its pop-outs need, the text beside it (hugging the phone on flipped rows)
+   (Caeden 11-06) */
+@media (min-width: 901px) {
+  .feat-in { grid-template-columns: auto minmax(0, 500px); justify-content: center; column-gap: 72px; }
+  .feat.flip .feat-in { grid-template-columns: minmax(0, 500px) auto; }
+  .feat-art { width: 360px; }
+  .feat-art[data-pluck], .feat-art[data-scanfx] { width: 560px; }
+  .feat.flip .feat-copy { justify-self: end; }
+  .feat-art { height: 640px; }
+  .feat-art .phone { --w: 290px; }
+  .feat-art .well { width: 540px; height: 540px; }
+}
 .feat.big .feat-copy h2 { font-size: clamp(40px, 4.8vw, 69px); line-height: .98; letter-spacing: -.05em; }
 
 /* Base: tap Share, the real sheet slides up, the card pops out */
@@ -236,8 +278,14 @@ p { margin: 0; }
 [data-pluck].mapped .map-arrow-m .head, [data-graph].popped .pop-arrow-m .head { stroke-dashoffset: 0; transition: stroke-dashoffset .2s ease-out .93s; }
 [data-pluck].mapped .map-arrow .shaft { stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.65, 0, .35, 1) .5s; }
 [data-pluck].mapped .map-arrow .head { stroke-dashoffset: 0; transition: stroke-dashoffset .2s ease-out .93s; }
-/* small laptops (901 to 1180): no room left of the phone, so the map tucks over it like on phones */
-@media (min-width: 901px) and (max-width: 1180px) {
+/* the bigger desktop phone (11-06) needs the room the margin gave: the phone steps
+   only 40px right, so Sylveon lands clear of the heading */
+@media (min-width: 901px) {
+  .feat-art[data-pluck] .phone { margin-left: 40px; }
+  .feat-art[data-pluck] .well { left: calc(50% + 20px); }
+}
+/* small laptops (901 to 1400): no room left of the phone, so the map tucks over it like on phones */
+@media (min-width: 901px) and (max-width: 1400px) {
   .pop-map { left: -.14em; top: -.28em; width: .62em; }
   .map-arrow { display: none; }
   .feat-art[data-pluck] .phone { margin-left: 0; }
@@ -420,10 +468,7 @@ p { margin: 0; }
 @media (min-width: 1081px) { .menu { display: none !important; } }
 @media (max-width: 900px) {
   .hero-stage { height: 560px; }
-  .hero-stage .p-center { --w: 230px; }
-  .hero-stage .p-left, .hero-stage .p-right { --w: 196px; top: 110px; }
-  .hero-stage .p-left { transform: translateX(-134%) translateY(var(--py, 0px)) rotate(-7deg); }
-  .hero-stage .p-right { transform: translateX(34%) translateY(var(--py, 0px)) rotate(7deg); }
+  .hero-stage { --pw: 230px; --kx: .716; --dy: 58; --s: .852; }
   .float { display: none; }
   .feat { padding: 64px 0; }
   .feat-in { grid-template-columns: 1fr; gap: 28px; }
@@ -487,9 +532,6 @@ p { margin: 0; }
   .chip { font-size: 9px; padding: 4px 10px 4px 11.5px; } /* left pad + letter-spacing keeps the tracked text centered */
   .hero h1 { margin-top: 14px; font-size: clamp(34px, 10.3vw, 40px); }
   .lede { margin-top: 14px; font-size: 15px; max-width: 330px; }
-  .lede-lead { font-size: 18px; }
-  .lede-rest { display: none; }
-  .lede-short { display: block; margin-top: 4px; font-size: 13px; }
   .cta-row { margin-top: 20px; gap: 8px; }
   .store { height: 44px; padding: 0 18px 0 14px; gap: 8px; }
   .store svg { width: 19px; height: 19px; }
@@ -497,12 +539,12 @@ p { margin: 0; }
   .store b { font-size: 15px; }
   .see { height: 44px; padding: 0 14px 0 18px; font-size: 13px; }
   .fine { margin-top: 12px; font-size: 11px; }
-  .hero-stage { height: 385px; margin-top: 28px; }
+  /* phones: the group is sized from the screen width (the front phone 44vw, up to
+     176px) and site.js keeps both side phones whole, 12px inside the edges */
+  .hero-stage { height: calc(var(--pw) * 2.094 + 8px); margin-top: 28px; }
   .orbit { top: 70px; height: 240px; }
-  .hero-stage .p-center { --w: 176px; top: 0; }
-  .hero-stage .p-left, .hero-stage .p-right { --w: 140px; top: 66px; }
-  .hero-stage .p-left { transform: translateX(-118%) translateY(var(--py, 0px)) rotate(-6deg); }
-  .hero-stage .p-right { transform: translateX(18%) translateY(var(--py, 0px)) rotate(6deg); }
+  .hero-stage { --pw: min(176px, 44vw); --kx: .66; --dy: 22; --s: .76; --r: 5; }
+  .hero-stage .phone { top: 0; }
   .float { display: none; }
   .strip { padding: 32px 0 24px; }
   .tile { width: 146px; }
@@ -518,6 +560,7 @@ p { margin: 0; }
   .feat-art .phone { --w: 200px; }
   .feat-art[data-graph] .well { left: 104px; }
   .feat-copy h2 { font-size: 34px; }
+  .feat-copy h2.one { font-size: min(34px, 8.6vw); }
   .feat.big .feat-copy h2 { font-size: 44px; }
   .feat-copy .body { margin-top: 14px; font-size: 14px; text-wrap: balance; }
   /* no room beside a phone-width phone: the sheet already shows the card */
@@ -563,6 +606,7 @@ p { margin: 0; }
   .js .reveal, .js .hero-stage .phone, .js .hero-stage .float { opacity: 1 !important; translate: none !important; transition: none !important; }
   .share-card, .base-phone .screen .share-screen, .store, .see svg, .pluck, .pluck-tag, .pop-graph, .pop-arrow path, .pop-map, .map-arrow path, .map-arrow-m path, .pop-arrow-m path, .scanfx, .pf-lines path { transition: none !important; }
   .scan-card .beam { display: none; }
+  .reel-cue svg { animation: none; opacity: .5; }
   .hero-shader { display: none; }
 }
 
@@ -620,6 +664,7 @@ body:has(.doc, .lost) .nav { position: sticky; }
   .pf-hub h3 .it { background-image: var(--foil-teal); }
   .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it { background-image: var(--foil-light); }
   .feat-copy h2 .it, .vendors h2 .it, .close h2 .it { width: fit-content; margin-left: -.04em; }
+  .feat-copy h2.one .it { margin-left: 0; padding-left: .02em; }
 }
 @media (forced-colors: active) {
   .hero h1 .it, .feat-copy h2 .it, .vendors h2 .it, .pro-intro h2 .it, .close h2 .it, .pf-hub h3 .it { background-image: none; color: CanvasText; -webkit-text-fill-color: CanvasText; }
