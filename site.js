@@ -196,6 +196,10 @@
        once as a blob, and a fresh blob URL each time it comes to the front, so
        it starts at its first frame. In TikTok it's fetched as the page opens. */
     var inTikTok = /TikTok|musical_ly|BytedanceWebview|trill_/i.test(navigator.userAgent || '');
+    // TikTok's browser can't play video in the page: asking it to, even inside a
+    // tap, throws the clip into its full-screen player (his phone, 11-06). So in
+    // TikTok no clip is ever asked to play; the animated images stand in.
+    if (inTikTok) blocked = true;
     var animUrl = function (p) { var im = p.querySelector('img'); return im && im.getAttribute('data-anim'); };
     var getAnim = function (p, cb) {
       var u = animUrl(p);
@@ -230,7 +234,7 @@
 
     var tries = 0, armed = false, busy = false;
     var unlockOnTap = function () {
-      if (armed || reduce) return;
+      if (armed || reduce || inTikTok) return;
       armed = true;
       var go = function () {
         if (busy || !blocked) return;                  // one tap fires touchend and click
