@@ -106,8 +106,12 @@
       var pr = v.play();
       if (pr && pr.catch) {
         pr.catch(function (err) {
-          // NotAllowed: this browser won't play it. AbortError is just our own pause.
-          if (err && err.name === 'NotAllowedError') { blocked = true; arm(HOLD); }
+          // NotAllowed (Low Power Mode): this browser won't play any of them.
+          // AbortError is just our own pause. Anything else (missing or bad file):
+          // this phone shows its still for the usual time instead of 12 s.
+          if (!err || err.name === 'AbortError') return;
+          if (err.name === 'NotAllowedError') blocked = true;
+          if (v === vid(phones[cur])) arm(HOLD);
         });
       }
       arm(12000); // a clip that never starts (slow network) doesn't hold the reel up
@@ -161,6 +165,7 @@
         arm(left * 1000); // in case 'ended' never comes
       });
       v.addEventListener('ended', function () { if (p === phones[cur]) advance(); });
+      v.addEventListener('error', function () { if (p === phones[cur] && !anim) arm(HOLD); }); // file failed: still image, normal pace
     });
 
     /* Swipe and drag. Vertical moves stay the page's (touch-action: pan-y); a
