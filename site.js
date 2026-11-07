@@ -113,7 +113,20 @@
       if (!ready || !onScreen || document.hidden || (drag && drag.moved) || anim) return;
       if (intro) { warm(); arm(INTRO); return; }
       var v = vid(phones[cur]);
-      if (blocked || !v) { if (!reduce) arm(HOLD); return; }
+      if (blocked || !v) {
+        if (reduce) return;
+        var p0 = phones[cur];
+        arm(HOLD);                                     // the still, until the animation is in
+        if (animUrl(p0)) {
+          getAnim(p0, function (b) {
+            if (!b || p0 !== phones[cur] || anim || (drag && drag.moved) || !blocked) return;
+            startAnim(p0, b);
+            arm(parseFloat(p0.querySelector('img').getAttribute('data-dur') || '4') * 1000 + 150);
+          });
+        }
+        return;
+      }
+      stopAnim(phones[cur]);
       if (fromStart) { try { v.currentTime = 0; } catch (e) { /* not loaded yet: it starts at 0 anyway */ } }
       var pr = v.play();
       if (pr && pr.catch) {
@@ -124,7 +137,7 @@
           if (!err || err.name === 'AbortError') return;
           if (err.name === 'NotAllowedError') { blocked = true; unlockOnTap(); }
           tell('blocked', err.name);
-          if (v === vid(phones[cur])) arm(HOLD);
+          if (v === vid(phones[cur])) { if (blocked) play(false); else arm(HOLD); }
         });
       }
       arm(12000); // a clip that never starts (slow network) doesn't hold the reel up
@@ -155,6 +168,7 @@
       if (f !== cur) {
         var old = phones[cur], ov = vid(old);
         old.classList.remove('playing');
+        stopAnim(old);
         if (ov) { ov.pause(); setTimeout(function () { if (old !== phones[cur]) { try { ov.currentTime = 0; } catch (e) { /* fine */ } } }, 300); }
         cur = f;
         play(true);
@@ -165,7 +179,7 @@
     var settle = function (target, ms, ease) {
       intro = false;
       // the clip leaving the front fades to its poster as the turn starts
-      if (Math.round(((BASE[cur] - target) % 360 + 540) % 360 - 180) !== 0) { hold(); phones[cur].classList.remove('playing'); }
+      if (Math.round(((BASE[cur] - target) % 360 + 540) % 360 - 180) !== 0) { hold(); stopAnim(phones[cur]); phones[cur].classList.remove('playing'); }
       turnTo(target, reduce ? 0 : ms, ease, land);
     };
     var advance = function () {
@@ -177,6 +191,43 @@
        touched the page. On the first tap anywhere: ask every clip once, inside
        that tap, then pause all but the front one. If any is allowed, the reel
        plays from then on. Up to three taps. */
+    /* Where video won't play (TikTok's browser refuses it even after a tap,
+       11-06), a phone with data-anim shows an animated image instead: fetched
+       once as a blob, and a fresh blob URL each time it comes to the front, so
+       it starts at its first frame. In TikTok it's fetched as the page opens. */
+    var inTikTok = /TikTok|musical_ly|BytedanceWebview|trill_/i.test(navigator.userAgent || '');
+    var animUrl = function (p) { var im = p.querySelector('img'); return im && im.getAttribute('data-anim'); };
+    var getAnim = function (p, cb) {
+      var u = animUrl(p);
+      if (!u || !window.fetch || !window.URL || !URL.createObjectURL) { cb(null); return; }
+      if (p._blob !== undefined) { cb(p._blob); return; }
+      if (p._waiting) { p._waiting.push(cb); return; }
+      p._waiting = [cb];
+      var t0 = Date.now();
+      fetch(u).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) {
+        p._blob = b;
+        try { if (window.tvTrack) window.tvTrack('web_hero_anim', { loaded: !!b, ms: Date.now() - t0, kb: b ? Math.round(b.size / 1024) : 0 }); } catch (e) { /* fine */ }
+        var w = p._waiting; p._waiting = null; w.forEach(function (f) { f(b); });
+      }, function () {
+        p._blob = null;
+        var w = p._waiting; p._waiting = null; w.forEach(function (f) { f(null); });
+      });
+    };
+    var startAnim = function (p, b) {
+      var im = p.querySelector('img');
+      stopAnim(p);
+      if (!p._poster) p._poster = im.getAttribute('src');
+      p._anim = URL.createObjectURL(b);
+      im.src = p._anim;
+    };
+    var stopAnim = function (p) {
+      if (!p._anim) return;
+      var im = p.querySelector('img');
+      im.src = p._poster;
+      try { URL.revokeObjectURL(p._anim); } catch (e) { /* fine */ }
+      p._anim = null;
+    };
+
     var tries = 0, armed = false, busy = false;
     var unlockOnTap = function () {
       if (armed || reduce) return;
@@ -363,6 +414,7 @@
       setInterval(show, 500);
     }
     fit();
+    if (inTikTok && !reduce) phones.forEach(function (p) { if (animUrl(p)) getAnim(p, function () {}); });
     setTimeout(function () { ready = true; play(true); }, 700); // after the phones have risen
   }
 
