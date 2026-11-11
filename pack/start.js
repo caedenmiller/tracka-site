@@ -29,7 +29,7 @@
   var hit = m && /^(common|uncommon|rare|double|ultra|illus|sir|hyper)$/.test(m[1]) ? m[1] : null;
   var KEY = 'tv_pack_seen';
   var DELAY_MS = 700; // his word 11-11: "get to the website and have it pop up"
-  var V = '1';
+  var V = '2';
 
   if (!preview) {
     try {
