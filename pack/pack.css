@@ -72,7 +72,6 @@ html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{poi
 .tp-total{display:flex;justify-content:center;align-items:baseline;gap:8px;margin:10px 0 0;font-size:15px;line-height:20px}
 .tp-total span{color:#9aa3ad}
 .tp-total b{font-weight:600;font-variant-numeric:tabular-nums}
-.tp-daily{margin:4px 0 14px;padding:0 20px;text-align:center;color:#9aa3ad;font-size:15px;line-height:20px;white-space:nowrap}
 /* The app's PressableScale: in 90 ms to 0.97 and 0.85, back in 160. */
 .tp-store{height:50px;border-radius:25px;margin:0 20px;background:#1baaa6;color:#04100f;display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;line-height:22px;font-weight:600;text-decoration:none;transition:transform .16s cubic-bezier(.455,.03,.515,.955),opacity .16s cubic-bezier(.455,.03,.515,.955)}
 .tp-store:active{transform:scale(.97);opacity:.85;transition-duration:.09s}

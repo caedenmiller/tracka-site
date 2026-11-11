@@ -1402,12 +1402,9 @@
     var store = el('a', 'tp-store');
     store.href = o.preview ? STORE.replace('ct=pack', 'ct=pack-preview') : STORE;
     store.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg><span>Get your free daily pack</span>';
-    var daily = el('p', 'tp-daily');
-    daily.textContent = 'Open a new pack every day in Tracka';
     root.appendChild(topBox);
     root.appendChild(grid);
     root.appendChild(total);
-    root.appendChild(daily);
     root.appendChild(store);
     return { el: root, focus: function () { store.focus({ preventScroll: true }); } };
   }
