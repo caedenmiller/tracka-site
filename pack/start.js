@@ -14,7 +14,7 @@
        interstitial rule is about the search click; we get ~0 of those today)
      - not for bots, not on a screen too short to hold it (a phone on its side)
      - not after a store tap: someone on their way to the App Store goes there
-   When: 4 s after the page's HTML is in (not window load), never mid-touch (it waits until a
+   When: 0.7 s after the page's HTML is in (his 11-11 call; not window load), never mid-touch (it waits until a
    finger has been off the glass for a moment), never over a sheet or the menu.
 
    PREVIEW (for Caeden and testing): ?pack=1 opens it every time, 0.6 s after
@@ -28,7 +28,7 @@
   var preview = !!m;
   var hit = m && /^(common|uncommon|rare|double|ultra|illus|sir|hyper)$/.test(m[1]) ? m[1] : null;
   var KEY = 'tv_pack_seen';
-  var DELAY_MS = preview ? 600 : 4000;
+  var DELAY_MS = 700; // his word 11-11: "get to the website and have it pop up"
   var V = '1';
 
   if (!preview) {
@@ -99,7 +99,7 @@
         busy: busy,
         onSeen: function () {
           if (!preview) try { localStorage.setItem(KEY, '1'); } catch (e) {}
-          // ms since the page started loading: 4 s after load, later when it waited out a touch
+          // ms since the page started loading: 0.7 s after the HTML, later when it waited out a touch
           track('web_pack_shown', { delay_ms: Math.round(performance.now()) });
         },
       });

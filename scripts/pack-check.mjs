@@ -57,9 +57,10 @@ async function toResults(p) {
 try {
   { // A
     const { b, p } = await open(chromium, AND);
-    await p.goto(BASE);
-    await p.waitForTimeout(800);
-    await p.click('.cta-row a.store');
+    await p.goto(BASE, { waitUntil: 'commit' });
+    // Tap before the pack's 0.7 s (DOMContentLoaded + 700 ms): as soon as the button exists.
+    await p.waitForSelector('.cta-row a.store', { state: 'attached' });
+    await p.evaluate(() => document.querySelector('.cta-row a.store').click());
     await p.waitForSelector('.aw-scrim.on');
     await p.click('.aw-close');
     const opened = await p.waitForSelector('.tp', { timeout: 8000 }).then(() => true, () => false);
@@ -115,7 +116,7 @@ try {
     const shown = events.find(e => e.event === 'web_pack_shown');
     const declined = events.find(e => e.event === 'web_pack_declined');
     check('D  flag set when shown', flag === '1');
-    check('D  web_pack_shown delay_ms is real', shown && shown.delay_ms >= 4000 && shown.delay_ms !== 4000, shown && shown.delay_ms);
+    check('D  web_pack_shown delay_ms is real', shown && shown.delay_ms >= 700 && shown.delay_ms !== 700, shown && shown.delay_ms);
     check('D  Esc sends web_pack_declined via esc', declined && declined.via === 'esc' && declined.step === 'sealed');
     await p.reload();
     await p.waitForTimeout(6000);
