@@ -1534,7 +1534,12 @@
       document.documentElement.classList.remove('tp-open');
       if (bodyStyle === null) document.body.removeAttribute('style');
       else document.body.setAttribute('style', bodyStyle);
+      // The site scrolls smoothly (html scroll-behavior), which would glide the page
+      // down from the top after a close; this jump must be instant.
+      var html = document.documentElement, sb = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
       window.scrollTo(0, scrollY);
+      html.style.scrollBehavior = sb;
       if (lastFocus && lastFocus.focus) try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
     }
     function onKey(e) {
