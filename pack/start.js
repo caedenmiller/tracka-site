@@ -14,7 +14,7 @@
        interstitial rule is about the search click; we get ~0 of those today)
      - not for bots, not on a screen too short to hold it (a phone on its side)
      - not after a store tap: someone on their way to the App Store goes there
-   When: 4 s after the page has loaded, never mid-touch (it waits until a
+   When: 4 s after the page's HTML is in (not window load), never mid-touch (it waits until a
    finger has been off the glass for a moment), never over a sheet or the menu.
 
    PREVIEW (for Caeden and testing): ?pack=1 opens it every time, 0.6 s after
@@ -107,6 +107,9 @@
   }
 
   function arm() { setTimeout(open, DELAY_MS); }
-  if (document.readyState === 'complete') arm();
-  else addEventListener('load', arm);
+  // From the page's HTML being in, not window load: load waits on the hero
+  // videos and every picture, which on a phone network ran 10 s and more
+  // (11-11, his look), so the pack came late or not at all.
+  if (document.readyState !== 'loading') arm();
+  else addEventListener('DOMContentLoaded', arm);
 })();
