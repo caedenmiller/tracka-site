@@ -916,7 +916,19 @@
     else enter.go([[1, 300, bezier(0.2, 0.8, 0.2, 1)]]);
 
     function began() {
-      if (!swiped) { swiped = true; root.className += ' tp-torn'; tick(); o.onTearStart(); }
+      if (!swiped) { swiped = true; root.className += ' tp-torn'; cueOff(); tick(); o.onTearStart(); }
+    }
+    // The cue goes the instant the pack is touched: from wherever its fade-in is, out in 120 ms, then
+    // hidden for the rest of the run. Inline, so no entrance delay in pack.css can hold it on screen
+    // while the pack tears and falls (a real visit, 11-11).
+    function cueOff() {
+      var from = getComputedStyle(cue).opacity;
+      cue.style.animation = 'none';
+      cue.style.opacity = from;
+      void cue.offsetWidth;
+      cue.style.transition = RM ? 'none' : 'opacity .12s ease-out';
+      cue.style.opacity = '0';
+      setTimeout(function () { cue.style.visibility = 'hidden'; }, RM ? 0 : 130);
     }
     function detach() {
       o.onDetach();
@@ -1389,10 +1401,13 @@
     countUp(tv, cards.reduce(function (s, c) { return s + (c.price || 0); }, 0), 600);
     var store = el('a', 'tp-store');
     store.href = o.preview ? STORE.replace('ct=pack', 'ct=pack-preview') : STORE;
-    store.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg><span>Get the app</span>';
+    store.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg><span>Get your free daily pack</span>';
+    var daily = el('p', 'tp-daily');
+    daily.textContent = 'Open a new pack every day in Tracka';
     root.appendChild(topBox);
     root.appendChild(grid);
     root.appendChild(total);
+    root.appendChild(daily);
     root.appendChild(store);
     return { el: root, focus: function () { store.focus({ preventScroll: true }); } };
   }

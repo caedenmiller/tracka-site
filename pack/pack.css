@@ -31,9 +31,8 @@ html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{poi
 .tp-skip{position:absolute;right:8px;top:0;min-width:44px;height:44px;padding:0 12px;display:flex;align-items:center;justify-content:center;background:none;border:0;margin:0;color:#9aa3ad;font:inherit;font-size:17px;line-height:22px;cursor:pointer;pointer-events:auto}
 
 /* The one cue, in the middle of the sealed pack: a finger in a ring that pulses outward in place
-   (scale and opacity only, nothing sideways), over "Tap to open". It leaves on the first touch. */
+   (scale and opacity only, nothing sideways), over "Tap to open". It leaves on the first touch (pack.js cueOff). */
 .tp-cue{position:absolute;left:0;text-align:center;pointer-events:none;font-size:15px;line-height:20px;font-weight:600;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.22);animation:tp-in .4s .7s ease-out both}
-.tp-torn .tp-cue{animation:tp-out .15s ease-out both}
 .tp-tap{position:relative;width:60px;height:60px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.16);border:1.5px solid currentColor}
 .tp-tap svg{width:26px;height:26px}
 .tp-ring{position:absolute;top:-1.5px;right:-1.5px;bottom:-1.5px;left:-1.5px;border-radius:50%;border:1.5px solid currentColor;opacity:0;animation:tp-ring 2.4s 1.1s cubic-bezier(.2,.6,.3,1) infinite}
@@ -70,9 +69,10 @@ html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{poi
 .tp-frame{position:relative;overflow:hidden}
 .tp-frame>.tp-in{position:absolute;overflow:hidden;background:#15171b}
 .tp-frame>.tp-in img{width:100%;height:100%;object-fit:cover}
-.tp-total{display:flex;justify-content:center;align-items:baseline;gap:8px;margin:10px 0 16px;font-size:15px;line-height:20px}
+.tp-total{display:flex;justify-content:center;align-items:baseline;gap:8px;margin:10px 0 0;font-size:15px;line-height:20px}
 .tp-total span{color:#9aa3ad}
 .tp-total b{font-weight:600;font-variant-numeric:tabular-nums}
+.tp-daily{margin:4px 0 14px;padding:0 20px;text-align:center;color:#9aa3ad;font-size:15px;line-height:20px;white-space:nowrap}
 /* The app's PressableScale: in 90 ms to 0.97 and 0.85, back in 160. */
 .tp-store{height:50px;border-radius:25px;margin:0 20px;background:#1baaa6;color:#04100f;display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;line-height:22px;font-weight:600;text-decoration:none;transition:transform .16s cubic-bezier(.455,.03,.515,.955),opacity .16s cubic-bezier(.455,.03,.515,.955)}
 .tp-store:active{transform:scale(.97);opacity:.85;transition-duration:.09s}

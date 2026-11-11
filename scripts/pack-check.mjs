@@ -15,6 +15,8 @@
 //      back stays in the pack; closing drops our history entry
 //   H  no video takes a tap or opens a player, pack or no pack; the reel still turns on a swipe
 //   F  one tap opens the pack (11-11: TikTok's swipe took the tear); no drag is read in TikTok
+//      and the Tap to open cue is gone within 200 ms of that tap, for good
+//   K  the results: Get your free daily pack, and Open a new pack every day in Tracka, one line each at 375 px
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -257,8 +259,23 @@ try {
         check(`F  ${name}: the tap cue only pulses in place`, !cueMoves.length, cueMoves.join(' '));
         check(`F  ${name}: nothing sweeps across the sealed pack`, drift < 0.5 && !(await p.$('.tp-sheen')), drift.toFixed(2) + ' px');
       }
+      // The cue goes the instant the pack is touched (a real visit, 11-11: it stayed up while the pack tore and fell)
+      await p.evaluate(() => {
+        window.__cueGone = new Promise(res => document.addEventListener('pointerdown', () => {
+          const t0 = performance.now(), cue = document.querySelector('.tp-cue');
+          (function poll() {
+            const cs = getComputedStyle(cue);
+            if (cs.visibility === 'hidden' || +cs.opacity < 0.02) return res(performance.now() - t0);
+            if (performance.now() - t0 > 2000) return res(Infinity);
+            requestAnimationFrame(poll);
+          })();
+        }, { capture: true, once: true }));
+      });
       await p.touchscreen.tap(195, 330);
+      const cueMs = await p.evaluate(() => window.__cueGone);
+      check(`F  ${name}: the cue is gone within 200 ms of the tap`, cueMs <= 200, Math.round(cueMs) + ' ms');
       check(`F  ${name}: one tap opens the pack`, await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 4000 }).then(() => true, () => false));
+      check(`F  ${name}: the cue never comes back`, await p.evaluate(() => { const c = document.querySelector('.tp-cue'); return !c || getComputedStyle(c).visibility === 'hidden'; }));
       await b.close();
     }
   }
@@ -334,6 +351,28 @@ try {
     const after = await front();
     check('H  a swipe over the clips still turns the reel', before && after && before !== after, before + ' -> ' + after);
     await b.close();
+  }
+  { // K: the results say there is a free pack every day, each line on one line at 375 px; the store link is untouched
+    for (const [name, engine, ua] of [['Safari', webkit, IOS], ['Android', chromium, AND]]) {
+      const { b, p } = await open(engine, ua);
+      await p.setViewportSize({ width: 375, height: 812 });
+      await p.goto(BASE);
+      await p.waitForSelector('.tp.on', { timeout: 9000 });
+      await toResults(p);
+      const r = await p.evaluate(() => {
+        const a = document.querySelector('.tp-store'), d = document.querySelector('.tp-daily'), s = a.querySelector('span');
+        const one = e => { const rs = e.getClientRects(); return rs.length === 1 && rs[0].height < 30; };
+        const inside = e => { const q = e.getBoundingClientRect(); return q.left >= 0 && q.right <= innerWidth; };
+        return { btn: s.textContent, line: d && d.textContent, apple: !!a.querySelector('svg use[href="#i-apple"]'), href: a.getAttribute('href'),
+          oneLine: one(s) && !!d && one(d), fits: inside(s) && !!d && inside(d) && s.scrollWidth <= s.clientWidth + 1 && d.scrollWidth <= d.clientWidth + 1,
+          order: !!d && document.querySelector('.tp-total').getBoundingClientRect().bottom <= d.getBoundingClientRect().top && d.getBoundingClientRect().bottom <= a.getBoundingClientRect().top };
+      });
+      check(`K  ${name}: the button reads Get your free daily pack, Apple glyph kept`, r.btn === 'Get your free daily pack' && r.apple, r.btn);
+      check(`K  ${name}: the line under Pack value reads Open a new pack every day in Tracka`, r.line === 'Open a new pack every day in Tracka' && r.order, r.line);
+      check(`K  ${name}: both sit on one line each inside 375 px`, r.oneLine && r.fits);
+      check(`K  ${name}: the store link still says ct=pack`, /ct=pack(&|$)/.test(r.href || ''), r.href);
+      await b.close();
+    }
   }
 } finally {
   server.close();
