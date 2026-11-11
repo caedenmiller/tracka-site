@@ -51,7 +51,7 @@
     // a.store too: on Android the hero's store button is "Get notified" (href #, android.js)
     if (a && (/apps\.apple\.com|^\/go\//.test(a.getAttribute('href')) || a.classList.contains('store')) && !a.closest('.tp')) tapped = true;
   }, true);
-  ['pointerdown', 'pointermove', 'touchstart'].forEach(function (t) {
+  ['pointerdown', 'pointermove', 'touchstart', 'touchmove', 'scroll'].forEach(function (t) {
     addEventListener(t, function () { lastTouch = Date.now(); }, { capture: true, passive: true });
   });
 
@@ -96,6 +96,7 @@
         preview: preview,
         track: track,
         ok: function () { return preview || (!tapped && localStorage.getItem(KEY) !== '1'); },
+        busy: busy,
         onSeen: function () {
           if (!preview) try { localStorage.setItem(KEY, '1'); } catch (e) {}
           // ms since the page started loading: 4 s after load, later when it waited out a touch

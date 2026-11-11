@@ -1417,7 +1417,8 @@
 
   /**
    * opts: { data: the set's JSON, hit: a tier to force (preview) or null for
-   * the first-visit SIR, track(event, props), onSeen() once it is on screen,
+   * the first-visit SIR, track(event, props), ok() still wanted, busy() not now,
+   * onSeen() once it is on screen,
    * preview: a ?pack= preview, whose store button says ct=pack-preview so his
    * own test taps never count as the pack's }.
    * Resolves false when it could not be shown (nothing was set or sent).
@@ -1439,9 +1440,16 @@
     var set = { set: data.set, name: data.name, logo: data.logo };
     var wait = [preload(set.logo)].concat(cards.map(function (c) { return preload(c.image); }));
     var timeout = new Promise(function (res) { setTimeout(res, 6000); });
+    // The pictures can take seconds on a slow phone: by then a finger may be on the
+    // glass again, so it waits for busy() to clear, as start.js did before loading.
     return Promise.race([Promise.all(wait), timeout]).then(function () {
-      if (opts.ok && !opts.ok()) return false;
-      return show(cards, set, opts);
+      return new Promise(function (done) {
+        (function go() {
+          if (opts.ok && !opts.ok()) return done(false);
+          if (opts.busy && opts.busy()) return setTimeout(go, 600);
+          done(show(cards, set, opts));
+        })();
+      });
     });
   }
 
