@@ -2,6 +2,7 @@
 // Checks for the first-visit pack's loader and page handling (11-11 review),
 // headless, against this checkout served on a local port. Each one failed
 // before its fix on branch site-pack:
+//   J  the TikTok handoff: a store tap in TikTok loads ?app=<ct> with the sheet; Safari on ?app= goes to the store
 //   A  Android: hero Get notified tapped first, so no pack (and a waitlist
 //      sheet built before the pack is never inert)
 //   B  closing puts a scrolled page back at once (no smooth glide)
@@ -143,6 +144,48 @@ try {
     check('E  never opens under a dragging finger', !under);
     check('E  opens once the finger lifts', await p.waitForSelector('.tp.on', { timeout: 6000 }).then(() => true, () => false));
     await b.close();
+  }
+  { // J: the TikTok handoff. In TikTok a store tap loads ?app=<ct> with the sheet up; in Safari ?app= goes to the store, no pack
+    const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
+    const store = [];
+    const watch = c => c.route('**/apps.apple.com/**', r => { store.push(r.request().url()); r.fulfill({ status: 204 }); }); // 204: the jump does not fire and the page stays
+    {
+      const { b, p, events } = await open(chromium, TT, watch);
+      await p.goto(BASE, { waitUntil: 'commit' });
+      await p.waitForSelector('.cta-row a.store', { state: 'attached' });
+      await p.evaluate(() => document.querySelector('.cta-row a.store').click());
+      await p.waitForURL(/\?app=home$/, { timeout: 5000 }).catch(() => {});
+      check('J  TikTok: a store tap loads the page with ?app=', /\?app=home$/.test(p.url()), p.url());
+      check('J  TikTok: the sheet is up on that load', await p.waitForSelector('.tt-sheet.on', { timeout: 4000 }).then(() => true, () => false));
+      await p.waitForTimeout(2500);
+      check('J  TikTok: no pack on the handoff load, nothing marked seen', !(await p.$('.tp')) && (await p.evaluate(() => localStorage.getItem('tv_pack_seen'))) === null);
+      check('J  TikTok: no store navigation', !store.length, store.join(' '));
+      const h = events.find(e => e.event === 'web_tiktok_handoff');
+      check('J  TikTok: web_tiktok_handoff carries the ct', h && h.ct === 'home', h && h.ct);
+      await b.close();
+    }
+    {
+      const { b, p } = await open(chromium, TT, watch);
+      await p.goto(BASE + '?pack=1');
+      await p.waitForSelector('.tp.on', { timeout: 9000 });
+      await toResults(p);
+      await p.click('.tp-store');
+      await p.waitForURL(/\?app=pack-preview$/, { timeout: 5000 }).catch(() => {});
+      check('J  TikTok: the pack\'s store button hands off with its ct', /\?app=pack-preview$/.test(p.url()) && !store.length, p.url());
+      check('J  TikTok: the sheet is up after the pack\'s handoff', await p.waitForSelector('.tt-sheet.on', { timeout: 4000 }).then(() => true, () => false));
+      await b.close();
+    }
+    {
+      const { b, p, events } = await open(chromium, IOS, watch);
+      await p.goto(BASE + '?app=pack').catch(() => {});
+      await p.waitForTimeout(2500);
+      check('J  Safari: ?app=pack goes for the store with ct=pack', store.length >= 1 && /[?&]ct=pack(&|$)/.test(store[0]), store[0]);
+      check('J  Safari: no pack, nothing marked seen', !(await p.$('.tp')) && (await p.evaluate(() => localStorage.getItem('tv_pack_seen'))) === null);
+      check('J  Safari: a Get the app button stays if the jump does not fire', await p.evaluate(() => { const a = document.querySelector('.tt-sheet .tt-get'); return !!a && /ct=pack/.test(a.href) && a.getBoundingClientRect().height >= 44; }));
+      const l = events.find(e => e.event === 'web_tiktok_handoff_landed');
+      check('J  Safari: web_tiktok_handoff_landed carries the ct', l && l.ct === 'pack', l && l.ct);
+      await b.close();
+    }
   }
   { // F: a tap opens it; inside TikTok a sideways drag is never read as a tear
     const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
