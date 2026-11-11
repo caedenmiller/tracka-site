@@ -16,7 +16,7 @@
 //   H  no video takes a tap or opens a player, pack or no pack; the reel still turns on a swipe
 //   F  one tap opens the pack (11-11: TikTok's swipe took the tear); no drag is read in TikTok
 //      and the Tap to open cue is gone within 200 ms of that tap, for good
-//   K  the results: Get your free daily pack on one line at 375 px, no line above it
+//   K  the results: Get your free pack on one line at 375 px, no line above it (Android: Get notified on Android)
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -367,7 +367,8 @@ try {
           oneLine: one(s), fits: inside(s) && s.scrollWidth <= s.clientWidth + 1,
           order: !!d && document.querySelector('.tp-total').getBoundingClientRect().bottom <= d.getBoundingClientRect().top && d.getBoundingClientRect().bottom <= a.getBoundingClientRect().top };
       });
-      check(`K  ${name}: the button reads Get your free daily pack, Apple glyph kept`, r.btn === 'Get your free daily pack' && r.apple, r.btn);
+      if (/Android/i.test(name)) check(`K  ${name}: the button reads Get notified on Android, no Apple glyph`, r.btn === 'Get notified on Android' && !r.apple, r.btn);
+      else check(`K  ${name}: the button reads Get your free pack, Apple glyph kept`, r.btn === 'Get your free pack' && r.apple, r.btn);
       check(`K  ${name}: no line under Pack value (his call: button only)`, !r.line, r.line);
       check(`K  ${name}: both sit on one line each inside 375 px`, r.oneLine && r.fits);
       check(`K  ${name}: the store link still says ct=pack`, /ct=pack(&|$)/.test(r.href || ''), r.href);

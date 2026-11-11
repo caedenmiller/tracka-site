@@ -1401,7 +1401,11 @@
     countUp(tv, cards.reduce(function (s, c) { return s + (c.price || 0); }, 0), 600);
     var store = el('a', 'tp-store');
     store.href = o.preview ? STORE.replace('ct=pack', 'ct=pack-preview') : STORE;
-    store.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg><span>Get your free daily pack</span>';
+    // Android (his pick 11-11): the app is iPhone only, so no Apple glyph and no promise;
+    // the tap still opens android.js's waitlist sheet over the pack.
+    store.innerHTML = /Android/i.test(navigator.userAgent)
+      ? '<span>Get notified on Android</span>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg><span>Get your free pack</span>';
     root.appendChild(topBox);
     root.appendChild(grid);
     root.appendChild(total);
