@@ -1,0 +1,72 @@
+name: Card show pages
+
+# Rebuilds /shows/ and the sitemap's /shows/ entries from the app's upcoming shows, and commits
+# to main only when a page changed. 10:17 UTC is just after midnight in Hawaii, so every US
+# show dated yesterday is over by then.
+# Needs repo secrets SUPABASE_URL and SUPABASE_ANON_KEY (the public anon key, never service role).
+on:
+  schedule:
+    - cron: '17 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: card-show-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Image tool for flyer thumbnails
+        run: command -v convert >/dev/null || command -v magick >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick)
+
+      # A read that fails or looks wrong exits non-zero before writing anything: the live pages stay.
+      - name: Build pages
+        run: node scripts/build-shows.mjs --thumbs --report /tmp/shows-report.json
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Data report
+        if: always()
+        run: test -f /tmp/shows-report.json && cat /tmp/shows-report.json || true
+
+      - name: Commit and push what changed
+        id: push
+        run: |
+          git add shows sitemap.xml
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Card show pages: $(date -u +%F)"
+          for attempt in 1 2 3; do
+            if git pull -q --rebase origin main && git push -q origin HEAD:main; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "Could not push after 3 tries." >&2
+          exit 1
+
+      # The site is a branch deploy, and a push made with this token doesn't start a Pages build by itself.
+      - name: Request the Pages build
+        if: steps.push.outputs.pushed == 'true'
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent
+        env:
+          GH_TOKEN: ${{ github.token }}
