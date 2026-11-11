@@ -893,15 +893,29 @@
     whole.appendChild(glintClip);
     var seamEl = softGlow('#ffffff', null, W * 1.2, 60, 0, -W * 0.1, TY - 30);
     whole.appendChild(seamEl);
+    // The entrance options (?entry=a|b|c, pack.css "Entrances"): the arrival is CSS on `arr`,
+    // with a bloom behind the pack and one sheen across it; the cue and the glint wait for it.
+    var arr = el('div', 'tp-fill tp-none tp-arr');
+    var lead = o.entry && !RM ? 1150 : 0;
+    if (o.entry) {
+      var bloom = softGlow(film.film, null, W * 2.6, H * 1.5, 0.2, left - W * 0.8, top - H * 0.25);
+      bloom.className += ' tp-bloom';
+      root.appendChild(bloom);
+      var sheenClip = el('div', 'tp-clip', { left: W * 0.02, top: H * 0.012, width: W * 0.96, height: H * 0.976 });
+      sheenClip.appendChild(el('div', 'tp-sheen'));
+      whole.appendChild(sheenClip);
+    }
     root.appendChild(flash);
-    root.appendChild(whole);
+    arr.appendChild(whole);
+    root.appendChild(arr);
     // The one cue (11-11): a tap opens it, everywhere. It leaves when the tear starts.
     var cue = el('div', 'tp-cue', { top: top + H + 20 }, 'Tap to open');
     cue.setAttribute('aria-hidden', 'true');
     root.appendChild(cue);
 
-    enter.go([[1, 300, bezier(0.2, 0.8, 0.2, 1)]]);
-    if (!RM) later(function () { glint.go([[1, 1200, bezier(0.35, 0, 0.65, 1)], ['wait', 2400], [0, 0]], { loop: true }); }, 600);
+    if (o.entry) enter.set(1);
+    else enter.go([[1, 300, bezier(0.2, 0.8, 0.2, 1)]]);
+    if (!RM) later(function () { glint.go([[1, 1200, bezier(0.35, 0, 0.65, 1)], ['wait', 2400], [0, 0]], { loop: true }); }, lead || 600);
 
     function began() {
       if (!swiped) { swiped = true; root.className += ' tp-torn'; tick(); o.onTearStart(); }
@@ -1447,6 +1461,13 @@
     root.setAttribute('aria-label', 'Free pack');
     var probe = el('div', 'tp-probe');
     root.appendChild(probe);
+    // An entrance option: the page blurs and dims under two layers instead of the stage cutting to black.
+    var entry = /^[abc]$/.test(opts.entry) ? opts.entry : '';
+    if (entry) {
+      root.className += ' tp-e tp-e-' + entry;
+      root.appendChild(el('div', 'tp-fill tp-none tp-blur'));
+      root.appendChild(el('div', 'tp-fill tp-none tp-dim'));
+    }
     var stage = el('div', 'tp-fill tp-stage');
     root.appendChild(stage);
     canvas = el('canvas', 'tp-sparks');
@@ -1503,6 +1524,7 @@
     head.style.top = insets.top + 6 + 'px';
     xBtn.style.top = insets.top + 6 + 'px';
     function stageRect() { return stage.getBoundingClientRect(); }
+    if (entry) root.style.setProperty('--tp-o', Wd / 2 + 'px ' + (packTop + (packW * PACK_VIEW.h) / PACK_VIEW.w / 2) + 'px');
 
     var beat = 'sealed', cardAt = 0, finished = false, closed = false;
     var tear = null, reveal = null, results = null;
@@ -1582,7 +1604,7 @@
     skip.addEventListener('click', function () { toResults(true); });
 
     tear = tearStage({
-      set: set, packW: packW, left: packLeft, top: packTop,
+      set: set, packW: packW, left: packLeft, top: packTop, entry: entry,
       stageLeft: function () { return stageRect().left; },
       onTearStart: function () {},
       onDetach: function () {

@@ -20,13 +20,14 @@
    PREVIEW (for Caeden and testing): ?pack=1 opens it every time, 0.6 s after
    load, untracked and without the flag; ?pack=hyper (or common, uncommon,
    rare, double, ultra, illus, sir) forces card ten's tier. ?nopack keeps it
-   off. */
+   off. &entry=a (or b, c) shows one of the entrance options (pack.css). */
 (function () {
   var q = location.search;
   if (/[?&]nopack(=|&|$)/.test(q)) return;
   var m = /[?&]pack=([a-z0-9]+)/.exec(q);
   var preview = !!m;
   var hit = m && /^(common|uncommon|rare|double|ultra|illus|sir|hyper)$/.test(m[1]) ? m[1] : null;
+  var entry = /[?&]entry=([abc])(&|$)/.exec(q);
   var KEY = 'tv_pack_seen';
   var DELAY_MS = 700; // his word 11-11: "get to the website and have it pop up"
   var V = '2';
@@ -94,6 +95,7 @@
         data: got[2],
         hit: hit,
         preview: preview,
+        entry: entry && entry[1],
         track: track,
         ok: function () { return preview || (!tapped && localStorage.getItem(KEY) !== '1'); },
         busy: busy,
