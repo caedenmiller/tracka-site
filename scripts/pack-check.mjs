@@ -8,6 +8,9 @@
 //   C  a ?pack=1 preview's store tap says ct=pack-preview
 //   D  first visit: shown once, flag set, delay_ms real, nothing on reload
 //   E  slow pictures and a dragging finger: never opens under the finger
+//   G  no tap, at any moment, reaches the page or a hero clip behind the pack (11-11: a tap
+//      on the pack sometimes brought up the video player on his iPhone)
+//   H  no video takes a tap or opens a player, pack or no pack; the reel still turns on a swipe
 //   F  one tap opens the pack (11-11: TikTok's swipe took the tear); no drag is read in TikTok
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
@@ -177,6 +180,79 @@ try {
       check(`F  ${name}: one tap opens the pack`, await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 4000 }).then(() => true, () => false));
       await b.close();
     }
+  }
+  { // G: while the pack is up no tap reaches the page behind, and no clip behind plays or goes full screen
+    const { b, p } = await open(webkit, IOS);
+    await p.addInitScript(() => {
+      window.__leaks = [];
+      const up = () => !!document.querySelector('.tp');
+      const name = n => (n && n.tagName ? n.tagName.toLowerCase() + (n.className && n.className.baseVal === undefined ? '.' + n.className : '') : String(n));
+      for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'mouseup', 'click'])
+        document.addEventListener(t, e => { if (up() && !(e.target.closest && e.target.closest('.tp, .tp-tick'))) window.__leaks.push(t + ' on ' + name(e.target)); }, true);
+      for (const t of ['play', 'playing', 'webkitbeginfullscreen', 'webkitpresentationmodechanged'])
+        document.addEventListener(t, e => { if (up() && e.target.tagName === 'VIDEO') window.__leaks.push(t + ' on video'); }, true);
+      for (const t of ['fullscreenchange', 'webkitfullscreenchange'])
+        document.addEventListener(t, () => { if (document.fullscreenElement || document.webkitFullscreenElement) window.__leaks.push(t); }, true);
+    });
+    await p.goto(BASE + '?pack=1');
+    const probe = when => p.evaluate(w => {
+      const t = document.elementFromPoint(195, 330);
+      if (!t || !t.closest('.tp')) window.__leaks.push(w + ': the page is on top at the pack');
+      for (const v of document.querySelectorAll('video')) if (!v.paused || v.webkitDisplayingFullscreen) window.__leaks.push(w + ': a clip behind is playing');
+      for (const c of document.body.children) if (c.tagName !== 'SCRIPT' && !c.matches('.tp, .tt-sheet, .aw-scrim') && (!c.inert || getComputedStyle(c).pointerEvents !== 'none')) window.__leaks.push(w + ': ' + c.tagName.toLowerCase() + ' can take a tap');
+    }, when);
+    const tapAt = async when => { await probe(when); await p.touchscreen.tap(195, 330); };
+    await p.waitForSelector('.tp', { state: 'attached', timeout: 9000 });
+    await tapAt('entrance start');
+    await p.waitForTimeout(300); await tapAt('0.3 s');
+    await p.waitForTimeout(500); await tapAt('0.8 s');
+    await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 6000 });
+    await p.waitForTimeout(900); await tapAt('after open');
+    await p.waitForTimeout(2500); await tapAt('mid cards'); // long enough for the reel behind to want its next clip
+    await p.click('.tp-skip');
+    await p.waitForSelector('.tp-store', { timeout: 5000 });
+    await p.waitForTimeout(400); await tapAt('results');
+    await p.waitForTimeout(300);
+    const leaks = await p.evaluate(() => window.__leaks);
+    check('G  no tap reaches the page or a clip behind the pack', !leaks.length, leaks.slice(0, 4).join('; '));
+    await p.click('.tp-x');
+    await p.waitForFunction(() => !document.querySelector('.tp'), null, { timeout: 3000 });
+    const back = await p.evaluate(() => Array.prototype.every.call(document.body.children, c => !c.inert && getComputedStyle(c).pointerEvents !== 'none'));
+    check('G  the page takes taps again after close', back);
+    await b.close();
+  }
+  { // H: no pack. A tap on a hero clip never reaches the video and never opens a player; a swipe over one still turns the reel
+    const { b, p } = await open(webkit, IOS);
+    await p.addInitScript(() => {
+      window.__vid = [];
+      for (const t of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'click'])
+        document.addEventListener(t, e => { if (e.target.tagName === 'VIDEO') window.__vid.push(t + ' on video'); }, true);
+      for (const t of ['webkitbeginfullscreen', 'webkitpresentationmodechanged', 'fullscreenchange', 'webkitfullscreenchange'])
+        document.addEventListener(t, e => { if (e.target.tagName === 'VIDEO' || document.fullscreenElement || document.webkitFullscreenElement) window.__vid.push(t); }, true);
+    });
+    await p.goto(BASE + '?nopack');
+    await p.waitForTimeout(1200);
+    const vids = await p.evaluate(() => Array.prototype.map.call(document.querySelectorAll('video'), v => {
+      const r = v.getBoundingClientRect();
+      return { x: Math.min(innerWidth - 6, Math.max(6, r.left + r.width / 2)), y: Math.min(innerHeight - 6, Math.max(6, r.top + r.height / 2)), pe: getComputedStyle(v).pointerEvents, controls: v.controls, inline: v.playsInline || v.hasAttribute('playsinline') };
+    }));
+    check('H  every video ignores taps, has no controls, plays inline', vids.length >= 3 && vids.every(v => v.pe === 'none' && !v.controls && v.inline), JSON.stringify(vids.map(v => v.pe)));
+    for (const v of vids) { await p.touchscreen.tap(v.x, v.y); await p.waitForTimeout(900); }
+    const bad = await p.evaluate(() => window.__vid.concat(Array.prototype.filter.call(document.querySelectorAll('video'), v => v.webkitDisplayingFullscreen || (v.webkitPresentationMode && v.webkitPresentationMode !== 'inline')).map(() => 'a video left the page')));
+    check('H  a tap on a video opens no player', !bad.length, bad.slice(0, 4).join('; '));
+    // the hero is a reel turned by a sideways drag (site.js), not a scroller: a drag across the front clip still turns it
+    await p.waitForFunction(() => !document.querySelector('.hero-stage .phone').getAnimations().length, null, { timeout: 3000 }).catch(() => {});
+    await p.waitForTimeout(1500);
+    const front = () => p.evaluate(() => { let best = null, z = -1; for (const ph of document.querySelectorAll('.hero-stage .phone')) { const n = +ph.style.zIndex; if (n > z) { z = n; best = ph.querySelector('img').getAttribute('src'); } } return best; });
+    const before = await front();
+    const box = await p.evaluate(() => { const r = document.querySelector('.hero-stage').getBoundingClientRect(); return { x: r.left + r.width / 2, y: Math.min(innerHeight - 40, r.top + r.height / 2) }; });
+    await p.mouse.move(box.x + 70, box.y); await p.mouse.down();
+    for (let i = 1; i <= 8; i++) { await p.mouse.move(box.x + 70 - i * 20, box.y); await p.waitForTimeout(16); }
+    await p.mouse.up();
+    await p.waitForTimeout(1200);
+    const after = await front();
+    check('H  a swipe over the clips still turns the reel', before && after && before !== after, before + ' -> ' + after);
+    await b.close();
   }
 } finally {
   server.close();

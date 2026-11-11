@@ -796,6 +796,7 @@
       if (navigator.vibrate) { navigator.vibrate(10); return; }
       if (!/iP(hone|ad|od)/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent))) return;
       var l = document.createElement('label'), i = document.createElement('input');
+      l.className = 'tp-tick';
       l.setAttribute('aria-hidden', 'true');
       l.style.display = 'none';
       i.type = 'checkbox';
@@ -1493,6 +1494,8 @@
     });
     document.body.appendChild(root);
     document.documentElement.classList.add('tp-open');
+    // Nothing behind plays while this is up (site.js holds its clips on html.tp-open too).
+    Array.prototype.forEach.call(document.querySelectorAll('video'), function (v) { try { v.pause(); } catch (e) {} });
     document.body.style.position = 'fixed';
     document.body.style.top = -scrollY + 'px';
     document.body.style.left = '0';

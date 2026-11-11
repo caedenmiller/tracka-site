@@ -109,7 +109,11 @@
 
     var vid = function (p) { return p.querySelector('video'); };
     var arm = function (ms) { clearTimeout(timer); timer = setTimeout(advance, ms); };
+    // The first-visit pack is up (pack.js sets html.tp-open): nothing behind it may start
+    // playing. On his iPhone a tap on the pack sometimes brought up the video player (11-11).
+    var packUp = function () { return document.documentElement.classList.contains('tp-open'); };
     var play = function (fromStart) {
+      if (packUp()) { clearTimeout(timer); timer = setTimeout(function () { play(fromStart); }, 800); return; }
       if (!ready || !onScreen || document.hidden || (drag && drag.moved) || anim) return;
       if (intro) { warm(); arm(INTRO); return; }
       var v = vid(phones[cur]);
@@ -169,7 +173,7 @@
       turnTo(target, reduce ? 0 : ms, ease, land);
     };
     var advance = function () {
-      if ((drag && drag.moved) || anim) { arm(1000); return; }
+      if (packUp() || (drag && drag.moved) || anim) { arm(1000); return; }
       settle(Math.round(angle / STEP) * STEP + STEP, MOVE, inOut);
     };
 
@@ -184,7 +188,15 @@
       var v = vid(p);
       if (!v) return;
       v.muted = true; // the attribute alone isn't always enough for inline autoplay
+      v.controls = false;
+      // A hero clip never belongs in the full-screen player: leave it at once, and stop asking clips to play.
+      v.addEventListener('webkitbeginfullscreen', function () {
+        blocked = true;
+        try { v.pause(); v.webkitExitFullscreen(); } catch (e) { /* fine */ }
+        p.classList.remove('playing');
+      });
       v.addEventListener('playing', function () {
+        if (packUp()) { v.pause(); arm(1000); return; }
         tell('playing');
         if (intro) { v.pause(); return; }               // nothing plays before the first turn
         if (p !== phones[cur] || (drag && drag.moved) || anim) { v.pause(); return; }
