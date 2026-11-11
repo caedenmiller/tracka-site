@@ -5,6 +5,11 @@
      web_shows_flyer_tap       a flyer opened {state}
    track.js still sends web_pageview, web_store_tap and web_link_tap as on every page. */
 (function () {
+  // No Android app yet: the strip's button says so (the tap opens android.js's waitlist sheet).
+  if (/Android/i.test(navigator.userAgent)) {
+    var g = document.querySelector('.sh-get');
+    if (g) g.textContent = 'Get notified';
+  }
   var b = document.body;
   var state = b.getAttribute('data-shows-state');
   if (!state || !window.tvTrack) return;

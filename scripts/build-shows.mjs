@@ -29,8 +29,8 @@ import { tmpdir } from 'node:os';
 
 const SITE = 'https://gettracka.com';
 const STORE = (ct) => `https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=${ct}&mt=8`;
-const CSS_V = 1;
-const JS_V = 1;
+const CSS_V = 2;
+const JS_V = 2;
 const THUMB_W = 216; // 72 css px at 3x
 
 const args = process.argv.slice(2);
@@ -576,9 +576,9 @@ ${body}
 
 function cta(ct) {
   return `    <aside class="sh-cta">
-      <img src="/art/v2/icon.png?v=3" width="56" height="56" alt="">
-      <h2>See every show on a map in Tracka</h2>
-      <div class="cta-row"><a class="store" href="${esc(STORE(ct))}" aria-label="Download Tracka on the App Store"><svg aria-hidden="true"><use href="#i-apple"/></svg><span><small>Download on the</small><b>App Store</b></span></a></div>
+      <img src="/art/v2/icon.png?v=3" width="40" height="40" alt="">
+      <p>Get the full details in the Tracka app</p>
+      <a class="sh-get" href="${esc(STORE(ct))}">Get the app</a>
     </aside>`;
 }
 
@@ -635,8 +635,6 @@ ${g.map(showItem).join('\n')}
       </ul>
     </section>`,
   );
-  // The app's pitch sits after the first month, where a reader has found what they came for.
-  blocks.splice(Math.min(1, blocks.length), 0, cta(ct));
 
   const near = (NEIGHBORS[st.code] || '')
     .split(' ')
@@ -654,6 +652,7 @@ ${g.map(showItem).join('\n')}
     <h1>Pokémon card shows in <span class="it">${esc(st.name)}</span></h1>
     <p class="sh-sub">${n} upcoming ${n === 1 ? 'show' : 'shows'} in ${esc(cityText)}.</p>
     ${updatedLine(updated)}
+${cta(ct)}
 ${blocks.join('\n')}
 ${nearHtml}`;
 
@@ -681,10 +680,10 @@ function hubPage(model, updated, v) {
   const body = `    <h1>Pokémon card shows <span class="it">near you</span></h1>
     <p class="sh-sub">${n} upcoming in ${states.length} states.</p>
     ${updatedLine(updated)}
+${cta('shows-hub')}
     <ul class="sh-states">
 ${states.map((st) => `      <li><a href="/shows/${st.slug}/"><b>${esc(st.name)}</b><span>${st.shows.length} ${st.shows.length === 1 ? 'show' : 'shows'}</span></a></li>`).join('\n')}
-    </ul>
-${cta('shows-hub')}`;
+    </ul>`;
   const ld = [
     {
       '@type': 'BreadcrumbList',

@@ -49,16 +49,20 @@ body.sh-page .nav { position: sticky; }
 .sh-go:hover { background: rgba(42, 133, 118, .2); }
 .sh-go svg { width: 18px; height: 18px; flex: none; }
 
-/* ---------- the one app pitch ---------- */
+/* ---------- the one app pitch: a slim strip under the title ---------- */
 .sh-cta {
-  margin-top: 36px; padding: 28px 24px; border-radius: 28px; text-align: center;
+  margin-top: 20px; padding: 10px 10px 10px 12px; border-radius: 20px;
   background: var(--deep); color: #fff;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  display: flex; align-items: center; gap: 12px;
 }
-.sh-cta img { width: 56px; height: 56px; border-radius: 14px; }
-.sh-cta h2 { font-size: 24px; line-height: 1.15; letter-spacing: -.03em; max-width: 16em; }
-.sh-cta .cta-row { margin-top: 4px; }
-.sh-cta .store { height: 50px; }
+.sh-cta img { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.sh-cta p { flex: 1; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+.sh-get {
+  flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px;
+  border-radius: 999px; background: #fff; color: var(--deep); font-size: 15px; font-weight: 700; white-space: nowrap;
+  transition: transform .2s var(--spring);
+}
+.sh-get:hover { transform: translateY(-1px); }
 .sh-cta :focus-visible { outline-color: #fff; }
 
 /* ---------- hub: one tile per state ---------- */
@@ -89,9 +93,8 @@ body.sh-page .nav { position: sticky; }
   .sh-show { padding: 14px; grid-template-columns: 84px minmax(0, 1fr); column-gap: 16px; }
   .sh-flyer { width: 84px; height: 112px; }
   .sh-states { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-  .sh-cta { flex-direction: row; text-align: left; padding: 28px 32px; gap: 20px; }
-  .sh-cta h2 { flex: 1; font-size: 28px; }
-  .sh-cta .cta-row { margin-top: 0; }
+  .sh-cta { max-width: 620px; padding: 12px 12px 12px 14px; }
+  .sh-cta p { font-size: 16px; }
 }
 @media (max-width: 560px) {
   .sh { padding: 24px 0 64px; }
