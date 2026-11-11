@@ -7,6 +7,8 @@
 /* While it is up nothing behind takes a tap (the page is inert too, pack.js); the TikTok and Android sheets open over it. */
 html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{pointer-events:none!important}
 .tp,.tp-stage{pointer-events:auto}
+/* A computer only (pack.js DESK), once the black is in: the page under it is not drawn. */
+html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
 .tp.off{opacity:0;transition-duration:.2s}
 .tp *{box-sizing:border-box}
 .tp-abs{position:absolute;left:0;top:0}

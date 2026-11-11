@@ -34,7 +34,7 @@
   var entry = /[?&]entry=([abc])(&|$)/.exec(q);
   var KEY = 'tv_pack_seen';
   var DELAY_MS = 700; // his word 11-11: "get to the website and have it pop up"
-  var V = '5';
+  var V = '6';
 
   if (!preview) {
     try {
