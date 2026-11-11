@@ -1475,8 +1475,11 @@
     var scrollY = window.scrollY;
     var bodyStyle = document.body.getAttribute('style');
     var inerted = [];
+    // Not the TikTok and Android sheets: they open OVER the pack (its Get the app), so
+    // one built earlier (a tap before the pack) must stay usable, or it covers the
+    // pack's X with a Close that can't be tapped.
     Array.prototype.forEach.call(document.body.children, function (c) {
-      if (c.tagName === 'SCRIPT' || c.inert) return;
+      if (c.tagName === 'SCRIPT' || c.inert || c.matches('.tt-sheet, .aw-scrim')) return;
       c.inert = true;
       c.setAttribute('aria-hidden', 'true');
       inerted.push(c);
