@@ -499,8 +499,12 @@
         window.addEventListener('resize', size);
         // ONE loop: it stops while the hero is off screen and restarts when it's back
         var visible = true, running = false, t0 = performance.now();
+        // A computer only: while the first-visit pack covers the page, the light rests (it is under the black).
+        var desk = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
+        var held = function () { return desk && document.documentElement.classList.contains('tp-open'); };
         var frame = function (now) {
           if (!visible) { running = false; return; }
+          if (held()) { running = false; setTimeout(function () { if (visible) kick(); }, 400); return; }
           gl.clearColor(0, 0, 0, 0);
           gl.clear(gl.COLOR_BUFFER_BIT);
           gl.uniform2f(uR, canvas.width, canvas.height);

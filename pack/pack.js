@@ -24,6 +24,12 @@
   'use strict';
 
   var RM = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // A Mac or PC (mouse or trackpad). Its window is several times a phone's pixels, so on a
+  // computer the pack hands its full-screen flashes and the turning rays to the GPU, draws
+  // nothing on the sparks layer when no spark is in flight, and hides the page under the black
+  // (11-11, desktop felt laggy). A phone never matches (hover: none, pointer: coarse): every
+  // DESK branch below leaves the phone's path as it was.
+  var DESK = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
   var PI = Math.PI;
 
   // ---------------------------------------------------------------------------
@@ -735,7 +741,7 @@
   // ---------------------------------------------------------------------------
   var MAX_SPARKS = 26, DRAG = 2.6;
   var sparks = [];
-  var canvas = null, ctx = null, dpr = 1;
+  var canvas = null, ctx = null, dpr = 1, inked = false;
   function sparkBurst(spec) {
     if (RM || !ctx) return;
     var n = Math.min(MAX_SPARKS, Math.max(0, Math.round(spec.count)));
@@ -754,6 +760,8 @@
   }
   function drawSparks() {
     if (!ctx) return;
+    // Computer: a clear of an empty window-sized canvas still sends the whole layer to the screen every frame.
+    if (DESK) { if (!sparks.length && !inked) return; inked = sparks.length > 0; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
     var t = now();
@@ -860,6 +868,7 @@
     root.setAttribute('aria-label', 'Open pack');
     root.tabIndex = 0;
     var flash = el('div', 'tp-fill tp-none', { background: film.lite, opacity: 0 });
+    if (DESK) flash.style.willChange = 'opacity';
     var whole = el('div', 'tp-abs tp-none', { left: left, top: top, width: W, height: H, opacity: 0 });
     whole.appendChild(softGlow(film.film, null, W * 1.3, H * 0.98, 0.3, -W * 0.15, H * 0.06));
     var pouch = el('div', 'tp-fill');
@@ -1034,6 +1043,7 @@
 
     var root = el('div', 'tp-fill');
     var pulse = el('div', 'tp-fill tp-none', { opacity: 0 });
+    if (DESK) pulse.style.willChange = 'opacity';
     var raysBox = el('div', 'tp-fill tp-none');
     var hit = el('div', 'tp-fill');
     hit.setAttribute('role', 'button');
@@ -1256,6 +1266,7 @@
       var p = new Val(0);
       p.go([[1, 1400, lin]]);
       var flashEl = el('div', 'tp-fill', { background: TIER_COLORS[tier].ink, opacity: 0 });
+      if (DESK) flashEl.style.willChange = 'opacity';
       burstBox.innerHTML = '';
       burstBox.appendChild(flashEl);
       var rings = [{ to: heat === null ? 1.22 + RANK[tier] * 0.07 : sampleCurve(RING_TO[0], h), ms: big ? 900 : 620, delay: 0, stroke: 2.5 }];
@@ -1275,7 +1286,11 @@
         var size = Math.min(W * 1.9, 760), on = new Val(0), spin = new Val(0);
         var cx = left + cardW / 2, cy = top + cardH / 2;
         var rbox = el('div', 'tp-abs', { left: cx - size / 2, top: cy - size / 2, width: size, height: size, opacity: 0 });
-        rbox.appendChild(softGlow(TIER_COLORS[tier].glow, TIER_COLORS[tier].glow2, size, size, 0.7));
+        // Computer: the box only turns, on the GPU (drawn once, not every frame); its scale-in is on an inner box,
+        // so the turn never stretches a picture drawn small. rotate() then scale() about one centre: the same look.
+        var rpic = rbox;
+        if (DESK) { rbox.style.willChange = 'transform, opacity'; rpic = el('div', 'tp-fill'); rbox.appendChild(rpic); }
+        rpic.appendChild(softGlow(TIER_COLORS[tier].glow, TIER_COLORS[tier].glow2, size, size, 0.7));
         var n2 = 14, rr = size / 2, path = '';
         for (var i = 0; i < n2; i++) {
           var a = (i / n2) * PI * 2, w = (PI / n2) * 0.42;
@@ -1283,12 +1298,12 @@
         }
         var svgBox = el('div', 'tp-abs');
         svgBox.innerHTML = '<svg width="' + size + '" height="' + size + '"><path d="' + path + '" fill="' + TIER_COLORS[tier].ink + '" fill-opacity="0.14"/></svg>';
-        rbox.appendChild(svgBox);
+        rpic.appendChild(svgBox);
         raysBox.innerHTML = '';
         raysBox.appendChild(rbox);
         on.go([[0.85, 360, quadOut], [TIER_COLORS[tier].foilText ? 0.5 : 0.36, 940]]);
         spin.go([[360, 46000, lin], [0, 0]], { loop: true });
-        rays = { el: rbox, on: on, spin: spin };
+        rays = { el: rbox, pic: rpic !== rbox ? rpic : null, on: on, spin: spin };
       }
       bursts = { p: p, flash: flashEl, flashTo: flashTo, flashMs: flashMs, rings: rings, rays: rays };
     }
@@ -1325,7 +1340,10 @@
         });
         if (b.rays) {
           css(b.rays.el, 'opacity', b.rays.on.v.toFixed(3));
-          css(b.rays.el, 'transform', 'rotate(' + b.rays.spin.v.toFixed(2) + 'deg) scale(' + interpC(b.rays.on.v, [0, 0.85], [0.55, 1]).toFixed(4) + ')');
+          if (b.rays.pic) {
+            css(b.rays.el, 'transform', 'rotate(' + b.rays.spin.v.toFixed(2) + 'deg)');
+            css(b.rays.pic, 'transform', 'scale(' + interpC(b.rays.on.v, [0, 0.85], [0.55, 1]).toFixed(4) + ')');
+          } else css(b.rays.el, 'transform', 'rotate(' + b.rays.spin.v.toFixed(2) + 'deg) scale(' + interpC(b.rays.on.v, [0, 0.85], [0.55, 1]).toFixed(4) + ')');
         }
       }
     }
@@ -1543,9 +1561,13 @@
     var beat = 'sealed', cardAt = 0, finished = false, closed = false;
     var tear = null, reveal = null, results = null;
 
+    // Computer: once the black is fully in, the page under it is not drawn at all (its layers,
+    // the hero's moving light). It is back the moment the pack starts to leave.
+    var hideT = DESK ? setTimeout(function () { if (!closed) document.documentElement.classList.add('tp-hide'); }, 1000) : 0;
     function close(via) {
       if (closed) return;
       closed = true;
+      if (DESK) { clearTimeout(hideT); document.documentElement.classList.remove('tp-hide'); }
       if (opts.onSettled) opts.onSettled();
       track('web_pack_declined', { step: beat, card: beat === 'reveal' ? cardAt + 1 : null, via: via });
       root.classList.remove('on');
@@ -1613,6 +1635,7 @@
       if (root.parentNode) root.parentNode.removeChild(root);
       inerted.forEach(function (c) { c.inert = false; c.removeAttribute('aria-hidden'); });
       document.documentElement.classList.remove('tp-open');
+      if (DESK) { clearTimeout(hideT); document.documentElement.classList.remove('tp-hide'); }
       if (bodyStyle === null) document.body.removeAttribute('style');
       else document.body.setAttribute('style', bodyStyle);
       // The site scrolls smoothly (html scroll-behavior), which would glide the page
