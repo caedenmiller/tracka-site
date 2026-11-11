@@ -1,0 +1,74 @@
+/* The first-visit pack (pack.js). The stage is the app's: pinned dark in both
+   themes (components/packs/pack-art STAGE), the app's system font. Loaded only
+   when the pack opens (start.js). Everything that moves is a transform or an
+   opacity, written by pack.js each frame. */
+.tp{position:fixed;top:0;right:0;bottom:0;left:0;z-index:990;background:#000;color:#f2f4f6;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:contain;opacity:0;transition:opacity .3s ease-out}
+.tp.on{opacity:1}
+.tp.off{opacity:0;transition-duration:.2s}
+.tp *{box-sizing:border-box}
+.tp-abs{position:absolute;left:0;top:0}
+.tp-fill{position:absolute;top:0;right:0;bottom:0;left:0}
+.tp-clip{position:absolute;left:0;overflow:hidden}
+.tp-none{pointer-events:none}
+.tp-probe{position:absolute;visibility:hidden;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.tp-sparks{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.tp svg{display:block;overflow:visible}
+.tp img{display:block;-webkit-user-drag:none;user-select:none}
+/* A focus ring only once the keyboard is in use (pack.js adds .kbd): the pack takes focus itself when it opens. */
+.tp :focus{outline:none}
+.tp.kbd :focus{outline:2px solid #1baaa6;outline-offset:2px}
+.tp.kbd [role=button]:focus{outline-offset:-4px}
+
+/* The header: the X (always: a visitor can leave at any point), the count, Skip. */
+.tp-x{position:absolute;left:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;margin:0;cursor:pointer;z-index:5;border-radius:22px;color:#9aa3ad}
+.tp-x svg{width:20px;height:20px}
+.tp-head{position:absolute;left:0;right:0;height:44px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
+.tp-count{color:#9aa3ad;font-size:15px;line-height:20px;font-weight:500;font-variant-numeric:tabular-nums}
+.tp-count.dim{opacity:.4}
+.tp-skip{position:absolute;right:8px;top:0;min-width:44px;height:44px;padding:0 12px;display:flex;align-items:center;justify-content:center;background:none;border:0;margin:0;color:#9aa3ad;font:inherit;font-size:17px;line-height:22px;cursor:pointer;pointer-events:auto}
+
+/* Card art */
+.tp-face{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;isolation:isolate}
+.tp-face img{width:100%;height:100%;object-fit:cover}
+
+/* Under the card: its name, its rarity in the tier's ink, its price. The fades are the app's
+   (Reanimated FadeIn / FadeOut / FadeInDown): withTiming's own easing, in-out quad, as a bezier. */
+.tp-info{position:absolute;left:0;text-align:center;pointer-events:none;animation:tp-in .18s cubic-bezier(.455,.03,.515,.955) both}
+.tp-info.out{animation:tp-out .12s cubic-bezier(.455,.03,.515,.955) both}
+.tp-name{font-size:20px;line-height:25px;font-weight:600;padding:0 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-sub{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px}
+.tp-tier{font-size:15px;line-height:20px;font-weight:500;white-space:nowrap}
+.tp-foil{-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.tp-price{font-size:15px;line-height:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.tp-big{font-size:34px;line-height:41px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+@keyframes tp-in{from{opacity:0}to{opacity:1}}
+@keyframes tp-out{from{opacity:1}to{opacity:0}}
+
+/* Results */
+.tp-res{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;animation:tp-in .26s cubic-bezier(.455,.03,.515,.955) both}
+.tp-top{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tp-hero{position:relative;animation:tp-in .24s cubic-bezier(.455,.03,.515,.955) both}
+.tp-res .tp-name{margin-top:18px;max-width:100%}
+.tp-grid{display:flex;flex-wrap:wrap;align-self:center;margin-top:18px}
+/* FadeInDown: up from 25 below. The picked tile sits 5 higher at once (the app's `up`), on the frame so the two never mix. */
+.tp-tile{display:block;background:none;border:0;padding:0;margin:0;cursor:pointer;animation:tp-down .3s cubic-bezier(.455,.03,.515,.955) both}
+.tp-tile.up>.tp-frame{transform:translateY(-5px)}
+@keyframes tp-down{from{opacity:0;transform:translateY(25px)}to{opacity:1;transform:none}}
+.tp-frame{position:relative;overflow:hidden}
+.tp-frame>.tp-in{position:absolute;overflow:hidden;background:#15171b}
+.tp-frame>.tp-in img{width:100%;height:100%;object-fit:cover}
+.tp-total{display:flex;justify-content:center;align-items:baseline;gap:8px;margin:10px 0 16px;font-size:15px;line-height:20px}
+.tp-total span{color:#9aa3ad}
+.tp-total b{font-weight:600;font-variant-numeric:tabular-nums}
+/* The app's PressableScale: in 90 ms to 0.97 and 0.85, back in 160. */
+.tp-store{height:50px;border-radius:25px;margin:0 20px;background:#1baaa6;color:#04100f;display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;line-height:22px;font-weight:600;text-decoration:none;transition:transform .16s cubic-bezier(.455,.03,.515,.955),opacity .16s cubic-bezier(.455,.03,.515,.955)}
+.tp-store:active{transform:scale(.97);opacity:.85;transition-duration:.09s}
+.tp-store svg{width:20px;height:20px;margin-top:-2px}
+@media (min-width:600px){.tp-store{align-self:center;width:340px;margin:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .tp,.tp.off{transition:none}
+  .tp-info,.tp-info.out,.tp-res,.tp-hero,.tp-tile{animation:none}
+  .tp-store{transition:none}
+  .tp-store:active{transform:none}
+}
