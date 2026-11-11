@@ -4,8 +4,9 @@
    page has painted, so the page itself is no slower.
 
    Whether (research in operator notes/overnight-2026-11-11/site-pack.md):
-     - once per browser: localStorage `tv_pack_seen` = '1', set the moment it
-       opens (a decline, a close or a reload all count). A flag, no id, never
+     - once per browser: localStorage `tv_pack_seen` = '1', set when the visitor
+       reaches the pull or closes it on purpose (X, Esc). Leaving the page mid-pack (TikTok's
+       edge swipe closed the browser on him, 11-11) does not count: it comes back next visit. A flag, no id, never
        sent anywhere (privacy.html section 12). Storage that can't be read or
        written means no pack: it could not be remembered, so it would come back.
        Safari and in-app browsers wipe script storage after 7 days without a
@@ -30,7 +31,7 @@
   var entry = /[?&]entry=([abc])(&|$)/.exec(q);
   var KEY = 'tv_pack_seen';
   var DELAY_MS = 700; // his word 11-11: "get to the website and have it pop up"
-  var V = '4';
+  var V = '5';
 
   if (!preview) {
     try {
@@ -99,8 +100,8 @@
         track: track,
         ok: function () { return preview || (!tapped && localStorage.getItem(KEY) !== '1'); },
         busy: busy,
+        onSettled: function () { if (!preview) try { localStorage.setItem(KEY, '1'); } catch (e) {} },
         onSeen: function () {
-          if (!preview) try { localStorage.setItem(KEY, '1'); } catch (e) {}
           // ms since the page started loading: 0.7 s after the HTML, later when it waited out a touch
           track('web_pack_shown', { delay_ms: Math.round(performance.now()) });
         },

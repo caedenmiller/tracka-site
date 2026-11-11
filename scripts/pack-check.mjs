@@ -10,6 +10,8 @@
 //   E  slow pictures and a dragging finger: never opens under the finger
 //   G  no tap, at any moment, reaches the page or a hero clip behind the pack (11-11: a tap
 //      on the pack sometimes brought up the video player on his iPhone)
+//   I  the seen flag is set at the results or by X / Esc, never by a page leave mid-pack; one
+//      back stays in the pack; closing drops our history entry
 //   H  no video takes a tap or opens a player, pack or no pack; the reel still turns on a swipe
 //   F  one tap opens the pack (11-11: TikTok's swipe took the tear); no drag is read in TikTok
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
@@ -119,12 +121,46 @@ try {
     await p.waitForTimeout(400);
     const shown = events.find(e => e.event === 'web_pack_shown');
     const declined = events.find(e => e.event === 'web_pack_declined');
-    check('D  flag set when shown', flag === '1');
+    check('D  flag not set by showing alone', flag === null, String(flag));
+    check('D  flag set by Esc', (await p.evaluate(() => localStorage.getItem('tv_pack_seen'))) === '1');
     check('D  web_pack_shown delay_ms is real', shown && shown.delay_ms >= 700 && shown.delay_ms !== 700, shown && shown.delay_ms);
     check('D  Esc sends web_pack_declined via esc', declined && declined.via === 'esc' && declined.step === 'sealed');
     await p.reload();
     await p.waitForTimeout(6000);
     check('D  nothing on reload', !(await p.$('.tp')));
+    await b.close();
+  }
+  { // I: an accidental exit keeps the pack; the pull or the X settles it; one back stays in the pack
+    const { b, p, events } = await open(chromium, IOS);
+    const flag = () => p.evaluate(() => localStorage.getItem('tv_pack_seen'));
+    await p.goto(BASE + 'privacy.html');
+    await p.goto(BASE);
+    await p.waitForSelector('.tp.on', { timeout: 12000 });
+    await p.touchscreen.tap(195, 330);
+    await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 6000 });
+    await p.goBack(); // a back swipe: our entry goes, the pack and the page stay
+    await p.waitForTimeout(400);
+    check('I  one back keeps the pack and the page', !!(await p.$('.tp.on')) && new URL(p.url()).pathname === '/', p.url());
+    await p.reload(); // leaves mid-pack
+    await p.waitForTimeout(300);
+    const left = events.find(e => e.event === 'web_pack_left');
+    check('I  leaving mid-pack sends web_pack_left with the step', left && left.step === 'reveal', left && left.step);
+    check('I  flag unset after leaving mid-pack', (await flag()) === null);
+    check('I  the pack comes back on the next visit', await p.waitForSelector('.tp.on', { timeout: 12000 }).then(() => true, () => false));
+    await toResults(p);
+    check('I  flag set at the results', (await flag()) === '1');
+    await p.evaluate(() => localStorage.removeItem('tv_pack_seen'));
+    await p.goto(BASE + 'privacy.html');
+    await p.goto(BASE);
+    await p.waitForSelector('.tp.on', { timeout: 12000 });
+    await p.waitForTimeout(300);
+    await p.click('.tp-x');
+    await p.waitForFunction(() => !document.querySelector('.tp'), null, { timeout: 3000 });
+    await p.waitForTimeout(500);
+    check('I  flag set by the X', (await flag()) === '1');
+    check('I  closing drops our history entry and stays on the page', new URL(p.url()).pathname === '/' && (await p.evaluate(() => !history.state)));
+    await p.goBack();
+    check('I  the next back is the page before', new URL(p.url()).pathname === '/privacy.html', p.url());
     await b.close();
   }
   { // E
@@ -174,6 +210,8 @@ try {
           }
           return worst;
         });
+        const cueMoves = await p.evaluate(() => { const c = document.querySelector('.tp-cue'); return !c || !c.querySelector('.tp-ring') ? ['no ring'] : c.getAnimations({ subtree: true }).flatMap(a => a.effect.getKeyframes().map(k => k.transform || '')).filter(t => /translate|matrix|skew|rotate/.test(t)); });
+        check(`F  ${name}: the tap cue only pulses in place`, !cueMoves.length, cueMoves.join(' '));
         check(`F  ${name}: nothing sweeps across the sealed pack`, drift < 0.5 && !(await p.$('.tp-sheen')), drift.toFixed(2) + ' px');
       }
       await p.touchscreen.tap(195, 330);

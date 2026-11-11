@@ -903,10 +903,14 @@
     root.appendChild(flash);
     arr.appendChild(whole);
     root.appendChild(arr);
-    // The one cue (11-11): a tap opens it, everywhere. It leaves when the tear starts.
-    var cue = el('div', 'tp-cue', { top: top + H + 20 }, 'Tap to open');
+    // The one cue (11-11): a tap opens it, everywhere. It sits in the middle of the pack, under the
+    // logo: a finger in a ring that pulses outward in place (nothing moves sideways), in the film's
+    // ink. It leaves on the first touch.
+    var cue = el('div', 'tp-cue', { top: H * 0.535, width: W, color: film.ink },
+      '<div class="tp-tap"><i class="tp-ring"></i><i class="tp-ring"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M22 14a8 8 0 0 1-8 8M18 11v-1a2 2 0 0 0-4 0M14 10V9a2 2 0 0 0-4 0v1M10 9.5V4a2 2 0 0 0-4 0v10M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg></div>Tap to open');
     cue.setAttribute('aria-hidden', 'true');
-    root.appendChild(cue);
+    whole.appendChild(cue);
 
     if (o.entry) enter.set(1);
     else enter.go([[1, 300, bezier(0.2, 0.8, 0.2, 1)]]);
@@ -1409,7 +1413,8 @@
   /**
    * opts: { data: the set's JSON, hit: a tier to force (preview) or null for
    * the first-visit SIR, track(event, props), ok() still wanted, busy() not now,
-   * onSeen() once it is on screen,
+   * onSeen() once it is on screen, onSettled() once it should not come back (the pull was
+   * reached, or it was closed on purpose; leaving the page mid-pack is neither),
    * preview: a ?pack= preview, whose store button says ct=pack-preview so his
    * own test taps never count as the pack's }.
    * Resolves false when it could not be shown (nothing was set or sent).
@@ -1525,12 +1530,61 @@
     function close(via) {
       if (closed) return;
       closed = true;
+      if (opts.onSettled) opts.onSettled();
       track('web_pack_declined', { step: beat, card: beat === 'reveal' ? cardAt + 1 : null, via: via });
       root.classList.remove('on');
       root.classList.add('off');
       setTimeout(teardown, RM ? 0 : 200);
     }
+    // Leaving the page mid-pack (a back swipe, the in-app browser closed): said once, and the pack
+    // is not marked seen, so it is there again next visit.
+    var left = false;
+    function onLeave(e) {
+      if (closed || finished || left || (e.type !== 'pagehide' && document.visibilityState !== 'hidden')) return;
+      left = true;
+      track('web_pack_left', { step: beat, card: beat === 'reveal' ? cardAt + 1 : null });
+    }
+    window.addEventListener('pagehide', onLeave);
+    document.addEventListener('visibilitychange', onLeave);
+    // A back swipe takes an entry of ours instead of the site, if the browser's swipe uses the
+    // page's history (TikTok's may not: his phone has to say). One back keeps the pack; the next leaves.
+    var ours = false, scrollMode = null;
+    try {
+      scrollMode = history.scrollRestoration;
+      history.scrollRestoration = 'manual';
+      history.pushState({ tvPack: 1 }, '', location.href);
+      ours = true;
+    } catch (e) {}
+    function onPop() { ours = false; }
+    window.addEventListener('popstate', onPop);
+    function dropEntry() {
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('pagehide', onLeave);
+      document.removeEventListener('visibilitychange', onLeave);
+      var done = false;
+      function restore(e) {
+        if (done) return;
+        done = true;
+        window.removeEventListener('popstate', restore);
+        // Going back over our entry must not move the page: hold it where it was, then hand scroll memory back.
+        if (e) { jump(); requestAnimationFrame(jump); }
+        setTimeout(function () { try { if (scrollMode) history.scrollRestoration = scrollMode; } catch (err) {} }, e ? 300 : 0);
+      }
+      var mine = false;
+      try { mine = ours && !!history.state && history.state.tvPack === 1; } catch (e) {}
+      if (!mine) return restore();
+      window.addEventListener('popstate', restore);
+      setTimeout(restore, 1000);
+      try { history.back(); } catch (e) { restore(); }
+    }
+    function jump() {
+      var html = document.documentElement, sb = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto';
+      window.scrollTo(0, scrollY);
+      html.style.scrollBehavior = sb;
+    }
     function teardown() {
+      dropEntry();
       timers.forEach(clearTimeout);
       timers = [];
       live.slice().forEach(function (v) { v.halt(); });
@@ -1547,10 +1601,7 @@
       else document.body.setAttribute('style', bodyStyle);
       // The site scrolls smoothly (html scroll-behavior), which would glide the page
       // down from the top after a close; this jump must be instant.
-      var html = document.documentElement, sb = html.style.scrollBehavior;
-      html.style.scrollBehavior = 'auto';
-      window.scrollTo(0, scrollY);
-      html.style.scrollBehavior = sb;
+      jump();
       if (lastFocus && lastFocus.focus) try { lastFocus.focus({ preventScroll: true }); } catch (e) {}
     }
     function onKey(e) {
@@ -1577,7 +1628,7 @@
 
     function toResults(skipped) {
       if (beat === 'results') return;
-      if (!finished) { finished = true; track('web_pack_finished', { tier: cards[9].tier, skipped: skipped }); }
+      if (!finished) { finished = true; if (opts.onSettled) opts.onSettled(); track('web_pack_finished', { tier: cards[9].tier, skipped: skipped }); }
       beat = 'results';
       renders = [];
       live.slice().forEach(function (v) { if (v !== turnVal) v.halt(); });
@@ -1610,7 +1661,7 @@
           onMoment: function () { count.classList.add('dim'); },
           onShown: function () {
             skip.style.display = 'none';
-            if (!finished) { finished = true; track('web_pack_finished', { tier: cards[9].tier, skipped: false }); }
+            if (!finished) { finished = true; if (opts.onSettled) opts.onSettled(); track('web_pack_finished', { tier: cards[9].tier, skipped: false }); }
           },
           onDone: function (skipped) { toResults(skipped); },
         });
