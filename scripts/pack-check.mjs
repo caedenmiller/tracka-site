@@ -8,6 +8,7 @@
 //   C  a ?pack=1 preview's store tap says ct=pack-preview
 //   D  first visit: shown once, flag set, delay_ms real, nothing on reload
 //   E  slow pictures and a dragging finger: never opens under the finger
+//   F  one tap opens the pack (11-11: TikTok's swipe took the tear); no drag is read in TikTok
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -139,6 +140,27 @@ try {
     check('E  never opens under a dragging finger', !under);
     check('E  opens once the finger lifts', await p.waitForSelector('.tp.on', { timeout: 6000 }).then(() => true, () => false));
     await b.close();
+  }
+  { // F: a tap opens it; inside TikTok a sideways drag is never read as a tear
+    const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
+    for (const [name, engine, ua] of [['Safari', webkit, IOS], ['TikTok', chromium, TT]]) {
+      const { b, c, p } = await open(engine, ua);
+      await p.goto(BASE + '?pack=1');
+      await p.waitForSelector('.tp.on', { timeout: 9000 });
+      check(`F  ${name}: the cue says Tap to open`, (await p.textContent('.tp-cue')) === 'Tap to open');
+      if (name === 'TikTok') {
+        const cdp = await c.newCDPSession(p);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 90, y: 260 }] });
+        for (let x = 100; x <= 300; x += 20) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: 260 }] });
+        await p.waitForTimeout(300);
+        check('F  TikTok: a drag across the pack tears nothing', !(await p.$('.tp-torn')));
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+        await p.waitForTimeout(100);
+      }
+      await p.touchscreen.tap(195, 330);
+      check(`F  ${name}: one tap opens the pack`, await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 4000 }).then(() => true, () => false));
+      await b.close();
+    }
   }
 } finally {
   server.close();

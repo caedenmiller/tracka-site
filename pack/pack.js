@@ -11,8 +11,8 @@
      app/pack-open.tsx                 the stage's layout (k, pack and card places)
    Reanimated's shared values are Val below (withTiming, withDelay,
    withSequence, withRepeat as a list of steps; withTiming's default easing is
-   Reanimated's, in-out quad). Haptics have no web equivalent on iPhone and
-   are left out. Reduce Motion is the system's, as in the app: every timing
+   Reanimated's, in-out quad). Haptics: one light tick at the open and at the hit
+   (tick() below), where the browser has any. Reduce Motion is the system's, as in the app: every timing
    lands at once and the beats keep their order.
 
    A first visit's card ten is a Special Illustration Rare (the app's round 4
@@ -788,15 +788,39 @@
   // ---------------------------------------------------------------------------
   // Pointer gestures (the app's Pan raced with a Tap)
   // ---------------------------------------------------------------------------
+  // A light tick: Android vibrates; iPhone Safari 17.4+ ticks when a switch is toggled, and a
+  // label's click toggles it, which only counts inside the visitor's own tap. Anything else: nothing.
+  function tick() {
+    if (RM) return;
+    try {
+      if (navigator.vibrate) { navigator.vibrate(10); return; }
+      if (!/iP(hone|ad|od)/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1 && /Mac/.test(navigator.userAgent))) return;
+      var l = document.createElement('label'), i = document.createElement('input');
+      l.setAttribute('aria-hidden', 'true');
+      l.style.display = 'none';
+      i.type = 'checkbox';
+      i.setAttribute('switch', '');
+      l.appendChild(i);
+      document.head.appendChild(l);
+      l.click();
+      document.head.removeChild(l);
+    } catch (e) {}
+  }
+
+  // Taps do everything; a drag is an extra. It is never read inside an in-app browser
+  // (TikTok's own swipe took a tear and threw him off the site, 11-11), and never from
+  // a drag that starts at a screen edge (the browser's back and forward swipes).
+  var NO_SWIPE = /TikTok|musical_ly|BytedanceWebview|trill_|Instagram|FBAN|FBAV|FB_IAB|FB4A/i.test(navigator.userAgent);
+  var EDGE = 28;
   function gesture(target, h) {
     var down = null;
     target.addEventListener('pointerdown', function (e) {
       if (e.button > 0 || down) return;
-      down = { id: e.pointerId, x: e.clientX, y: e.clientY, active: false, pts: [{ x: e.clientX, y: e.clientY, t: now() }] };
+      down = { id: e.pointerId, x: e.clientX, y: e.clientY, active: false, tapOnly: NO_SWIPE || e.clientX < EDGE || e.clientX > window.innerWidth - EDGE, pts: [{ x: e.clientX, y: e.clientY, t: now() }] };
       try { target.setPointerCapture(e.pointerId); } catch (err) {}
     });
     target.addEventListener('pointermove', function (e) {
-      if (!down || e.pointerId !== down.id) return;
+      if (!down || e.pointerId !== down.id || down.tapOnly) return;
       var dx = e.clientX - down.x, dy = e.clientY - down.y;
       down.pts.push({ x: e.clientX, y: e.clientY, t: now() });
       if (down.pts.length > 6) down.pts.shift();
@@ -823,14 +847,12 @@
   // ---------------------------------------------------------------------------
   // The sealed pack and its tear (TearStage)
   // ---------------------------------------------------------------------------
-  var DEMO_MS = 2200, DEMO_GAP_MS = 2600, DEMO_MAX = 3;
-  function easeIO(q) { return q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2; }
 
   function tearStage(o) {
     var W = o.packW, H = (W * PACK_VIEW.h) / PACK_VIEW.w, TY = H * TEAR_LINE, left = o.left, top = o.top;
     var film = packFilm(o.set.set);
-    var x = new Val(0), enter = new Val(0), fly = new Val(0), fall = new Val(0), seam = new Val(0), glint = new Val(0), demo = new Val(-1);
-    var dir = 1, phase = 0, swiped = false, demos = 0, taps = 0, gone = false;
+    var x = new Val(0), enter = new Val(0), fly = new Val(0), fall = new Val(0), seam = new Val(0), glint = new Val(0);
+    var dir = 1, phase = 0, swiped = false, gone = false;
 
     var root = el('div', 'tp-fill');
     root.setAttribute('role', 'button');
@@ -871,31 +893,18 @@
     whole.appendChild(glintClip);
     var seamEl = softGlow('#ffffff', null, W * 1.2, 60, 0, -W * 0.1, TY - 30);
     whole.appendChild(seamEl);
-    var ghost = el('div', 'tp-abs', { left: 0, top: TY - 22, width: 44, height: 44, borderRadius: '22px', background: 'rgba(255,255,255,0.22)', border: '1.5px solid rgba(255,255,255,0.8)', opacity: 0 });
-    whole.appendChild(ghost);
     root.appendChild(flash);
     root.appendChild(whole);
+    // The one cue (11-11): a tap opens it, everywhere. It leaves when the tear starts.
+    var cue = el('div', 'tp-cue', { top: top + H + 20 }, 'Tap to open');
+    cue.setAttribute('aria-hidden', 'true');
+    root.appendChild(cue);
 
     enter.go([[1, 300, bezier(0.2, 0.8, 0.2, 1)]]);
     if (!RM) later(function () { glint.go([[1, 1200, bezier(0.35, 0, 0.65, 1)], ['wait', 2400], [0, 0]], { loop: true }); }, 600);
 
-    function playDemo() {
-      if (RM || swiped || phase !== 0 || demo.v >= 0) return;
-      demo.set(0).go([[DEMO_MS, DEMO_MS, lin]], {
-        done: function (finished) {
-          demo.v = -1;
-          if (finished) {
-            if (phase === 0) x.v = 0;
-            demos += 1;
-            if (o.showDemo && !swiped && demos < DEMO_MAX) later(playDemo, DEMO_GAP_MS);
-          }
-        },
-      });
-    }
-    if (o.showDemo && !RM) later(playDemo, 700);
-
     function began() {
-      if (!swiped) { swiped = true; o.onTearStart(); }
+      if (!swiped) { swiped = true; root.className += ' tp-torn'; tick(); o.onTearStart(); }
     }
     function detach() {
       o.onDetach();
@@ -913,17 +922,10 @@
     function goneNow() { gone = true; o.onGone(); }
     function forceOpen() {
       if (phase !== 0) return;
-      demo.set(-1);
       began();
       x.set(0);
       phase = 1;
-      x.go([[W, 200]]);
-    }
-    function tapped() {
-      // A tap shows the gesture; the web adds: a second tap opens it (a mouse can drag, but no one should be stuck). Reduce Motion: a tap opens it.
-      taps += 1;
-      if (RM || taps >= 2) forceOpen();
-      else playDemo();
+      x.go([[W, 260]]);
     }
     root.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); forceOpen(); }
@@ -932,7 +934,6 @@
       active: function (dx) { return Math.abs(dx) > 8; },
       start: function (dx) {
         if (phase === 2) return;
-        demo.set(-1);
         x.halt();
         if (phase === 0) { x.set(0); dir = dx >= 0 ? 1 : -1; phase = 1; began(); }
       },
@@ -948,17 +949,11 @@
         if (x.v > W * 0.5 || vx * dir > 500) x.go([[W, 160]]);
         else x.go([[0, 220]], { done: function (f) { if (f && phase === 1) phase = 0; } });
       },
-      tap: function () { if (phase === 0 && demo.v < 0) tapped(); },
+      tap: forceOpen,
     });
 
     function render() {
       if (gone) return;
-      // The ghost drags the tear while it plays.
-      var e = demo.v;
-      if (e >= 0 && phase === 0) {
-        var far0 = W * 0.66;
-        x.v = e < 300 ? 5 : e < 1300 ? 5 + (far0 - 5) * easeIO((e - 300) / 1000) : e < 1620 ? far0 : far0 * (1 - easeIO(Math.min(1, (e - 1620) / 580)));
-      }
       // The strip lets go at the far edge.
       if (phase === 1 && x.v >= W * 0.975) { phase = 2; x.set(W); detach(); }
       var xv = x.v, p = xv / W, fl = fall.v, fy = fly.v;
@@ -988,18 +983,8 @@
       css(seamEl, 'transform', 'scaleX(' + interpC(s, [0, 0.25, 1], [0.3, 1, 1.5]).toFixed(3) + ') scaleY(' + interpC(s, [0, 0.25, 1], [0.3, 1, 1.9]).toFixed(3) + ')');
       css(flash, 'opacity', (s > 0 ? 0.4 * (1 - s) : 0).toFixed(3));
       var g = glint.v;
-      css(glintEl, 'opacity', (phase === 0 && demo.v < 0 ? interpC(g, [0, 0.16, 0.84, 1], [0, 1, 1, 0]) : 0).toFixed(3));
+      css(glintEl, 'opacity', (phase === 0 ? interpC(g, [0, 0.16, 0.84, 1], [0, 1, 1, 0]) : 0).toFixed(3));
       css(glintEl, 'transform', 'translateX(' + interp(g, [0, 1], [-W * 0.45, W * 1.05]).toFixed(2) + 'px)');
-      // The ghost touch.
-      var gx = 5, gop = 0, gs = 1;
-      if (e >= 0) {
-        var far = W * 0.66;
-        if (e < 300) { gop = e / 300; gs = 1.4 - 0.4 * (e / 300); }
-        else if (e < 1300) { gx = 5 + (far - 5) * easeIO((e - 300) / 1000); gop = 1; }
-        else if (e < 1620) { gx = far; gop = 1 - (e - 1300) / 320; gs = 1 + 0.35 * ((e - 1300) / 320); }
-      }
-      css(ghost, 'opacity', gop.toFixed(3));
-      css(ghost, 'transform', 'translateX(' + (gx - 22).toFixed(2) + 'px) scale(' + gs.toFixed(3) + ')');
     }
     return { el: root, render: render, pointerOff: function () { root.style.pointerEvents = 'none'; root.removeAttribute('tabindex'); } };
   }
@@ -1208,7 +1193,7 @@
       if (st.phase === 'done') { if (!st.busy) o.onDone(false); return; }
       if (st.busy || st.phase !== 'stack') return;
       if (!st.flipped[st.idx]) {
-        if (st.idx === 9) { build(); return; }
+        if (st.idx === 9) { tick(); build(); return; }
         st.busy = true;
         sync();
         var d = flip(st.idx);
@@ -1242,6 +1227,7 @@
 
     function startBurst(tier) {
       if (RM) return;
+      tick();
       var big = isBig(tier), heat = tierHeat(tier), h = heat === null ? 0 : heat;
       var flashTo = heat === null ? 0 : sampleCurve(FLASH, heat);
       var n = heat === null ? 0 : Math.round(sampleCurve(SPARKS, heat));
@@ -1596,7 +1582,7 @@
     skip.addEventListener('click', function () { toResults(true); });
 
     tear = tearStage({
-      set: set, packW: packW, left: packLeft, top: packTop, showDemo: true,
+      set: set, packW: packW, left: packLeft, top: packTop,
       stageLeft: function () { return stageRect().left; },
       onTearStart: function () {},
       onDetach: function () {
