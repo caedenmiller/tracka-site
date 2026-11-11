@@ -71,8 +71,8 @@ p { margin: 0; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
 .brand img { width: 27px; height: 27px; border-radius: 7px; }
 .nav-links { display: flex; gap: 26px; margin-left: auto; font-size: 13.5px; font-weight: 500; }
-.nav-links a { color: var(--on-deep-sub); padding: 10px 0; transition: color .16s; }
-.nav-links a:hover { color: #fff; }
+.nav-links a { display: inline-flex; align-items: center; min-height: 44px; color: #fff; font-weight: 600; transition: opacity .16s; } /* one link, reads as a link (his call 11-11: menu cut to Card shows) */
+.nav-links a:hover { opacity: .8; }
 .nav-cta { white-space: nowrap; margin-left: 8px; background: var(--light); color: var(--ink); font-weight: 700; font-size: 13.5px; padding: 10px 16px; border-radius: 999px; transition: transform .2s var(--spring), box-shadow .2s; }
 .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, .16); }
 .menu-btn { display: none; margin-left: auto; width: 44px; height: 44px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .14); color: #fff; align-items: center; justify-content: center; flex-direction: column; gap: 5px; cursor: pointer; }
@@ -430,13 +430,9 @@ video::-webkit-media-controls, video::-webkit-media-controls-start-playback-butt
 
 /* ---------- smaller screens ---------- */
 @media (max-width: 1080px) {
-  .nav-links { display: none; }
-  .menu-btn { display: flex; }
-  .nav-in { gap: 12px; } /* the button sits beside the menu, not out in the middle (Caeden 11-02) */
-  .nav-cta { margin-left: auto; }
-  .menu-btn { margin-left: 0; }
+  .nav-in { gap: 12px; }
+  .nav-cta { margin-left: 4px; }
 }
-@media (min-width: 1081px) { .menu { display: none !important; } }
 @media (max-width: 900px) {
   .hero-stage { height: 560px; }
   .hero-stage { --pw: 230px; --kx: .716; --dy: 58; --s: .852; }
