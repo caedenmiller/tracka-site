@@ -95,7 +95,7 @@
         data: got[2],
         hit: hit,
         preview: preview,
-        entry: entry && entry[1],
+        entry: entry ? entry[1] : 'a', // Rise is the entrance (his pick 11-11); ?entry=b|c still previews the others
         track: track,
         ok: function () { return preview || (!tapped && localStorage.getItem(KEY) !== '1'); },
         busy: busy,
