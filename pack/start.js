@@ -25,6 +25,9 @@
 (function () {
   var q = location.search;
   if (/[?&]nopack(=|&|$)/.test(q)) return;
+  // The TikTok handoff (escape.js, 11-11): this load is on its way to the store, in TikTok
+  // under the sheet and in Safari by redirect. No pack, and nothing marked seen.
+  if (/[?&]app=/.test(q)) return;
   var m = /[?&]pack=([a-z0-9]+)/.exec(q);
   var preview = !!m;
   var hit = m && /^(common|uncommon|rare|double|ultra|illus|sir|hyper)$/.test(m[1]) ? m[1] : null;

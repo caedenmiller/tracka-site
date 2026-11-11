@@ -17,14 +17,39 @@
    the steps, the App Store line and the sheet panel too much).
    11-07: a solid black screen instead of the see-through veil, same words, the
    arrow in foil, and on a creator page the code repeated big (see css()).
+   11-11, the handoff: the inline sheet left Open in browser handing Safari the plain
+   homepage, a first visit there, so the pack showed AGAIN and the store still had to be
+   found. A store tap on a site page (the pack's button too) now LOADS this same page as
+   ?app=<the link's ct> and the sheet opens on that load; it is our own page, not the
+   /go/tiktok/ redirect TikTok refuses, so it should load (his phone has to confirm).
+   In Safari a load with ?app= shows no pack (start.js) and goes straight to the App Store
+   with that ct, with a Get the app button left on screen in case the jump does not fire.
    PREVIEW ONLY: ?preview_tiktok=1 shows it in any browser so it can be looked at
    without TikTok; nothing is tracked in a preview. */
 (function () {
   var ua = navigator.userAgent;
   var preview = /[?&]preview_tiktok=1(&|$)/.test(location.search);
-  if (!preview) {
-    if (!/TikTok|musical_ly|BytedanceWebview|trill_/i.test(ua)) return;
-    if (!/iPhone|iPad|iPod/i.test(ua)) return;
+  var inTikTok = /TikTok|musical_ly|BytedanceWebview|trill_/i.test(ua) && /iPhone|iPad|iPod/i.test(ua);
+  var app = /[?&]app=([a-z0-9-]{1,40})(&|$)/i.exec(location.search);
+  app = app && location.pathname.indexOf('/go/') !== 0 ? app[1] : null;
+  if (app && !inTikTok && !preview) { landed(app); return; }
+  if (!preview && !inTikTok) return;
+
+  // Out of TikTok with the marker: straight to the store; this screen stays behind as the way on.
+  function landed(ct) {
+    var url = 'https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=' + ct + '&mt=8';
+    try { if (window.tvTrack) window.tvTrack('web_tiktok_handoff_landed', { ct: ct }); } catch (e) { /* fine */ }
+    css();
+    var s = document.createElement('div');
+    s.className = 'tt-sheet on';
+    s.setAttribute('role', 'dialog');
+    s.setAttribute('aria-modal', 'true');
+    s.setAttribute('aria-label', 'Get Tracka');
+    s.innerHTML = '<div class="tt-mark" aria-hidden="true"><img src="/go/icon.png?v=3" width="84" height="84" alt=""><b>Tracka</b></div>' +
+      '<a class="tt-get" href="' + url + '">Get the app</a><button class="tt-close" type="button">Close</button>';
+    s.querySelector('.tt-close').addEventListener('click', function () { s.hidden = true; });
+    document.body.appendChild(s);
+    location.replace(url);
   }
 
   var LANDING = '/go/tiktok/';
@@ -67,6 +92,8 @@
       '.tt-mark b{font-size:22px;font-weight:800;line-height:1;letter-spacing:.18em;padding-left:.18em;text-transform:uppercase}' +
       '.tt-close{flex:none;align-self:center;margin-top:auto;height:52px;min-width:168px;padding:0 34px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:#1B1B20;color:#fff;font:700 16px "Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif}' +
       '.tt-code+.tt-close,.tt-mark+.tt-close{margin-top:24px}' +
+      '.tt-get{flex:none;display:flex;align-items:center;justify-content:center;height:58px;margin-top:24px;border-radius:999px;background:#fff;color:#08080A;font:800 18px "Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif;text-decoration:none}' +
+      '.tt-get:active{opacity:.85}.tt-get+.tt-close{margin-top:14px}' +
       '.tt-close:focus{outline:none}.tt-close:active{background:#2A2A31}' +
       '@media(max-height:600px){.tt-arrow{width:44px;height:58px}.tt-mark img{width:64px;height:64px;border-radius:15px}.tt-tip{font-size:25px;margin-top:6px}.tt-code{padding:14px 14px 12px}.tt-code b{font-size:min(42px,calc((100vw - 84px) / var(--n,7) / .8))}.tt-close{height:48px}}' +
       // the pinned bar: one line at a FIXED 40px, and the nav and the page sit 40px
@@ -168,7 +195,7 @@
 
   function start() {
     if (onLanding) show();
-    else if (!onGo) bar();
+    else if (!onGo) { bar(); if (app) show(true); } // the handoff load: the sheet at once
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
@@ -180,7 +207,15 @@
     // /go pages already redirect in Safari: just show the sheet there.
     // Everywhere else the sheet opens on this page (no navigation: TikTok
     // blocks the /go/tiktok/ load for normal visitors).
+    // A site page: load it again with the marker, so Open in browser hands Safari an address
+    // that goes to the store (see the 11-11 note above). Already on it, or a preview: the sheet.
     if (onGo) show();
-    else show(true);
+    else if (app || preview) show(true);
+    else {
+      var ct = /[?&]ct=([a-z0-9-]{1,40})(&|$)/i.exec(a.getAttribute('href') || '');
+      ct = ct ? ct[1] : 'home';
+      try { if (window.tvTrack) window.tvTrack('web_tiktok_handoff', { ct: ct }); } catch (err) { /* fine */ }
+      location.replace(location.pathname + '?app=' + ct);
+    }
   }, true);
 })();
