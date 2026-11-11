@@ -93,11 +93,13 @@
       return window.tvPackRun({
         data: got[2],
         hit: hit,
+        preview: preview,
         track: track,
         ok: function () { return preview || (!tapped && localStorage.getItem(KEY) !== '1'); },
         onSeen: function () {
           if (!preview) try { localStorage.setItem(KEY, '1'); } catch (e) {}
-          track('web_pack_shown', { delay_ms: DELAY_MS });
+          // ms since the page started loading: 4 s after load, later when it waited out a touch
+          track('web_pack_shown', { delay_ms: Math.round(performance.now()) });
         },
       });
     }).catch(function () {});

@@ -1393,7 +1393,7 @@
     total.appendChild(tv);
     countUp(tv, cards.reduce(function (s, c) { return s + (c.price || 0); }, 0), 600);
     var store = el('a', 'tp-store');
-    store.href = STORE;
+    store.href = o.preview ? STORE.replace('ct=pack', 'ct=pack-preview') : STORE;
     store.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg><span>Get the app</span>';
     root.appendChild(topBox);
     root.appendChild(grid);
@@ -1417,7 +1417,9 @@
 
   /**
    * opts: { data: the set's JSON, hit: a tier to force (preview) or null for
-   * the first-visit SIR, track(event, props), onSeen() once it is on screen }.
+   * the first-visit SIR, track(event, props), onSeen() once it is on screen,
+   * preview: a ?pack= preview, whose store button says ct=pack-preview so his
+   * own test taps never count as the pack's }.
    * Resolves false when it could not be shown (nothing was set or sent).
    */
   function run(opts) {
@@ -1578,7 +1580,7 @@
       drawSparks();
       count.textContent = '';
       skip.style.display = 'none';
-      results = resultsStage({ cards: cards, stageW: Wd, stageH: Hd, topInset: insets.top + 44, bottomInset: insets.bottom });
+      results = resultsStage({ preview: opts.preview, cards: cards, stageW: Wd, stageH: Hd, topInset: insets.top + 44, bottomInset: insets.bottom });
       stage.appendChild(results.el);
       renders.push(drawSparks);
       results.focus();
