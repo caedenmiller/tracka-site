@@ -30,10 +30,15 @@ html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{poi
 .tp-count.dim{opacity:.4}
 .tp-skip{position:absolute;right:8px;top:0;min-width:44px;height:44px;padding:0 12px;display:flex;align-items:center;justify-content:center;background:none;border:0;margin:0;color:#9aa3ad;font:inherit;font-size:17px;line-height:22px;cursor:pointer;pointer-events:auto}
 
-/* The one cue under the sealed pack: it comes in after the pack, breathes, and leaves with the tear. */
-.tp-cue{position:absolute;left:0;right:0;text-align:center;pointer-events:none;color:#9aa3ad;font-size:15px;line-height:20px;font-weight:500;letter-spacing:.02em;animation:tp-in .4s .7s ease-out both,tp-breathe 2.6s 1.1s ease-in-out infinite}
+/* The one cue, in the middle of the sealed pack: a finger in a ring that pulses outward in place
+   (scale and opacity only, nothing sideways), over "Tap to open". It leaves on the first touch. */
+.tp-cue{position:absolute;left:0;text-align:center;pointer-events:none;font-size:15px;line-height:20px;font-weight:600;letter-spacing:.02em;text-shadow:0 1px 2px rgba(0,0,0,.22);animation:tp-in .4s .7s ease-out both}
 .tp-torn .tp-cue{animation:tp-out .15s ease-out both}
-@keyframes tp-breathe{0%,100%{opacity:1}50%{opacity:.45}}
+.tp-tap{position:relative;width:60px;height:60px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.16);border:1.5px solid currentColor}
+.tp-tap svg{width:26px;height:26px}
+.tp-ring{position:absolute;top:-1.5px;right:-1.5px;bottom:-1.5px;left:-1.5px;border-radius:50%;border:1.5px solid currentColor;opacity:0;animation:tp-ring 2.4s 1.1s cubic-bezier(.2,.6,.3,1) infinite}
+.tp-ring+.tp-ring{animation-delay:2.3s}
+@keyframes tp-ring{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(1.7)}}
 
 /* Card art */
 .tp-face{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;isolation:isolate}
@@ -76,7 +81,9 @@ html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{poi
 
 @media (prefers-reduced-motion:reduce){
   .tp,.tp.off{transition:none}
-  .tp-info,.tp-info.out,.tp-res,.tp-hero,.tp-tile,.tp-cue{animation:none}
+  .tp-info,.tp-info.out,.tp-res,.tp-hero,.tp-tile,.tp-cue,.tp-ring{animation:none}
+  .tp-ring{opacity:.45;transform:scale(1.28)}
+  .tp-ring+.tp-ring{display:none}
   .tp-torn .tp-cue{opacity:0}
   .tp-store{transition:none}
   .tp-store:active{transform:none}
@@ -93,7 +100,9 @@ html.tp-open body>:not(.tp):not(.tt-sheet):not(.aw-scrim),html.tp-open video{poi
 .tp-e .tp-arr{transform-origin:var(--tp-o)}
 .tp-e .tp-bloom{transform-origin:var(--tp-o);transition:opacity .4s ease-out}
 .tp-e:not(.on) .tp-arr,.tp-e:not(.on) .tp-bloom,.tp-e .tp-torn .tp-bloom{opacity:0!important}
-.tp-e .tp-cue{animation-delay:1s,1.4s}
+.tp-e .tp-cue{animation-delay:1s}
+.tp-e .tp-ring{animation-delay:1.3s}
+.tp-e .tp-ring+.tp-ring{animation-delay:2.5s}
 .tp-e .tp-x::before{content:"";position:absolute;top:4px;right:4px;bottom:4px;left:4px;border-radius:50%;background:rgba(8,14,16,.55);z-index:-1}
 .tp-e.on .tp-x::before{animation:tp-out .5s .35s ease-out both}
 @keyframes tp-idle{0%,100%{transform:scale(1)}50%{transform:scale(1.016)}}
