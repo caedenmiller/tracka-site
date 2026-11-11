@@ -157,6 +157,22 @@ try {
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
         await p.waitForTimeout(100);
       }
+      { // nothing on the sealed pack moves sideways (a sweeping shine read as "swipe right", 11-11)
+        await p.waitForTimeout(1300);
+        const drift = await p.evaluate(async () => {
+          const seen = new Map(); let worst = 0; const t0 = performance.now();
+          while (performance.now() - t0 < 4200) {
+            for (const n of document.querySelectorAll('.tp-stage *')) {
+              const x = new DOMMatrixReadOnly(getComputedStyle(n).transform).e;
+              if (!seen.has(n)) seen.set(n, x);
+              worst = Math.max(worst, Math.abs(x - seen.get(n)));
+            }
+            await new Promise(r => requestAnimationFrame(r));
+          }
+          return worst;
+        });
+        check(`F  ${name}: nothing sweeps across the sealed pack`, drift < 0.5 && !(await p.$('.tp-sheen')), drift.toFixed(2) + ' px');
+      }
       await p.touchscreen.tap(195, 330);
       check(`F  ${name}: one tap opens the pack`, await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 4000 }).then(() => true, () => false));
       await b.close();

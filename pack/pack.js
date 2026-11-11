@@ -851,7 +851,7 @@
   function tearStage(o) {
     var W = o.packW, H = (W * PACK_VIEW.h) / PACK_VIEW.w, TY = H * TEAR_LINE, left = o.left, top = o.top;
     var film = packFilm(o.set.set);
-    var x = new Val(0), enter = new Val(0), fly = new Val(0), fall = new Val(0), seam = new Val(0), glint = new Val(0);
+    var x = new Val(0), enter = new Val(0), fly = new Val(0), fall = new Val(0), seam = new Val(0);
     var dir = 1, phase = 0, swiped = false, gone = false;
 
     var root = el('div', 'tp-fill');
@@ -887,23 +887,17 @@
     whole.appendChild(flap);
     var front = softGlow('#ffffff', null, 46, 46, 0, 0, TY - 23);
     whole.appendChild(front);
-    var glintClip = el('div', 'tp-clip', { top: 0, width: W, height: H });
-    var glintEl = softGlow('#ffffff', null, W * 0.4, H * 0.116, 0, 0, TY - H * 0.058);
-    glintClip.appendChild(glintEl);
-    whole.appendChild(glintClip);
     var seamEl = softGlow('#ffffff', null, W * 1.2, 60, 0, -W * 0.1, TY - 30);
     whole.appendChild(seamEl);
     // The entrance options (?entry=a|b|c, pack.css "Entrances"): the arrival is CSS on `arr`,
-    // with a bloom behind the pack and one sheen across it; the cue and the glint wait for it.
+    // with a bloom behind the pack. Nothing sweeps across the sealed pack, in any browser: a
+    // shine moving sideways read as "swipe right", which in TikTok goes back and leaves the
+    // site (his test 11-11). It idles in place instead: the bloom pulses and the pack breathes.
     var arr = el('div', 'tp-fill tp-none tp-arr');
-    var lead = o.entry && !RM ? 1150 : 0;
     if (o.entry) {
       var bloom = softGlow(film.film, null, W * 2.6, H * 1.5, 0.2, left - W * 0.8, top - H * 0.25);
       bloom.className += ' tp-bloom';
       root.appendChild(bloom);
-      var sheenClip = el('div', 'tp-clip', { left: W * 0.02, top: H * 0.012, width: W * 0.96, height: H * 0.976 });
-      sheenClip.appendChild(el('div', 'tp-sheen'));
-      whole.appendChild(sheenClip);
     }
     root.appendChild(flash);
     arr.appendChild(whole);
@@ -915,7 +909,6 @@
 
     if (o.entry) enter.set(1);
     else enter.go([[1, 300, bezier(0.2, 0.8, 0.2, 1)]]);
-    if (!RM) later(function () { glint.go([[1, 1200, bezier(0.35, 0, 0.65, 1)], ['wait', 2400], [0, 0]], { loop: true }); }, lead || 600);
 
     function began() {
       if (!swiped) { swiped = true; root.className += ' tp-torn'; tick(); o.onTearStart(); }
@@ -996,9 +989,6 @@
       css(seamEl, 'opacity', interpC(s, [0, 0.25, 1], [0, 1, 0]).toFixed(3));
       css(seamEl, 'transform', 'scaleX(' + interpC(s, [0, 0.25, 1], [0.3, 1, 1.5]).toFixed(3) + ') scaleY(' + interpC(s, [0, 0.25, 1], [0.3, 1, 1.9]).toFixed(3) + ')');
       css(flash, 'opacity', (s > 0 ? 0.4 * (1 - s) : 0).toFixed(3));
-      var g = glint.v;
-      css(glintEl, 'opacity', (phase === 0 ? interpC(g, [0, 0.16, 0.84, 1], [0, 1, 1, 0]) : 0).toFixed(3));
-      css(glintEl, 'transform', 'translateX(' + interp(g, [0, 1], [-W * 0.45, W * 1.05]).toFixed(2) + 'px)');
     }
     return { el: root, render: render, pointerOff: function () { root.style.pointerEvents = 'none'; root.removeAttribute('tabindex'); } };
   }

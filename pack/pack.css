@@ -80,8 +80,8 @@
 }
 
 /* Entrances (?entry=a|b|c; the default above is untouched until he picks). The page blurs and
-   dims instead of cutting to black, the pack arrives on .tp-arr with a bloom behind and one
-   sheen across it. Opacity and transform only; the blur layer is dropped once the black is in.
+   dims instead of cutting to black, the pack arrives on .tp-arr with a bloom behind. No shine
+   crosses the sealed pack (it read as "swipe right"); it idles in place: the bloom pulses, the pack breathes. Opacity and transform only; the blur layer is dropped once the black is in.
    The X is there from the first frame, on a dark chip while the page is still light. */
 .tp-e{background:none;opacity:1;transition:none}
 .tp-e.off{opacity:0;transition:opacity .2s ease-out}
@@ -90,28 +90,26 @@
 .tp-e .tp-arr{transform-origin:var(--tp-o)}
 .tp-e .tp-bloom{transform-origin:var(--tp-o);transition:opacity .4s ease-out}
 .tp-e:not(.on) .tp-arr,.tp-e:not(.on) .tp-bloom,.tp-e .tp-torn .tp-bloom{opacity:0!important}
-.tp-sheen{position:absolute;top:-10%;left:0;width:56%;height:120%;opacity:0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.1) 30%,rgba(255,255,255,.5) 49%,rgba(255,255,255,.62) 52%,rgba(255,255,255,.12) 68%,rgba(255,255,255,0) 100%)}
 .tp-e .tp-cue{animation-delay:1s,1.4s}
 .tp-e .tp-x::before{content:"";position:absolute;top:4px;right:4px;bottom:4px;left:4px;border-radius:50%;background:rgba(8,14,16,.55);z-index:-1}
 .tp-e.on .tp-x::before{animation:tp-out .5s .35s ease-out both}
+@keyframes tp-idle{0%,100%{transform:scale(1)}50%{transform:scale(1.016)}}
+@keyframes tp-idle-bloom{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.44;transform:scale(1.07)}}
 @keyframes tp-blur{0%{opacity:0}70%{opacity:1}100%{opacity:1;visibility:hidden}}
-@keyframes tp-sheen{0%{opacity:1;transform:translate3d(-170%,0,0) skewX(-16deg)}100%{opacity:1;transform:translate3d(300%,0,0) skewX(-16deg)}}
 
 /* A, Rise: comes up from below, tipped back, on a long soft landing. */
 .tp-e-a.on .tp-blur{animation:tp-blur .75s cubic-bezier(.4,0,.2,1) forwards}
 .tp-e-a.on .tp-dim{animation:tp-in .65s .14s cubic-bezier(.4,0,.2,1) forwards}
-.tp-e-a.on .tp-arr{animation:tp-a .95s .06s cubic-bezier(.16,1,.3,1) backwards}
-.tp-e-a.on .tp-bloom{animation:tp-bloom-a 1.15s .1s cubic-bezier(.2,.7,.2,1) backwards}
-.tp-e-a.on .tp-sheen{animation:tp-sheen .7s .46s cubic-bezier(.4,0,.2,1) backwards}
+.tp-e-a.on .tp-arr{animation:tp-a .95s .06s cubic-bezier(.16,1,.3,1) backwards,tp-idle 3.6s 1.25s ease-in-out infinite}
+.tp-e-a.on .tp-bloom{animation:tp-bloom-a 1.15s .1s cubic-bezier(.2,.7,.2,1) backwards,tp-idle-bloom 3.6s 1.25s ease-in-out infinite}
 @keyframes tp-a{0%{opacity:0;transform:perspective(1100px) translate3d(0,72px,0) rotateX(18deg) scale(.88)}30%{opacity:1}100%{opacity:1;transform:perspective(1100px) translate3d(0,0,0) rotateX(0deg) scale(1)}}
 @keyframes tp-bloom-a{0%{opacity:0;transform:translate3d(0,40px,0) scale(.6)}45%{opacity:.62;transform:translate3d(0,0,0) scale(1.06)}100%{opacity:.2;transform:translate3d(0,0,0) scale(1)}}
 
 /* B, Land: drops in from close up, turned and tilted, lands with weight; light blooms on the landing. */
 .tp-e-b.on .tp-blur{animation:tp-blur .55s cubic-bezier(.4,0,.2,1) forwards}
 .tp-e-b.on .tp-dim{animation:tp-in .5s .08s cubic-bezier(.4,0,.2,1) forwards}
-.tp-e-b.on .tp-arr{animation:tp-b 1s .04s linear backwards}
-.tp-e-b.on .tp-bloom{animation:tp-bloom-b 1.1s .04s linear backwards}
-.tp-e-b.on .tp-sheen{animation:tp-sheen .62s .5s cubic-bezier(.4,0,.2,1) backwards}
+.tp-e-b.on .tp-arr{animation:tp-b 1s .04s linear backwards,tp-idle 3.6s 1.25s ease-in-out infinite}
+.tp-e-b.on .tp-bloom{animation:tp-bloom-b 1.1s .04s linear backwards,tp-idle-bloom 3.6s 1.25s ease-in-out infinite}
 @keyframes tp-b{
   0%{opacity:0;transform:perspective(900px) translate3d(0,-44px,0) rotateY(-26deg) rotateZ(-8deg) scale(1.36);animation-timing-function:cubic-bezier(.5,0,.75,.5)}
   16%{opacity:1}
@@ -123,9 +121,8 @@
 /* C, Turn: the light comes first, then the pack turns to face you through it. */
 .tp-e-c.on .tp-blur{animation:tp-blur .8s cubic-bezier(.4,0,.2,1) forwards}
 .tp-e-c.on .tp-dim{animation:tp-in .7s .16s cubic-bezier(.4,0,.2,1) forwards}
-.tp-e-c.on .tp-arr{animation:tp-c 1s .14s linear backwards}
-.tp-e-c.on .tp-bloom{animation:tp-bloom-c 1.15s cubic-bezier(.3,.6,.3,1) backwards}
-.tp-e-c.on .tp-sheen{animation:tp-sheen .66s .5s cubic-bezier(.4,0,.2,1) backwards}
+.tp-e-c.on .tp-arr{animation:tp-c 1s .14s linear backwards,tp-idle 3.6s 1.25s ease-in-out infinite}
+.tp-e-c.on .tp-bloom{animation:tp-bloom-c 1.15s cubic-bezier(.3,.6,.3,1) backwards,tp-idle-bloom 3.6s 1.25s ease-in-out infinite}
 @keyframes tp-c{
   0%{opacity:0;transform:perspective(1000px) translate3d(0,14px,0) rotateY(-80deg) scale(.86);animation-timing-function:cubic-bezier(.2,.75,.25,1)}
   16%{opacity:1}
@@ -138,5 +135,5 @@
   .tp-e.on .tp-dim{animation:tp-in .25s linear forwards}
   .tp-e.on .tp-arr{animation:tp-in .25s linear backwards}
   .tp-e.on .tp-bloom,.tp-e.on .tp-x::before{animation:none}
-  .tp-e.on .tp-x::before,.tp-sheen{display:none}
+  .tp-e.on .tp-x::before{display:none}
 }
