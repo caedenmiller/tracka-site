@@ -48,7 +48,8 @@
   var tapped = false, lastTouch = 0, started = false;
   document.addEventListener('click', function (e) {
     var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-    if (a && /apps\.apple\.com|^\/go\//.test(a.getAttribute('href')) && !a.closest('.tp')) tapped = true;
+    // a.store too: on Android the hero's store button is "Get notified" (href #, android.js)
+    if (a && (/apps\.apple\.com|^\/go\//.test(a.getAttribute('href')) || a.classList.contains('store')) && !a.closest('.tp')) tapped = true;
   }, true);
   ['pointerdown', 'pointermove', 'touchstart'].forEach(function (t) {
     addEventListener(t, function () { lastTouch = Date.now(); }, { capture: true, passive: true });
