@@ -25,6 +25,7 @@
 //   --flyer-prefix <url>   flyer URLs must start with this (default: the project's show-flyers bucket)
 //   --min <n>              fewest shows a good read can have (default 100)
 //   --report <file>        write the data report as JSON
+//   --allow-drop           build even if far fewer shows have dates than last run
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, rmSync, statSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -422,7 +423,16 @@ const DATED = [
   new RegExp(`\\b${WDAY}${NUMDATE}(?:${DATEJOIN}${NUMDATE})*`, 'gi'),
   new RegExp(`\\b${MON}\\.?\\s*202\\d\\b`, 'gi'),
   /\b202[4-9]\b/g,
+  new RegExp(`\\b${DAY}\\s+${MON}\\b\\.?`, 'gi'), // "16 November"
+  // A month on its own ("November Great River Card Shows", "Novembers BK TCG Show", "... NJ Dec"):
+  // a monthly show names its month. Full names, plus short forms that aren't everyday words.
+  /\b(?:january|february|march|april|may|june|july|august|september|october|november|december)(?:'?s)?\b/gi,
+  /\b(?:jan|feb|apr|jun|jul|aug|sept?|oct|nov|dec)\b\.?/gi,
   /\s*#\s*\d+\b/g, // "#11", the edition number: same show, next date
+  // An edition number standing before punctuation or the end: "RVA Expo 7 (Regional)", "Show 16! - November",
+  // "West Valley TCG Expo 8", and a short year: "Nutmeg Card Show '26: Oakville".
+  /\s\d{1,3}(?=\s*(?:[!:(\-–|┃]|$))/g,
+  /\s'\d\d\b/g,
   /\b(?:vol\.?|volume|episode)\s*\d+\b/gi,
 ];
 const SEP = '[-–|┃│:@,]';
@@ -451,7 +461,7 @@ function showKey(state, city, title) {
   const c = slugify(city);
   const name = slugify(undated(title)) || 'card-show';
   const bare = c ? `-${name}-`.replace(`-${c}-`, '-').replace(/^-+|-+$/g, '') : name;
-  return `${state}|${city.toLowerCase()}|${bare || name}`;
+  return `${state}|${c}|${bare || name}`;
 }
 
 // "dulles-card-show-chantilly": the name (at most 48 characters, cut at a word), then the city
@@ -483,7 +493,7 @@ function readShowPages() {
       };
       const key = attr('key');
       if (!key || pages.has(key) || !key.startsWith(`${stateOf[st.name]}|`)) continue;
-      pages.set(key, { key, slug: d.name, stateSlug: st.name, state: stateOf[st.name], stateName: STATES[stateOf[st.name]], title: attr('name'), city: attr('city') });
+      pages.set(key, { key, past: html.includes('class="sh-none"'), slug: d.name, stateSlug: st.name, state: stateOf[st.name], stateName: STATES[stateOf[st.name]], title: attr('name'), city: attr('city') });
     }
   }
   return { pages, taken };
@@ -933,7 +943,7 @@ function breadcrumbs(g, url) {
   };
 }
 
-// A show whose dates are all past keeps its page (and its place in the sitemap): name, city,
+// A show whose dates are all past keeps its page (no dead links) but leaves the index and the sitemap: name, city,
 // one line, and the way to its state's shows. Built only from what the old page carries.
 function pastShowPage(p, updated, v) {
   const path = `/shows/${p.stateSlug}/${p.slug}/`;
@@ -953,6 +963,7 @@ ${cta(`show-${p.stateSlug}`.slice(0, 40))}
     count: 0,
     ld: [breadcrumbs(g, SITE + path)],
     body,
+    noindex: true,
     v,
     show: p,
   });
@@ -1020,10 +1031,16 @@ async function main() {
   if (model.shows.length < MIN_SHOWS) {
     throw new Error(`only ${model.shows.length} upcoming shows read (expected at least ${MIN_SHOWS}); nothing written`);
   }
-  await makeThumbs(model.shows);
-  const v = versions();
   const old = readShowPages();
   const groups = showGroups(model, old);
+  // A partial read that still clears --min would turn every missing show into a no-dates page for a
+  // day. Stop if far fewer shows have dates than the pages that had dates last run.
+  const hadDates = [...old.pages.values()].filter((p) => !p.past).length;
+  if (!has('allow-drop') && hadDates >= 50 && groups.size < hadDates * 0.6) {
+    throw new Error(`only ${groups.size} shows with dates, last run had ${hadDates}; nothing written (--allow-drop to override)`);
+  }
+  await makeThumbs(model.shows);
+  const v = versions();
 
   const entries = [];
   const changed = [];
@@ -1052,7 +1069,6 @@ async function main() {
     if (groups.has(p.key)) continue;
     const path = `/shows/${p.stateSlug}/${p.slug}/`;
     const r = writePage(path.slice(1, -1), (d) => pastShowPage(p, d, v));
-    entries.push({ path, updated: r.updated, priority: '0.3' });
     if (r.changed) changed.push(`${path} (no dates)`);
     pastPages++;
   }
