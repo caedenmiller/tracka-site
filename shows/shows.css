@@ -1,4 +1,4 @@
-/* Card show pages (/shows/, /shows/<state>/), on top of site.css. Same light sage page as
+/* Card show pages (/shows/, /shows/<state>/, /shows/<state>/<show>/), on top of site.css. Same light sage page as
    privacy and terms; the list is cards with the flyer on the left. No pack takeover here. */
 
 body.sh-page .nav { position: sticky; }
@@ -82,6 +82,32 @@ body.sh-page .nav { position: sticky; }
 .sh-near a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; background: rgba(255, 255, 255, .6); font-size: 14px; font-weight: 600; }
 .sh-near a span { font-size: 12px; font-weight: 700; color: var(--ink-sub); }
 
+/* a show's name on a state page opens its own page */
+.sh-show h3 a { color: inherit; }
+.sh-show h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- one show (/shows/<state>/<show>/): flyer, dates, place ---------- */
+.sh-one h1 { font-size: clamp(30px, 4.4vw, 46px); line-height: 1.08; letter-spacing: -.03em; overflow-wrap: anywhere; text-wrap: balance; }
+.sh-detail {
+  margin-top: 24px; max-width: 720px;
+  display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 14px; align-items: start;
+  padding: 12px; border-radius: 20px; background: rgba(255, 255, 255, .6);
+}
+.sh-detail.sh-noflyer { grid-template-columns: minmax(0, 1fr); padding: 14px 16px; }
+.sh-detail .sh-flyer { grid-area: auto; width: 96px; height: 128px; }
+.sh-stops { min-width: 0; }
+.sh-stop + .sh-stop { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(24, 62, 57, .12); }
+.sh-dates { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sh-dates li { font-size: 16px; font-weight: 700; line-height: 1.3; color: var(--accent); scroll-margin-top: 120px; }
+.sh-dates li span { display: block; margin-top: 1px; font-size: 14px; font-weight: 500; color: var(--ink-sub); }
+.sh-addr { margin-top: 10px; font-size: 15px; line-height: 1.45; color: var(--ink-sub); overflow-wrap: anywhere; }
+.sh-addr b { font-weight: 700; color: var(--ink); }
+.sh-detail .sh-go { margin-top: 12px; }
+.sh-none { margin-top: 28px; font-size: 16px; color: var(--ink-sub); }
+.sh-none a, .sh-more a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.sh-more { margin-top: 24px; font-size: 15px; }
+.sh-more a { display: inline-flex; align-items: center; min-height: 44px; }
+
 /* ---------- footer: room to tap ---------- */
 .sh-page .foot-mini nav { flex-wrap: wrap; gap: 4px 20px; }
 .sh-page .foot-mini nav a { display: inline-flex; align-items: center; min-height: 44px; }
@@ -95,6 +121,9 @@ body.sh-page .nav { position: sticky; }
   .sh-states { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
   .sh-cta { max-width: 620px; padding: 12px 12px 12px 14px; }
   .sh-cta p { font-size: 16px; }
+  .sh-detail { padding: 16px; grid-template-columns: 144px minmax(0, 1fr); column-gap: 20px; }
+  .sh-detail .sh-flyer { width: 144px; height: 192px; }
+  .sh-dates-many { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
 }
 @media (max-width: 560px) {
   .sh { padding: 24px 0 64px; }
