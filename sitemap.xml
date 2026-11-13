@@ -286,7 +286,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/arizona/the-arizona-hobby-expo-2-glendale/</loc>
+    <loc>https://gettracka.com/shows/arizona/the-arizona-hobby-expo-glendale/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -326,7 +326,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/arizona/west-valley-tcg-expo-8-buckeye/</loc>
+    <loc>https://gettracka.com/shows/arizona/west-valley-tcg-expo-buckeye/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -351,7 +351,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/california/card-party-gen-5-san-diego-chula-vista/</loc>
+    <loc>https://gettracka.com/shows/california/card-party-gen-san-diego-chula-vista/</loc>
+    <lastmod>2026-11-13</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://gettracka.com/shows/california/card-show-santee/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -417,11 +422,6 @@
   </url>
   <url>
     <loc>https://gettracka.com/shows/california/monterey-bay-card-show-x-crispy-cardboard/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gettracka.com/shows/california/november-card-show-santee/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -546,7 +546,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/connecticut/gold-coast-card-show-november-stamford/</loc>
+    <loc>https://gettracka.com/shows/connecticut/gold-coast-card-show-stamford/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -596,7 +596,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/connecticut/nutmeg-card-show-26-oakville-watertown/</loc>
+    <loc>https://gettracka.com/shows/connecticut/nutmeg-card-show-oakville-watertown/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -621,7 +621,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/connecticut/the151cardshow-november-show-middletown/</loc>
+    <loc>https://gettracka.com/shows/connecticut/the151cardshow-show-middletown/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -901,17 +901,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/illinois/november-pokemon-tcg-and-sports-card-show-carpentersville/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://gettracka.com/shows/illinois/peoria-card-expo/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://gettracka.com/shows/illinois/pokemon-and-sports-and-tcg-card-show-crystal-lake/</loc>
+    <lastmod>2026-11-13</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://gettracka.com/shows/illinois/pokemon-tcg-and-sports-card-show-carpentersville/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -996,22 +996,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/iowa/december-great-river-card-shows-dubuque/</loc>
+    <loc>https://gettracka.com/shows/iowa/great-river-card-shows-dubuque/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/iowa/december-great-river-card-shows-quad-cities-davenport/</loc>
+    <loc>https://gettracka.com/shows/iowa/great-river-card-shows-quad-cities-davenport/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://gettracka.com/shows/iowa/great-river-card-shows-quad-cities-expo-davenport/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gettracka.com/shows/iowa/november-great-river-card-shows-quad-cities-davenport/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1101,7 +1096,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/maryland/lake-rio-card-show-mintd-x-703-gaithersburg/</loc>
+    <loc>https://gettracka.com/shows/maryland/lake-rio-card-show-mintd-x-gaithersburg/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1336,7 +1331,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/massachusetts/new-england-card-house-danvers-november/</loc>
+    <loc>https://gettracka.com/shows/massachusetts/new-england-card-house-danvers/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1361,7 +1356,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/massachusetts/night-market-at-the-pokemon-outlet-december-lee/</loc>
+    <loc>https://gettracka.com/shows/massachusetts/night-market-at-the-pokemon-outlet-lee/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1401,12 +1396,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/massachusetts/pokemon-outlet-card-show-16-november-lee/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gettracka.com/shows/massachusetts/pokemon-outlet-card-show-17-december-lee/</loc>
+    <loc>https://gettracka.com/shows/massachusetts/pokemon-outlet-card-show-lee/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1516,12 +1506,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/massachusetts/the-underdog-hobby-show-8-woburn/</loc>
+    <loc>https://gettracka.com/shows/massachusetts/the-underdog-hobby-show-home-for-the-holidays-woburn/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/massachusetts/the-underdog-hobby-show-9-home-for-the-holidays-woburn/</loc>
+    <loc>https://gettracka.com/shows/massachusetts/the-underdog-hobby-show-woburn/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1536,7 +1526,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/massachusetts/turtle-boyz-november-show-malden/</loc>
+    <loc>https://gettracka.com/shows/massachusetts/turtle-boyz-show-malden/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1611,7 +1601,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-hampshire/the-village-at-paugus-bay-november-collecta-con-gilford/</loc>
+    <loc>https://gettracka.com/shows/new-hampshire/the-village-at-paugus-bay-collecta-con-gilford/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1621,17 +1611,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-jersey/apex-tcg-show-cherry-hill-nj-dec-cherry-hill-township/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://gettracka.com/shows/new-jersey/apex-tcg-show-hasbrouck-heights-nj/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-jersey/apex-tcg-show-morristown-nj-nov/</loc>
+    <loc>https://gettracka.com/shows/new-jersey/apex-tcg-show-morristown-nj/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1686,7 +1671,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-jersey/nerd-force-fan-fest-vineland/</loc>
+    <loc>https://gettracka.com/shows/new-jersey/nerd-force-fan-fest-episode-vineland/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1741,7 +1726,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-york/518-cards-and-co-december-show-albany/</loc>
+    <loc>https://gettracka.com/shows/new-york/518-cards-and-co-show-albany/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1767,6 +1752,11 @@
   </url>
   <url>
     <loc>https://gettracka.com/shows/new-york/behind-the-diamond-and-beast-training-present-huntington/</loc>
+    <lastmod>2026-11-13</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://gettracka.com/shows/new-york/bk-tcg-show-brooklyn-ny/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1846,11 +1836,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-york/januarys-bk-tcg-show-brooklyn-ny/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://gettracka.com/shows/new-york/lakeville-charity-card-show-new-hyde-park/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
@@ -1882,11 +1867,6 @@
   </url>
   <url>
     <loc>https://gettracka.com/shows/new-york/north-country-sports-cards-and-collectibles-show-plattsburgh/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gettracka.com/shows/new-york/novembers-bk-tcg-show-brooklyn-ny/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1956,12 +1936,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/new-york/the-collectors-clubhouse-december-evening-clifton-park/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gettracka.com/shows/new-york/the-collectors-clubhouse-november-evening-clifton-park/</loc>
+    <loc>https://gettracka.com/shows/new-york/the-collectors-clubhouse-evening-edition-clifton-park/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2351,7 +2326,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/rhode-island/pawtucket-city-card-show-002/</loc>
+    <loc>https://gettracka.com/shows/rhode-island/pawtucket-city-card-show/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2361,7 +2336,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/south-carolina/augusta-card-fest-10-north-augusta/</loc>
+    <loc>https://gettracka.com/shows/south-carolina/augusta-card-fest-north-augusta/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2416,7 +2391,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/south-carolina/florence-card-fest-2/</loc>
+    <loc>https://gettracka.com/shows/south-carolina/florence-card-fest/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2436,7 +2411,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/tennessee/expo-center-november-two-day-knoxville/</loc>
+    <loc>https://gettracka.com/shows/tennessee/expo-center-two-day-knoxville/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2546,12 +2521,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/texas/crossroads-card-show-texas-victoria/</loc>
+    <loc>https://gettracka.com/shows/texas/collectors-vault-night-market-dallas-fairview/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/texas/december-collectors-vault-night-market-dallas-fairview/</loc>
+    <loc>https://gettracka.com/shows/texas/crossroads-card-show-texas-victoria/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2631,12 +2606,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/texas/houston-syndicate-march/</loc>
+    <loc>https://gettracka.com/shows/texas/houston-syndicate-new-years/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/texas/houston-syndicate-new-years/</loc>
+    <loc>https://gettracka.com/shows/texas/houston-syndicate/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2666,12 +2641,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/texas/march-syndicate-market-pop-up-houston/</loc>
-    <lastmod>2026-11-13</lastmod>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://gettracka.com/shows/texas/pack-fresh-card-show-bryan/</loc>
+    <loc>https://gettracka.com/shows/texas/pack-fresh-card-show-vol-bryan/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2826,7 +2796,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/vermont/the-southern-vermont-card-show-extravaganza-2-brattleboro/</loc>
+    <loc>https://gettracka.com/shows/vermont/the-southern-vermont-card-show-extravaganza-brattleboro/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2846,7 +2816,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/virginia/bright-box-card-bazaar-2-winchester/</loc>
+    <loc>https://gettracka.com/shows/virginia/bright-box-card-bazaar-winchester/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -2916,7 +2886,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/virginia/hashtagcon-tcg-november-monthly-kids-under-12-herndon/</loc>
+    <loc>https://gettracka.com/shows/virginia/hashtagcon-tcg-monthly-kids-under-12-are-free-herndon/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
@@ -3016,7 +2986,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://gettracka.com/shows/virginia/rva-expo-7-regional-card-show-richmond/</loc>
+    <loc>https://gettracka.com/shows/virginia/rva-expo-regional-card-show-richmond/</loc>
     <lastmod>2026-11-13</lastmod>
     <priority>0.6</priority>
   </url>
