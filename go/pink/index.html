@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tracka</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#08080A">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.svg?v=6" type="image/svg+xml">
+<link rel="canonical" href="https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=c-PINK&mt=8">
+<link rel="preconnect" href="https://apps.apple.com">
+<style>
+@font-face{font-family:"Plus Jakarta Sans";font-weight:500 800;font-display:swap;src:url(/fonts/plus-jakarta-sans-latin.woff2) format("woff2")}
+:root{color-scheme:dark;--bg:#08080A;--ink:#fff;--ink-2:#969CA4;--ink-3:#7E858E;--line:rgba(255,255,255,.1);--blue:rgb(147,197,240);--font:"Plus Jakarta Sans",-apple-system,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.5 var(--font);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100%;touch-action:manipulation;overflow-x:hidden}
+.strip{padding-top:max(18px,env(safe-area-inset-top))}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);padding:0 24px;margin:0 0 10px}
+.scroll{overflow-x:auto;overscroll-behavior-x:none;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-padding:0 24px}
+.scroll::-webkit-scrollbar{display:none}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--ink-3);opacity:.45;transition:opacity .18s,transform .18s}
+.dots i.on{opacity:1;background:var(--ink);transform:scale(1.2)}
+.list{list-style:none;margin:0;padding:1px 24px;display:flex;gap:8px;width:max-content}
+.t{flex:0 0 calc((100vw - 64px) / 3);max-width:150px;scroll-snap-align:start;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.ta{aspect-ratio:5/7;padding:6px 6px 0;display:flex;align-items:flex-end;justify-content:center}
+.ta img{display:block;width:auto;height:auto;max-width:100%;max-height:100%}
+.tb{display:grid;gap:1px;padding:6px 8px 8px}
+.tb b{font-size:11px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp{font-size:13px;font-weight:800;letter-spacing:-.01em}
+.tp small{margin-left:3px;font-size:9.5px;font-weight:600;letter-spacing:0;color:var(--ink-2)}
+.ts{font-size:10.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:34px max(24px,env(safe-area-inset-left)) max(56px,env(safe-area-inset-bottom))}
+.icon{width:96px;height:96px;border-radius:22px;margin-bottom:22px;border:1.5px solid rgba(255,255,255,.22);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 12px 34px rgba(139,116,255,.2)}
+h1{font-size:26px;font-weight:800;line-height:1;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px;padding-left:.18em}
+p{margin:0;color:var(--ink-2);max-width:30ch}
+p span{color:var(--blue)}
+/* The slogan in the T's own foil (site.css --foil-true; Caeden 11-05). Browsers without text clipping keep the blue. */
+.foil{font-weight:700}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){.foil{background-image:linear-gradient(105deg,#cd65e5,#8976ff,#2f9aff,#9cecff,#c2f7ff,#00decd,#00c8ec,#01b0fb,#4998ff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}}
+.badge{display:inline-flex;align-items:center;gap:10px;margin-top:30px;height:60px;padding:0 20px 0 16px;border-radius:12px;background:#000;border:1px solid rgba(255,255,255,.55);color:#fff;text-decoration:none;text-align:left;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;transition:border-color .18s}
+.badge:active{border-color:#fff}
+.badge svg{width:26px;height:26px;flex:none;margin-top:-2px}
+.badge small{display:block;font-size:11px;line-height:1;letter-spacing:.01em;margin-bottom:3px}
+.badge b{display:block;font-size:22px;line-height:1;font-weight:600;letter-spacing:-.01em}
+.sub{margin-top:14px;font-size:14px;color:var(--ink-3);text-align:center}
+.foot{position:fixed;left:0;right:0;bottom:max(20px,env(safe-area-inset-bottom));font-size:13px;color:var(--ink-3);padding:0 24px;text-align:center}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.wrap{animation:in .32s ease-out both}
+@media(prefers-reduced-motion:reduce){.wrap{animation:none}}
+[hidden]{display:none!important}
+.code{margin-top:26px;padding:14px 24px 16px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:rgba(255,255,255,.03);display:grid;gap:4px;justify-items:center}
+.code small{font-size:10.5px;font-weight:700;letter-spacing:.26em;padding-left:.26em;text-transform:uppercase;color:var(--ink-3)}
+.code{max-width:100%}
+.code b{font-size:min(44px,calc((100vw - 88px) / 3.44));line-height:1.2;font-weight:800;letter-spacing:.06em;overflow-wrap:anywhere;-webkit-user-select:all;user-select:all}
+.strip{display:none}
+@media(max-height:559px){main{padding-top:18px;padding-bottom:12px}.icon{width:72px;height:72px;border-radius:16px;margin-bottom:12px}h1{font-size:22px;margin-bottom:8px}.code{margin-top:12px;padding:6px 16px}.badge{margin-top:16px}.sub{margin-top:6px}.foot{position:static;padding:8px 24px max(12px,env(safe-area-inset-bottom))}}
+</style>
+</head>
+<body>
+<div class="strip wrap" id="strip">
+<div class="eyebrow">On tables at upcoming shows</div>
+<div class="scroll" id="scroll"><ul class="list"></ul></div>
+<div class="dots" id="dots" aria-hidden="true"></div>
+</div>
+<main class="wrap">
+<img class="icon" src="/go/icon.png?v=3" width="96" height="96" alt="">
+<h1>Tracka</h1>
+<p><span class="foil">The all-in-one TCG app.</span></p>
+<div class="code" id="code" hidden><small>Creator code</small><b>PINK</b></div>
+<a class="badge" href="https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=c-PINK&mt=8" aria-label="Download on the App Store">
+<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.64c-.02-2.1 1.72-3.11 1.8-3.16-.98-1.43-2.5-1.63-3.04-1.65-1.3-.13-2.53.76-3.19.76-.66 0-1.67-.74-2.75-.72-1.41.02-2.72.82-3.44 2.09-1.47 2.55-.38 6.32 1.05 8.39.7 1.01 1.53 2.15 2.62 2.11 1.05-.04 1.45-.68 2.72-.68s1.63.68 2.74.66c1.13-.02 1.85-1.03 2.54-2.05.8-1.17 1.13-2.3 1.15-2.36-.03-.01-2.2-.85-2.2-3.39zM14.28 6.46c.58-.7.97-1.68.86-2.66-.83.03-1.85.56-2.45 1.26-.54.62-1.01 1.62-.88 2.57.93.07 1.88-.47 2.47-1.17z"/></svg>
+<span><small>Download on the</small><b>App Store</b></span>
+</a>
+<div class="sub" id="sub">Free on iPhone</div>
+</main>
+<div class="foot" id="hint" hidden>Not opening? Tap ⋯ and choose Open in browser.</div>
+<script src="/track.js?v=5"></script>
+<script>
+(function(){
+  // three or more cards still upcoming: drop the ended ones. Fewer: keep the
+  // ended ones after them, without their past show line (Caeden 10-14)
+  var d=new Date(),today=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  var tiles=[].slice.call(document.querySelectorAll(".t")),list=document.querySelector(".list");
+  var ended=tiles.filter(function(t){return t.getAttribute("data-end")<today;});
+  if(tiles.length-ended.length>=3){ended.forEach(function(t){t.remove();});}
+  else if(ended.length){
+    ended.forEach(function(t){var s=t.querySelector(".ts");if(s)s.remove();list.appendChild(t);});
+    document.querySelector(".eyebrow").textContent="On vendors’ tables";
+  }
+  var left=document.querySelectorAll(".t").length,sc=document.getElementById("scroll"),dotsEl=document.getElementById("dots");
+  if(left<3){document.getElementById("strip").hidden=true;}
+  else{
+    var pages=Math.ceil(left/3);
+    for(var i=0;i<pages;i++){var e=document.createElement("i");if(!i)e.className="on";dotsEl.appendChild(e);}
+    var tile=sc.querySelector(".t"),dots=dotsEl.children;
+    sc.addEventListener("scroll",function(){
+      var step=(tile.offsetWidth+8)*3,k=Math.min(dots.length-1,Math.round(sc.scrollLeft/step));
+      for(var j=0;j<dots.length;j++)dots[j].className=j===k?"on":"";
+    },{passive:true});
+  }
+  var url="https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=c-PINK&mt=8";
+  if(/Android/i.test(navigator.userAgent)){
+    document.querySelector(".badge").hidden=true;
+    document.getElementById("sub").textContent="iPhone only right now";
+    return;
+  }
+  // Instagram / Facebook / Threads / TikTok web views drop an automatic
+  // navigation to apps.apple.com (blank page) but honor a user tap, so those
+  // get this page and the badge. Everyone else redirects on load.
+  var inApp=/Instagram|FBAN|FBAV|FB_IAB|Barcelona|TikTok|musical_ly|BytedanceWebview|trill_/i.test(navigator.userAgent);
+  if(inApp){document.getElementById("hint").hidden=false;}
+  document.getElementById("code").hidden=false;
+})();
+</script>
+<script src="/escape.js?v=10" defer></script>
+<script src="/android.js?v=4" defer></script>
+</body>
+</html>
