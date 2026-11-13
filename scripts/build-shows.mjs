@@ -1,7 +1,13 @@
 #!/usr/bin/env node
-// Builds the card show pages: /shows/ (states with counts) and /shows/<state>/ (that state's
-// upcoming shows by month), then refreshes their entries in sitemap.xml. Node built-ins only.
-// Runs daily from .github/workflows/shows.yml.
+// Builds the card show pages: /shows/ (states with counts), /shows/<state>/ (that state's
+// upcoming shows by month) and /shows/<state>/<show>/ (one show: all its upcoming dates), then
+// refreshes their entries in sitemap.xml. Node built-ins only. Runs daily from
+// .github/workflows/shows.yml.
+//
+// A show is one name (tidied) in one city and state. Its page's folder name is made once, from
+// name and city, and then read back from the page itself (data-show-key) on every later run, so
+// URLs never move. A show with no upcoming dates keeps its page (no dead links, Pages can't
+// redirect): the dates give way to one line and a link to its state.
 //
 // Reads with the public anon key only, through the app database's read-only function
 // site_upcoming_shows() (approved shows that are not over yet, public columns only).
@@ -19,6 +25,7 @@
 //   --flyer-prefix <url>   flyer URLs must start with this (default: the project's show-flyers bucket)
 //   --min <n>              fewest shows a good read can have (default 100)
 //   --report <file>        write the data report as JSON
+//   --allow-drop           build even if far fewer shows have dates than last run
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, rmSync, statSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -29,7 +36,7 @@ import { tmpdir } from 'node:os';
 
 const SITE = 'https://gettracka.com';
 const STORE = (ct) => `https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=${ct}&mt=8`;
-const CSS_V = 2;
+const CSS_V = 3;
 const JS_V = 2;
 const THUMB_W = 216; // 72 css px at 3x
 
@@ -129,6 +136,14 @@ function offsetFor(tz, iso, hhmm) {
 // ---------- text ----------
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const unesc = (s) => String(s).replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&');
+
+// Shortens at a word break, with an ellipsis.
+function cut(text, n) {
+  if (text.length <= n) return text;
+  const at = text.lastIndexOf(' ', n - 1);
+  return `${text.slice(0, at > n / 2 ? at : n - 1).replace(/[\s,;:·-]+$/, '')}…`;
+}
 
 const slugify = (s) =>
   String(s)
@@ -197,6 +212,9 @@ function whenText(a, b) {
   if (a.slice(0, 7) === b.slice(0, 7)) return `${monthShort(a)} ${dayNum(a)} to ${dayNum(b)}`;
   return `${monthShort(a)} ${dayNum(a)} to ${monthShort(b)} ${dayNum(b)}`;
 }
+
+// "Sat, Nov 14, 2026", "Nov 13 to 15, 2026"
+const whenLong = (a, b) => `${whenText(a, b)}, ${yearNum(b)}`;
 
 // "Nov 2026", "Nov–Dec 2026", "Dec 2026–Jan 2027"
 function monthRange(a, b) {
@@ -389,6 +407,131 @@ function buildModel(rows) {
   return { shows, states };
 }
 
+// ---------- one page per show ----------
+
+// Many organizers put the date in the name ("G&S TCG Show November 14th", "Peoria Card Expo 1/2",
+// "Elite TCG Card Show - January 3rd, 2027 - Wilmington", "NOVA TCG Exchange Card Show #12"). A show's page is about all its dates,
+// so its name (and so its URL and identity) leaves dates and years out. State pages keep the name
+// as typed, since there it sits beside that one date.
+const MON = '(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)';
+const WDAY = '(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day,?\\s+)?';
+const DAY = '(?:0?[1-9]|[12]\\d|3[01])(?:st|nd|rd|th)?(?!\\d)';
+const NUMDATE = '(?:0?[1-9]|1[0-2])\\/(?:0?[1-9]|[12]\\d|3[01])(?:\\/(?:20)?\\d\\d)?(?!\\d)';
+const DATEJOIN = '\\s*(?:-|–|&|and|to|,|\\/)\\s*';
+const DATED = [
+  new RegExp(`\\b${WDAY}${MON}\\.?\\s*${DAY}(?:${DATEJOIN}(?:${MON}\\.?\\s*)?${DAY})*(?:,?\\s*202\\d\\b)?`, 'gi'),
+  new RegExp(`\\b${WDAY}${NUMDATE}(?:${DATEJOIN}${NUMDATE})*`, 'gi'),
+  new RegExp(`\\b${MON}\\.?\\s*202\\d\\b`, 'gi'),
+  /\b202[4-9]\b/g,
+  new RegExp(`\\b${DAY}\\s+${MON}\\b\\.?`, 'gi'), // "16 November"
+  // A month on its own ("November Great River Card Shows", "Novembers BK TCG Show", "... NJ Dec"):
+  // a monthly show names its month. Full names, plus short forms that aren't everyday words.
+  /\b(?:january|february|march|april|may|june|july|august|september|october|november|december)(?:'?s)?\b/gi,
+  /\b(?:jan|feb|apr|jun|jul|aug|sept?|oct|nov|dec)\b\.?/gi,
+  /\s*#\s*\d+\b/g, // "#11", the edition number: same show, next date
+  // An edition number standing before punctuation or the end: "RVA Expo 7 (Regional)", "Show 16! - November",
+  // "West Valley TCG Expo 8", and a short year: "Nutmeg Card Show '26: Oakville".
+  /\s\d{1,3}(?=\s*(?:[!:(\-–|┃]|$))/g,
+  /\s'\d\d\b/g,
+  /\b(?:vol\.?|volume|episode)\s*\d+\b/gi,
+];
+const SEP = '[-–|┃│:@,]';
+
+function undated(title) {
+  let t = title;
+  for (const re of DATED) t = t.replace(re, ' ');
+  if (t === title) return title;
+  t = t
+    .replace(/[(\[]\s*[,.\s]*\s*[)\]]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(new RegExp(`(${SEP})\\s*,`, 'g'), '$1')
+    .replace(/\s+([,.)!])/g, '$1')
+    .replace(/\s([-–|┃│])(?:\s*[-–|┃│])+\s/g, ' $1 ')
+    .replace(/\s[-–|┃│]\s+(?=[@:]\s)/g, ' ')
+    .replace(new RegExp(`\\s*${SEP}+\\s*([!.]*)$`), '$1')
+    .replace(new RegExp(`^[\\s.)]*${SEP}+\\s*`), '')
+    .replace(/([!?.])\1+$/, '$1')
+    .trim();
+  return /\p{L}{2}/u.test(t) && t.length >= 4 ? t : title;
+}
+
+// Name without dates, and without its own city ("Elite TCG Card Show - King of Prussia" in King of
+// Prussia is "Elite TCG Card Show" there), plus city and state.
+function showKey(state, city, title) {
+  const c = slugify(city);
+  const name = slugify(undated(title)) || 'card-show';
+  const bare = c ? `-${name}-`.replace(`-${c}-`, '-').replace(/^-+|-+$/g, '') : name;
+  return `${state}|${c}|${bare || name}`;
+}
+
+// "dulles-card-show-chantilly": the name (at most 48 characters, cut at a word), then the city
+// unless the name already says it. No dates or ids, so it never needs to change.
+function baseSlug(title, city) {
+  let name = slugify(title) || 'card-show';
+  if (name.length > 48) name = name.slice(0, 49).replace(/-[^-]*$/, '') || name.slice(0, 48);
+  const c = slugify(city);
+  return c && !`-${name}-`.includes(`-${c}-`) ? `${name}-${c}` : name;
+}
+
+// Show pages from earlier runs: shows/<state>/<folder>/index.html carrying data-show-key.
+// Every other folder there is left alone, and its name is never handed to a show.
+function readShowPages() {
+  const pages = new Map();
+  const taken = new Set();
+  const stateOf = Object.fromEntries(Object.entries(STATES).map(([code, n]) => [slugify(n), code]));
+  for (const st of readdirSync(join(ROOT, 'shows'), { withFileTypes: true })) {
+    if (!st.isDirectory() || !stateOf[st.name]) continue;
+    const dirs = readdirSync(join(ROOT, 'shows', st.name), { withFileTypes: true }).filter((d) => d.isDirectory());
+    for (const d of dirs.sort((a, b) => a.name.localeCompare(b.name))) {
+      taken.add(`${st.name}/${d.name}`);
+      const file = join(ROOT, 'shows', st.name, d.name, 'index.html');
+      if (!existsSync(file)) continue;
+      const html = readFileSync(file, 'utf8');
+      const attr = (n) => {
+        const m = new RegExp(`\\sdata-show-${n}="([^"]*)"`).exec(html);
+        return m ? unesc(m[1]) : null;
+      };
+      const key = attr('key');
+      if (!key || pages.has(key) || !key.startsWith(`${stateOf[st.name]}|`)) continue;
+      pages.set(key, { key, past: html.includes('class="sh-none"'), slug: d.name, stateSlug: st.name, state: stateOf[st.name], stateName: STATES[stateOf[st.name]], title: attr('name'), city: attr('city') });
+    }
+  }
+  return { pages, taken };
+}
+
+// Groups the upcoming shows by name, city and state, and gives each group its folder: the one
+// its page already has, or a new one. New names are handed out in key order, so two shows that
+// slug the same get -2, -3 the same way every time, and an older page is never the one renamed.
+function showGroups(model, old) {
+  const groups = new Map();
+  for (const s of model.shows) {
+    const key = showKey(s.state, s.city, s.title);
+    if (!groups.has(key)) groups.set(key, { key, state: s.state, stateName: s.stateName, stateSlug: s.stateSlug, city: s.city, title: undated(s.title), dates: [] });
+    groups.get(key).dates.push(s);
+  }
+  const taken = new Set(old.taken);
+  const fresh = [];
+  for (const g of groups.values()) {
+    const had = old.pages.get(g.key);
+    if (had) g.slug = had.slug;
+    else fresh.push(g);
+  }
+  report.showSlugCollisions = [];
+  for (const g of fresh.sort((a, b) => a.key.localeCompare(b.key))) {
+    const base = baseSlug(g.title, g.city);
+    let slug = base;
+    for (let i = 2; taken.has(`${g.stateSlug}/${slug}`); i++) slug = `${base}-${i}`;
+    if (slug !== base) report.showSlugCollisions.push({ key: g.key, slug: `/shows/${g.stateSlug}/${slug}/` });
+    taken.add(`${g.stateSlug}/${slug}`);
+    g.slug = slug;
+  }
+  for (const g of groups.values()) {
+    g.path = `/shows/${g.stateSlug}/${g.slug}/`;
+    for (const s of g.dates) s.showPath = g.path;
+  }
+  return groups;
+}
+
 // ---------- flyer thumbnails ----------
 
 const IMG_DIR = join(ROOT, 'shows', 'img');
@@ -513,7 +656,7 @@ const SYMBOLS = `<svg width="0" height="0" style="position:absolute" aria-hidden
   <symbol id="i-apple" viewBox="0 0 24 24"><path fill="currentColor" d="M16.37 12.64c-.02-2.1 1.72-3.11 1.8-3.16-.98-1.43-2.5-1.63-3.04-1.65-1.3-.13-2.53.76-3.19.76-.66 0-1.67-.74-2.75-.72-1.41.02-2.72.82-3.44 2.09-1.47 2.55-.38 6.32 1.05 8.39.7 1.01 1.53 2.15 2.62 2.11 1.05-.04 1.45-.68 2.72-.68s1.63.68 2.74.66c1.13-.02 1.85-1.03 2.54-2.05.8-1.17 1.13-2.3 1.15-2.36-.03-.01-2.2-.85-2.2-3.39zM14.28 6.46c.58-.7.97-1.68.86-2.66-.83.03-1.85.56-2.45 1.26-.54.62-1.01 1.62-.88 2.57.93.07 1.88-.47 2.47-1.17z"/></symbol>
 </svg>`;
 
-function shell({ path, title, description, ct, state, count, ld, body, noindex, v }) {
+function shell({ path, title, description, ct, state, count, ld, body, noindex, v, show }) {
   const url = SITE + path;
   const json = ld ? JSON.stringify({ '@context': 'https://schema.org', '@graph': ld }).replace(/</g, '\\u003c') : null;
   return `<!DOCTYPE html>
@@ -545,7 +688,9 @@ ${noindex ? '<meta name="robots" content="noindex, follow">\n' : ''}<meta name="
 <link rel="stylesheet" href="/site.css?v=${v.css}">
 <link rel="stylesheet" href="/shows/shows.css?v=${CSS_V}">
 ${json ? `<script type="application/ld+json">${json}</script>\n` : ''}</head>
-<body class="sh-page" data-shows-state="${esc(state)}" data-shows-count="${count}">
+<body class="sh-page" data-shows-state="${esc(state)}" data-shows-count="${count}"${
+  show ? ` data-show-key="${esc(show.key)}" data-show-name="${esc(show.title)}" data-show-city="${esc(show.city)}"` : ''
+}>
 ${SYMBOLS}
 <a class="skip" href="#main">Skip to content</a>
 <header class="nav solid">
@@ -554,7 +699,7 @@ ${SYMBOLS}
     <a class="pill pill-sm nav-cta" style="margin-left:auto" href="${esc(STORE(ct))}">Get the app</a>
   </div>
 </header>
-<main id="main" class="sh">
+<main id="main" class="sh${show ? ' sh-one' : ''}">
   <div class="wrap">
 ${body}
   </div>
@@ -592,7 +737,7 @@ function showItem(s) {
           ${art}
           <div class="sh-body">
             <p class="sh-when"><time datetime="${s.start_date}">${esc(whenText(s.start_date, s.end_date))}</time>${time ? ` · ${esc(time)}` : ''}</p>
-            <h3>${esc(s.title)}</h3>
+            <h3>${s.showPath ? `<a href="${esc(s.showPath)}">${esc(s.title)}</a>` : esc(s.title)}</h3>
             ${where ? `<p class="sh-where">${esc(where)}</p>` : ''}
           </div>
           <a class="sh-go" href="${esc(directions(s))}" target="_blank" rel="noopener" aria-label="Directions to ${esc(s.title)}"><svg aria-hidden="true"><use href="#i-go"/></svg>Directions</a>
@@ -656,7 +801,7 @@ ${cta(ct)}
 ${blocks.join('\n')}
 ${nearHtml}`;
 
-  const events = list.map((s) => eventLd(s, url));
+  const events = list.map((s) => eventLd(s, s.showPath ? SITE + s.showPath : url));
   events.forEach(checkEvent);
   const ld = [
     {
@@ -694,6 +839,134 @@ ${states.map((st) => `      <li><a href="/shows/${st.slug}/"><b>${esc(st.name)}<
     },
   ];
   return shell({ path: '/shows/', title, description, ct: 'shows-hub', state: 'hub', count: n, ld, body, v });
+}
+
+// One show's page, title and description. Long names are cut so the title stays near 60
+// characters with the place and the next date still in it.
+function showTitle(g, next) {
+  const loc = `${g.city}, ${g.state}`;
+  const showy = /\b(show|shows|expo|con|convention|fest|festival)\b/i.test(g.title);
+  const where = showy ? loc : `${loc} card show`;
+  const date = next ? `${monthShort(next)} ${dayNum(next)}` : null;
+  const tail = [where, date].filter(Boolean).join(' · ');
+  // The name matters most, then the place, then the date. Asides ("(Bob Duncan Center)",
+  // "- Winter Edition") go before any of those do.
+  const short = g.title.replace(/\s*\([^)]*\)/g, '').split(/\s+(?:[-–|┃│@/]|featuring|presented by)\s+|:\s+/i)[0].trim();
+  const names = short.length >= 8 && short !== g.title ? [g.title, short] : [g.title];
+  const dated = (n, w) => [n, w, date].filter(Boolean).join(' · ');
+  const tries = [`${g.title} · ${tail} | Tracka`, ...names.flatMap((n) => [dated(n, where), dated(n, loc), `${n} · ${where}`])];
+  const fit = tries.find((t) => t.length <= 64);
+  return fit || `${cut(names.at(-1), Math.max(28, 64 - where.length - 3))} · ${where}`;
+}
+
+function showDescription(g) {
+  const first = g.dates[0];
+  const at = first.venue ? ` at ${first.venue}` : '';
+  const head = `${g.title}: Pokémon and trading card show in ${g.city}, ${g.state}`;
+  if (g.dates.length === 1) {
+    const time = hours(first);
+    return cut(`${head}, ${whenLong(first.start_date, first.end_date)}${time ? `, ${time}` : ''}${at}.`, 155);
+  }
+  const days = g.dates.slice(0, 4).map((s) => `${monthShort(s.start_date)} ${dayNum(s.start_date)}`);
+  const more = g.dates.length > 4 ? ' and more' : '';
+  return cut(`${head}${at}. Upcoming dates: ${more ? days.join(', ') + more : andList(days)}.`, 155);
+}
+
+function addressLines(s) {
+  const lines = [];
+  if (s.place?.street) lines.push(s.place.street);
+  if (s.place) lines.push(`${s.place.locality || s.city}, ${s.state}${s.place.zip ? ` ${s.place.zip}` : ''}`);
+  return lines;
+}
+
+function showPage(g, updated, v) {
+  const url = SITE + g.path;
+  const ct = `show-${g.stateSlug}`.slice(0, 40);
+  const first = g.dates[0];
+
+  // Dates that share a place sit together under it; usually that is all of them.
+  const stops = new Map();
+  for (const s of g.dates) {
+    const k = `${s.venue || ''}|${s.place?.street || ''}|${s.lat ?? ''}`;
+    if (!stops.has(k)) stops.set(k, []);
+    stops.get(k).push(s);
+  }
+  const stopHtml = [...stops.values()].map((list) => {
+    const s = list[0];
+    const lines = addressLines(s);
+    const addr = s.venue || lines.length
+      ? `\n          <p class="sh-addr">${[s.venue ? `<b>${esc(s.venue)}</b>` : null, ...lines.map(esc)].filter(Boolean).join('<br>')}</p>`
+      : '';
+    return `        <div class="sh-stop">
+          <ul class="sh-dates${list.length > 3 ? ' sh-dates-many' : ''}">
+${list
+  .map((d) => {
+    const time = hours(d);
+    return `            <li id="${d.anchor}"><time datetime="${d.start_date}">${esc(whenLong(d.start_date, d.end_date))}</time>${time ? ` <span>${esc(time)}</span>` : ''}</li>`;
+  })
+  .join('\n')}
+          </ul>${addr}
+          <a class="sh-go" href="${esc(directions(s))}" target="_blank" rel="noopener" aria-label="Directions to ${esc(s.venue || g.title)}"><svg aria-hidden="true"><use href="#i-go"/></svg>Directions</a>
+        </div>`;
+  });
+  const art = first.flyer
+    ? `\n      <a class="sh-flyer" href="${esc(first.flyer)}" target="_blank" rel="noopener"><img src="${esc(first.thumb || first.flyer)}" alt="Flyer for ${esc(g.title)}" width="120" height="160" decoding="async"></a>`
+    : '';
+
+  const body = `    <a class="back" href="/shows/${g.stateSlug}/"><svg aria-hidden="true"><use href="#i-left"/></svg>${esc(g.stateName)}</a>
+    <h1>${esc(g.title).replace(/ ([-–|]) /g, '&nbsp;$1 ')}</h1>
+    <p class="sh-sub">${esc(g.city)}, ${esc(g.stateName)}</p>
+    ${updatedLine(updated)}
+${cta(ct)}
+    <section class="sh-detail${first.flyer ? '' : ' sh-noflyer'}" aria-label="Dates and place">${art}
+      <div class="sh-stops">
+${stopHtml.join('\n')}
+      </div>
+    </section>
+    <p class="sh-more"><a href="/shows/${g.stateSlug}/">More card shows in ${esc(g.stateName)}</a></p>`;
+
+  const events = g.dates.map((s) => eventLd(s, url));
+  events.forEach(checkEvent);
+  const ld = [breadcrumbs(g, url), ...events];
+  return shell({ path: g.path, title: showTitle(g, first.start_date), description: showDescription(g), ct, state: g.stateSlug, count: g.dates.length, ld, body, v, show: g });
+}
+
+function breadcrumbs(g, url) {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Tracka', item: `${SITE}/` },
+      { '@type': 'ListItem', position: 2, name: 'Card shows', item: `${SITE}/shows/` },
+      { '@type': 'ListItem', position: 3, name: g.stateName, item: `${SITE}/shows/${g.stateSlug}/` },
+      { '@type': 'ListItem', position: 4, name: g.title, item: url },
+    ],
+  };
+}
+
+// A show whose dates are all past keeps its page (no dead links) but leaves the index and the sitemap: name, city,
+// one line, and the way to its state's shows. Built only from what the old page carries.
+function pastShowPage(p, updated, v) {
+  const path = `/shows/${p.stateSlug}/${p.slug}/`;
+  const g = { ...p, path };
+  const body = `    <a class="back" href="/shows/${p.stateSlug}/"><svg aria-hidden="true"><use href="#i-left"/></svg>${esc(p.stateName)}</a>
+    <h1>${esc(p.title).replace(/ ([-–|]) /g, '&nbsp;$1 ')}</h1>
+    <p class="sh-sub">${esc(p.city)}, ${esc(p.stateName)}</p>
+    ${updatedLine(updated)}
+${cta(`show-${p.stateSlug}`.slice(0, 40))}
+    <p class="sh-none">No upcoming dates. <a href="/shows/${p.stateSlug}/">Card shows in ${esc(p.stateName)}</a></p>`;
+  return shell({
+    path,
+    title: showTitle(g, null),
+    description: cut(`${p.title} in ${p.city}, ${p.state} has no upcoming dates listed. See other Pokémon card shows in ${p.stateName}.`, 155),
+    ct: `show-${p.stateSlug}`.slice(0, 40),
+    state: p.stateSlug,
+    count: 0,
+    ld: [breadcrumbs(g, SITE + path)],
+    body,
+    noindex: true,
+    v,
+    show: p,
+  });
 }
 
 // A state that had a page and now has no shows keeps a small page, kept out of search, so
@@ -758,6 +1031,14 @@ async function main() {
   if (model.shows.length < MIN_SHOWS) {
     throw new Error(`only ${model.shows.length} upcoming shows read (expected at least ${MIN_SHOWS}); nothing written`);
   }
+  const old = readShowPages();
+  const groups = showGroups(model, old);
+  // A partial read that still clears --min would turn every missing show into a no-dates page for a
+  // day. Stop if far fewer shows have dates than the pages that had dates last run.
+  const hadDates = [...old.pages.values()].filter((p) => !p.past).length;
+  if (!has('allow-drop') && hadDates >= 50 && groups.size < hadDates * 0.6) {
+    throw new Error(`only ${groups.size} shows with dates, last run had ${hadDates}; nothing written (--allow-drop to override)`);
+  }
   await makeThumbs(model.shows);
   const v = versions();
 
@@ -775,6 +1056,23 @@ async function main() {
     if (r.changed) changed.push(`/shows/${st.slug}/`);
   }
 
+  // One page per show, then the pages of shows that have no dates left.
+  let showPages = 0;
+  let pastPages = 0;
+  for (const g of [...groups.values()].sort((a, b) => a.path.localeCompare(b.path))) {
+    const r = writePage(g.path.slice(1, -1), (d) => showPage(g, d, v));
+    entries.push({ path: g.path, updated: r.updated, priority: '0.6' });
+    if (r.changed) changed.push(g.path);
+    showPages++;
+  }
+  for (const p of [...old.pages.values()].sort((a, b) => `${a.stateSlug}/${a.slug}`.localeCompare(`${b.stateSlug}/${b.slug}`))) {
+    if (groups.has(p.key)) continue;
+    const path = `/shows/${p.stateSlug}/${p.slug}/`;
+    const r = writePage(path.slice(1, -1), (d) => pastShowPage(p, d, v));
+    if (r.changed) changed.push(`${path} (no dates)`);
+    pastPages++;
+  }
+
   // Folders from earlier runs whose state has nothing now.
   const names = Object.fromEntries(Object.values(STATES).map((n) => [slugify(n), n]));
   for (const d of readdirSync(join(ROOT, 'shows'), { withFileTypes: true })) {
@@ -786,11 +1084,13 @@ async function main() {
   writeSitemap(entries);
 
   report.pages = entries.length;
+  report.showPages = showPages;
+  report.pastShowPages = pastPages;
   report.changed = changed;
   if (flag('report')) writeFileSync(flag('report'), JSON.stringify(report, null, 2));
   console.log(
     `${model.shows.length} upcoming shows in ${model.states.size} states (read ${report.read}). ` +
-      `${entries.length} pages, ${changed.length} changed. Dropped ${report.dropped.length}, duplicates ${report.duplicates.length}, ` +
+      `${entries.length} pages (${showPages} show pages, ${pastPages} with no dates, ${report.showSlugCollisions.length} slug collisions), ${changed.length} changed. Dropped ${report.dropped.length}, duplicates ${report.duplicates.length}, ` +
       `same-day same-city pairs ${report.nearDuplicates.length}. No flyer ${report.noFlyer}, no venue or address ${report.noVenue}, no pin ${report.noPin}. ` +
       `Thumbnails made ${report.thumbs.made}, failed ${report.thumbs.failed}.`,
   );
