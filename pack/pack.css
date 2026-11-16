@@ -127,7 +127,11 @@ html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
 /* E's bar on Android: Get notified as the header's Get the app (site.css .nav-cta: the site's sans at 700,
    --foil-true, #06222b, a full pill; 13px on a phone as there). 44 tall for the thumb where the header's is 37.
    On iPhone the bar holds the black .tp-badge instead. */
-.tp-bar-foil .tp-bar-in{padding-right:10px}
+/* E's bar is a white card on the page (his look 11-16): the site's ink (site.css --ink, --ink-sub, --ring),
+   its sans, a hairline and a soft teal-dark shadow so it lifts off the teal. */
+.tp-bar-foil .tp-bar-in{padding-right:10px;background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;color:var(--ink,#183e39);font-family:var(--sans,"Jakarta",-apple-system,system-ui,sans-serif);box-shadow:0 10px 30px rgba(24,62,57,.18),0 2px 6px rgba(24,62,57,.08),0 0 0 1px var(--ring,rgba(24,62,57,.1))}
+.tp-bar-foil .tp-bar-t b{color:var(--ink,#183e39);font-weight:700}
+.tp-bar-foil .tp-bar-t span{color:var(--ink-sub,rgba(24,62,57,.82));font-weight:500}
 .tp-bar-foil .tp-bar-get{background:var(--foil-true);color:#06222b;font:700 13.5px/1 var(--sans,"Jakarta",-apple-system,system-ui,sans-serif);border-radius:999px;padding:0 16px;gap:6px}
 @media (max-width:560px){.tp-bar-foil .tp-bar-get{font-size:13px;padding:0 14px}}
 
