@@ -1369,7 +1369,7 @@
      C  the app itself: Tracka's App Store row (icon, name, Get) in place of the button
      D  today's screen; closing it leaves a bar on the page with the pull and Get the app (ct=packbar)
      E  his pick (11-16), C + D: C's row with the homepage's Download on the App Store button in place of
-        Get, and D's bar after a close, its Get the app in the hero's foil (site.css --foil-teal) */
+        Get, and D's bar after a close, its button the header's Get the app (site.css .nav-cta) */
   function resultsStage(o) {
     var v = o.variant || '';
     var cards = o.cards, W = o.stageW;
@@ -1501,8 +1501,7 @@
     t.lastChild.textContent = card.price !== null ? money(card.price) : '';
     a.appendChild(t);
     var pill = el('span', 'tp-bar-get');
-    pill.innerHTML = o.foil ? (ANDROID ? '' : APPLE) + '<span class="tp-foil-t">' + (ANDROID ? 'Get notified' : 'Get the app') + '</span>'
-      : ANDROID ? 'Get notified' : APPLE + 'Get the app';
+    pill.innerHTML = ANDROID ? 'Get notified' : APPLE + 'Get the app';
     a.appendChild(pill);
     bar.appendChild(a);
     document.body.appendChild(bar);

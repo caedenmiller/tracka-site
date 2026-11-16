@@ -122,14 +122,11 @@ html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
 .tp-badge small{font-size:10px;font-weight:500}
 .tp-badge b{font-size:16px;font-weight:600;letter-spacing:-.01em}
 @media (max-width:380px){.tp-app-e{gap:10px}.tp-app-e img{width:46px;height:46px;border-radius:11px}.tp-badge{padding:0 14px 0 12px}}
-/* E's bar: Get the app in the hero's foil (site.css .hero h1 .it: --foil-teal, the serif italic, clipped to the
-   letters, the same padding for the italic's overhang), on the homepage button's black. */
-.tp-bar-foil .tp-bar-get{background:#000;color:#fff;border:1px solid rgba(255,255,255,.18);gap:7px;padding:0 16px 0 14px}
-.tp-foil-t{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-style:italic;font-weight:400;letter-spacing:-.01em;font-size:21px;line-height:1;color:var(--light,#cfe3da)}
-@supports ((-webkit-background-clip:text) or (background-clip:text)){
-  .tp-foil-t{background-image:var(--foil-teal);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding:.06em .08em .16em .04em;margin-top:-.06em;margin-bottom:-.16em}
-}
-@media (forced-colors:active){.tp-foil-t{background-image:none;color:CanvasText;-webkit-text-fill-color:CanvasText}}
+/* E's bar: its button is the header's Get the app (site.css .nav-cta: the site's sans at 700, --foil-true,
+   #06222b, a full pill; 13px on a phone as there). 44 tall for the thumb where the header's is 37. */
+.tp-bar-foil .tp-bar-get{background:var(--foil-true);color:#06222b;font:700 13.5px/1 var(--sans,"Jakarta",-apple-system,system-ui,sans-serif);border-radius:999px;padding:0 16px;gap:6px}
+.tp-bar-foil .tp-bar-get svg{width:15px;height:15px;margin-top:-1px}
+@media (max-width:560px){.tp-bar-foil .tp-bar-get{font-size:13px;padding:0 14px}}
 
 @media (prefers-reduced-motion:reduce){
   .tp,.tp.off{transition:none}
