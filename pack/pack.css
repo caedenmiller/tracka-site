@@ -80,6 +80,40 @@ html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
 .tp-store svg{width:20px;height:20px;margin-top:-2px}
 @media (min-width:600px){.tp-store{align-self:center;width:340px;margin:0}}
 
+/* Results options (pack.js resultsStage, ?pack=1&results=a|b|c|d). */
+/* A: the hit fills the top; the X steps back (still 44 wide, still there). */
+.tp-quiet-x .tp-x{opacity:.5}
+.tp-res-a .tp-name{font-size:24px;line-height:30px;margin-top:22px}
+.tp-res-a .tp-store{margin-top:20px}
+/* B: the next pack over the button, one link. It breathes as the sealed pack does (tp-idle, below). */
+.tp-next{display:flex;flex-direction:column;align-items:stretch;text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent}
+.tp-next-art{position:relative;align-self:center;margin:6px 0 16px;animation:tp-idle 3.6s .6s ease-in-out infinite}
+.tp-next-art>.tp-abs{animation:tp-idle-bloom 3.6s .6s ease-in-out infinite}
+.tp-next:active .tp-store{transform:scale(.97);opacity:.85;transition-duration:.09s}
+@media (min-width:600px){.tp-next .tp-store{width:340px}}
+/* C: Tracka's App Store row in place of the button. */
+.tp-app{display:flex;align-items:center;gap:12px;margin:18px 20px 0;padding:12px 14px 12px 12px;border-radius:20px;background:#15171b;border:1px solid #262a31;color:#f2f4f6;text-decoration:none;transition:transform .16s cubic-bezier(.455,.03,.515,.955),opacity .16s cubic-bezier(.455,.03,.515,.955)}
+.tp-app:active{transform:scale(.97);opacity:.85;transition-duration:.09s}
+.tp-app img{width:52px;height:52px;border-radius:12px;flex:none}
+.tp-app-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.tp-app-t b{font-size:17px;line-height:22px;font-weight:600}
+.tp-app-t span{font-size:13px;line-height:18px;color:#9aa3ad}
+.tp-get{flex:none;min-width:76px;height:36px;padding:0 18px;border-radius:18px;background:#1baaa6;color:#04100f;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+@media (min-width:600px){.tp-app{align-self:center;width:360px;margin-left:0;margin-right:0}}
+/* D: after a close at the results, the pull stays on the page with the store link. */
+.tp-bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:80;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;transform:translateY(calc(100% + 24px));transition:transform .42s cubic-bezier(.16,1,.3,1)}
+.tp-bar.on{transform:none}
+.tp-bar *{box-sizing:border-box}
+.tp-bar-in{display:flex;align-items:center;gap:12px;height:64px;padding:0 8px 0 12px;border-radius:20px;background:rgba(12,14,16,.92);-webkit-backdrop-filter:blur(16px) saturate(1.3);backdrop-filter:blur(16px) saturate(1.3);box-shadow:0 8px 28px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.08);color:#f2f4f6;text-decoration:none}
+.tp-bar-card{flex:none;display:block}
+.tp-bar-card img{display:block;width:100%;height:100%;object-fit:cover}
+.tp-bar-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.tp-bar-t b{font-size:15px;line-height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-bar-t span{font-size:13px;line-height:18px;color:#9aa3ad;font-variant-numeric:tabular-nums}
+.tp-bar-get{flex:none;height:44px;padding:0 16px;border-radius:22px;background:#1baaa6;color:#04100f;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;white-space:nowrap}
+.tp-bar-get svg{width:17px;height:17px;margin-top:-2px}
+@media (min-width:600px){.tp-bar{left:50%;right:auto;width:420px;margin-left:-210px}}
+
 @media (prefers-reduced-motion:reduce){
   .tp,.tp.off{transition:none}
   .tp-info,.tp-info.out,.tp-res,.tp-hero,.tp-tile,.tp-cue,.tp-ring{animation:none}
@@ -88,6 +122,9 @@ html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
   .tp-torn .tp-cue{opacity:0}
   .tp-store{transition:none}
   .tp-store:active{transform:none}
+  .tp-next-art,.tp-next-art>.tp-abs{animation:none}
+  .tp-app,.tp-bar{transition:none}
+  .tp-app:active{transform:none}
 }
 
 /* Entrances (?entry=a|b|c; the default above is untouched until he picks). The page blurs and
