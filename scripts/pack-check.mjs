@@ -16,7 +16,10 @@
 //   H  no video takes a tap or opens a player, pack or no pack; the reel still turns on a swipe
 //   F  one tap opens the pack (11-11: TikTok's swipe took the tear); no drag is read in TikTok
 //      and the Tap to open cue is gone within 200 ms of that tap, for good
-//   K  the results: Get your free pack on one line at 375 px, no line above it (Android: Get notified on Android)
+//   K  the results (his pick 11-16): Tracka's row with the foil Download on the App Store button, ct=pack, inside 375 px
+//      (Android: Coming to Android, Notify me, no Apple mark)
+//   L  a close at the results leaves the white bar: ct=packbar, web_pack_bar_shown once, the tap counted; Android's
+//      waitlist; TikTok hands off ?app=packbar and Safari on it goes to the store with ct=packbar
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -59,7 +62,7 @@ async function toResults(p) {
   await p.keyboard.press('Enter');
   await p.waitForSelector('.tp-skip', { state: 'visible', timeout: 8000 });
   await p.click('.tp-skip');
-  await p.waitForSelector('.tp-store', { timeout: 5000 });
+  await p.waitForSelector('.tp-app', { timeout: 5000 });
   await p.waitForTimeout(400);
 }
 
@@ -84,7 +87,7 @@ try {
     await p.click('.aw-close');
     await p.waitForSelector('.tp.on', { timeout: 9000 });
     await toResults(p);
-    await p.click('.tp-store');
+    await p.click('.tp-app');
     await p.waitForSelector('.aw-scrim.on');
     const closes = await p.click('.aw-close', { timeout: 2000 }).then(() => p.waitForFunction(() => !document.querySelector('.aw-scrim.on'), null, { timeout: 2000 })).then(() => true, () => false);
     check('A  Android: the waitlist sheet over the pack closes', closes);
@@ -107,8 +110,8 @@ try {
     await p.goto(BASE + '?pack=1');
     await p.waitForSelector('.tp.on', { timeout: 9000 });
     await toResults(p);
-    await p.evaluate(() => document.querySelector('.tp-store').addEventListener('click', e => e.preventDefault()));
-    await p.click('.tp-store');
+    await p.evaluate(() => document.querySelector('.tp-app').addEventListener('click', e => e.preventDefault()));
+    await p.click('.tp-app');
     await p.waitForTimeout(300);
     const taps = events.filter(e => e.event === 'web_store_tap').map(e => e.ct);
     check('C  preview store tap is ct=pack-preview', taps.length === 1 && taps[0] === 'pack-preview', taps.join(','));
@@ -207,7 +210,7 @@ try {
       await p.goto(BASE + '?pack=1');
       await p.waitForSelector('.tp.on', { timeout: 9000 });
       await toResults(p);
-      await p.click('.tp-store');
+      await p.click('.tp-app');
       await p.waitForURL(/\?app=pack-preview$/, { timeout: 5000 }).catch(() => {});
       check('J  TikTok: the pack\'s store button hands off with its ct', /\?app=pack-preview$/.test(p.url()) && !store.length, p.url());
       check('J  TikTok: the sheet is up after the pack\'s handoff', await p.waitForSelector('.tt-sheet.on', { timeout: 4000 }).then(() => true, () => false));
@@ -308,7 +311,7 @@ try {
     await p.waitForTimeout(900); await tapAt('after open');
     await p.waitForTimeout(2500); await tapAt('mid cards'); // long enough for the reel behind to want its next clip
     await p.click('.tp-skip');
-    await p.waitForSelector('.tp-store', { timeout: 5000 });
+    await p.waitForSelector('.tp-app', { timeout: 5000 });
     await p.waitForTimeout(400); await tapAt('results');
     await p.waitForTimeout(300);
     const leaks = await p.evaluate(() => window.__leaks);
@@ -352,7 +355,7 @@ try {
     check('H  a swipe over the clips still turns the reel', before && after && before !== after, before + ' -> ' + after);
     await b.close();
   }
-  { // K: the results say there is a free pack every day, each line on one line at 375 px; the store link is untouched
+  { // K: the results end on Tracka's row; the button is the homepage's App Store button in foil; the store link is untouched
     for (const [name, engine, ua] of [['Safari', webkit, IOS], ['Android', chromium, AND]]) {
       const { b, p } = await open(engine, ua);
       await p.setViewportSize({ width: 375, height: 812 });
@@ -360,18 +363,88 @@ try {
       await p.waitForSelector('.tp.on', { timeout: 9000 });
       await toResults(p);
       const r = await p.evaluate(() => {
-        const a = document.querySelector('.tp-store'), d = document.querySelector('.tp-daily'), s = a.querySelector('span');
-        const one = e => { const rs = e.getClientRects(); return rs.length === 1 && rs[0].height < 30; };
+        const a = document.querySelector('.tp-app'), badge = a.querySelector('.tp-badge'), get = a.querySelector('.tp-get');
         const inside = e => { const q = e.getBoundingClientRect(); return q.left >= 0 && q.right <= innerWidth; };
-        return { btn: s.textContent, line: d && d.textContent, apple: !!a.querySelector('svg use[href="#i-apple"]'), href: a.getAttribute('href'),
-          oneLine: one(s), fits: inside(s) && s.scrollWidth <= s.clientWidth + 1,
-          order: !!d && document.querySelector('.tp-total').getBoundingClientRect().bottom <= d.getBoundingClientRect().top && d.getBoundingClientRect().bottom <= a.getBoundingClientRect().top };
+        const btn = badge || get;
+        return { title: a.querySelector('.tp-app-t b').textContent, sub: a.querySelector('.tp-app-t span').textContent,
+          badge: badge && badge.querySelector('small').textContent + ' ' + badge.querySelector('b').textContent, get: get && get.textContent, apple: !!a.querySelector('svg use[href="#i-apple"]'),
+          foil: badge ? getComputedStyle(badge).backgroundImage : '', href: a.getAttribute('href'), fits: inside(a) && inside(btn) && btn.getClientRects().length === 1,
+          old: !!document.querySelector('.tp-store') };
       });
-      if (/Android/i.test(name)) check(`K  ${name}: the button reads Get notified on Android, no Apple glyph`, r.btn === 'Get notified on Android' && !r.apple, r.btn);
-      else check(`K  ${name}: the button reads Get your free pack, Apple glyph kept`, r.btn === 'Get your free pack' && r.apple, r.btn);
-      check(`K  ${name}: no line under Pack value (his call: button only)`, !r.line, r.line);
-      check(`K  ${name}: both sit on one line each inside 375 px`, r.oneLine && r.fits);
-      check(`K  ${name}: the store link still says ct=pack`, /ct=pack(&|$)/.test(r.href || ''), r.href);
+      if (/Android/i.test(name)) check(`K  ${name}: Tracka, Coming to Android, Notify me, no Apple mark`, r.title === 'Tracka' && r.sub === 'Coming to Android' && r.get === 'Notify me' && !r.apple && !r.badge, JSON.stringify(r));
+      else {
+        check(`K  ${name}: Tracka, Free on iPhone, Download on the App Store with the Apple mark`, r.title === 'Tracka' && r.sub === 'Free on iPhone' && r.badge === 'Download on the App Store' && r.apple, JSON.stringify(r));
+        check(`K  ${name}: the button wears the header pill's foil`, /gradient/.test(r.foil), r.foil.slice(0, 40));
+      }
+      check(`K  ${name}: the row and its button sit inside 375 px`, r.fits);
+      check(`K  ${name}: no old teal button`, !r.old);
+      check(`K  ${name}: the store link says ct=pack`, /ct=pack(&|$)/.test(r.href || ''), r.href);
+      await b.close();
+    }
+  }
+  { // L: the bar after a close at the results (a real first visit, not a preview)
+    const storeL = [];
+    const watchL = c => c.route('**/apps.apple.com/**', r => { storeL.push(r.request().url()); r.fulfill({ status: 204 }); });
+    const toBar = async p => {
+      await p.goto(BASE);
+      await p.waitForSelector('.tp.on', { timeout: 12000 });
+      await toResults(p);
+      await p.click('.tp-x');
+      await p.waitForFunction(() => !document.querySelector('.tp') && document.querySelector('.tp-bar.on'), null, { timeout: 4000 });
+      await p.waitForTimeout(600);
+    };
+    {
+      const { b, p, events } = await open(chromium, IOS, watchL);
+      await toBar(p);
+      const r = await p.evaluate(() => { const a = document.querySelector('.tp-bar a'), q = a.getBoundingClientRect(); return { href: a.getAttribute('href'), badge: !!a.querySelector('.tp-badge:not(.tp-badge-foil)'), bg: getComputedStyle(a).backgroundColor, fits: q.left >= 0 && q.right <= innerWidth && q.bottom <= innerHeight }; });
+      const shown = events.filter(e => e.event === 'web_pack_bar_shown');
+      const finished = events.find(e => e.event === 'web_pack_finished');
+      check('L  Safari: the white bar holds the black App Store button, on screen', r.badge && r.bg === 'rgb(255, 255, 255)' && r.fits, JSON.stringify(r));
+      check('L  Safari: the bar link says ct=packbar', /ct=packbar(&|$)/.test(r.href || ''), r.href);
+      check('L  Safari: web_pack_bar_shown once, with the card and its tier', shown.length === 1 && /^me6-/.test(shown[0].card) && shown[0].tier === (finished && finished.tier) && shown[0].os === 'ios' && shown[0].set === 'me6', JSON.stringify(shown));
+      await p.click('.tp-bar a');
+      await p.waitForTimeout(500);
+      const taps = events.filter(e => e.event === 'web_store_tap').map(e => e.ct);
+      check('L  Safari: the bar tap is counted with ct=packbar', taps.length === 1 && taps[0] === 'packbar', taps.join(','));
+      check('L  Safari: the bar tap goes to the store with ct=packbar', storeL.some(u => /ct=packbar&/.test(u)), storeL.join(' '));
+      check('L  Safari: still one web_pack_bar_shown', events.filter(e => e.event === 'web_pack_bar_shown').length === 1);
+      await b.close();
+    }
+    {
+      const { b, p, events } = await open(chromium, IOS);
+      await p.goto(BASE);
+      await p.waitForSelector('.tp.on', { timeout: 12000 });
+      await p.click('.tp-x');
+      await p.waitForTimeout(800);
+      check('L  a close before the results leaves no bar and no web_pack_bar_shown', !(await p.$('.tp-bar')) && !events.some(e => e.event === 'web_pack_bar_shown'));
+      await b.close();
+    }
+    {
+      const { b, p } = await open(chromium, AND);
+      await toBar(p);
+      const r = await p.evaluate(() => { const a = document.querySelector('.tp-bar a'); return { t: a.querySelector('.tp-bar-get') && a.querySelector('.tp-bar-get').textContent, apple: !!a.querySelector('svg use[href="#i-apple"]') }; });
+      check('L  Android: the bar says Get notified, no Apple mark', r.t === 'Get notified' && !r.apple, JSON.stringify(r));
+      await p.click('.tp-bar a');
+      check('L  Android: the bar tap opens the waitlist sheet', await p.waitForSelector('.aw-scrim.on', { timeout: 3000 }).then(() => true, () => false));
+      await b.close();
+    }
+    {
+      const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
+      const before = storeL.length;
+      const { b, p } = await open(chromium, TT, watchL);
+      await toBar(p);
+      await p.click('.tp-bar a');
+      await p.waitForURL(/\?app=packbar$/, { timeout: 5000 }).catch(() => {});
+      check('L  TikTok: the bar hands off with ?app=packbar', /\?app=packbar$/.test(p.url()) && storeL.length === before, p.url());
+      await b.close();
+    }
+    {
+      const { b, p, events } = await open(chromium, IOS, watchL);
+      await p.goto(BASE + '?app=packbar', { waitUntil: 'commit' });
+      await p.waitForTimeout(1500);
+      check('L  Safari: ?app=packbar goes for the store with ct=packbar', storeL.some(u => /ct=packbar&/.test(u)), storeL.slice(-1).join(''));
+      const l = events.find(e => e.event === 'web_tiktok_handoff_landed');
+      check('L  Safari: web_tiktok_handoff_landed carries ct=packbar', l && l.ct === 'packbar', l && l.ct);
       await b.close();
     }
   }

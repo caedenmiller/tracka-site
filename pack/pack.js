@@ -17,7 +17,8 @@
 
    A first visit's card ten is a Special Illustration Rare (the app's round 4
    first pack, migration 20261110000009 [sir]). Nothing on screen says so.
-   The results end on one App Store button (ct=pack); track.js counts the tap
+   The results end on Tracka's row with one App Store button (ct=pack), and a close there leaves
+   a bar on the page (ct=packbar); track.js counts the tap
    and escape.js / android.js handle it inside TikTok and on Android, over
    this (they sit at z-index 1000, this at 990, so no <dialog> top layer). */
 (function () {
@@ -1364,22 +1365,16 @@
     a.href = STORE.replace('ct=pack', 'ct=' + ct + (o.preview ? '-preview' : ''));
     return a;
   }
-  /* RESULTS OPTIONS (11-16, not live: ?pack=1&results=a|b|c|d; no flag = today's screen).
-     A  the hit, big, and one button; no grid; the X dimmed
-     B  the next pack: a sealed pack over the button, "Open another"
-     C  the app itself: Tracka's App Store row (icon, name, Get) in place of the button
-     D  today's screen; closing it leaves a bar on the page with the pull and Get the app (ct=packbar)
-     E  his pick (11-16), C + D: C's row ends in a foil Download on the App Store button (the homepage's
-        button in the header pill's --foil-true and #06222b); after a close, D's bar with the black one */
+  /* His pick 11-16 (board design/site-pack-2026-11/results-options, option E): the results end on Tracka's
+     App Store row (icon, name, Free on iPhone) with the homepage's Download on the App Store button in the
+     header pill's foil (site.css .store's shape, .nav-cta's --foil-true and #06222b), ct=pack. Android: Coming
+     to Android and Notify me (no Apple mark; android.js's waitlist sheet takes the tap). Closed at the results
+     (X, Esc), the pull stays on the page in a white bar with the black button, ct=packbar (pullBar). */
   function resultsStage(o) {
-    var v = o.variant || '';
     var cards = o.cards, W = o.stageW;
-    var root = el('div', 'tp-res' + (v ? ' tp-res-' + v : ''), { paddingTop: o.topInset + 14, paddingBottom: o.bottomInset + 12 });
+    var root = el('div', 'tp-res', { paddingTop: o.topInset + 14, paddingBottom: o.bottomInset + 12 });
     var room = o.stageH - o.topInset - o.bottomInset;
-    var heroH = Math.round(Math.min(260, Math.max(170, room * 0.33)));
-    if (v === 'a') heroH = Math.round(Math.min(450, Math.max(200, room * 0.55)));
-    if (v === 'b') heroH = Math.round(Math.min(250, Math.max(160, room * 0.31)));
-    var heroW = Math.round(heroH / CARD_RATIO);
+    var heroH = Math.round(Math.min(260, Math.max(170, room * 0.33))), heroW = Math.round(heroH / CARD_RATIO);
     var cols = 5, gap = 10, tileW = Math.min(62, Math.floor((W - 40 - gap * (cols - 1)) / cols)), tileH = Math.round(tileW * CARD_RATIO);
     var picked = bestPullIndex(cards);
     var topBox = el('div', 'tp-top');
@@ -1419,7 +1414,7 @@
       tiles.forEach(function (t, i) { t.className = 'tp-tile' + (i === picked ? ' up' : ''); t.setAttribute('aria-pressed', i === picked ? 'true' : 'false'); });
     }
     var grid = el('div', 'tp-grid', { gap: gap + 'px', width: tileW * cols + gap * (cols - 1) });
-    var tiles = v === 'a' || v === 'b' ? [] : cards.map(function (c, i) {
+    var tiles = cards.map(function (c, i) {
       var b = el('button', 'tp-tile', { width: tileW, height: tileH, animationDelay: 100 + i * 28 + 'ms' });
       b.type = 'button';
       b.setAttribute('aria-label', c.name + ', ' + rarityLine(c) + (c.price !== null ? ', ' + money(c.price) : ''));
@@ -1431,63 +1426,31 @@
       return b;
     });
     showHero();
-    var packValue = cards.reduce(function (s, c) { return s + (c.price || 0); }, 0);
     var total = el('div', 'tp-total');
     var tl = el('span');
     tl.textContent = 'Pack value';
     var tv = el('b');
     total.appendChild(tl);
     total.appendChild(tv);
-    countUp(tv, packValue, 600);
-    var store;
-    if (v === 'c' || v === 'e') {
-      // C: the App Store's own row for Tracka. One link; "Get" is the store's word for free.
-      // E: the same row ending in the homepage's own App Store button (index.html .cta-row a.store,
-      // site.css .store); Android keeps Notify me, no Apple mark.
-      store = storeLink(o, 'tp-app' + (v === 'e' ? ' tp-app-e' : ''));
-      store.setAttribute('aria-label', ANDROID ? 'Tracka. Get notified on Android' : v === 'e' ? 'Download Tracka on the App Store' : 'Get Tracka free on the App Store');
-      store.innerHTML = '<img src="/go/icon.png?v=3" width="52" height="52" alt="">' +
-        '<span class="tp-app-t"><b>Tracka</b><span>' + (ANDROID ? 'Coming to Android' : 'Free on iPhone') + '</span></span>' +
-        (ANDROID ? '<span class="tp-get">Notify me</span>'
-          : v === 'e' ? '<span class="tp-badge tp-badge-foil">' + BADGE + '</span>'
-          : '<span class="tp-get">Get</span>');
-    } else {
-      store = storeLink(o, 'tp-store');
-      // Android (his pick 11-11): the app is iPhone only, so no Apple glyph and no promise;
-      // the tap still opens android.js's waitlist sheet over the pack.
-      store.innerHTML = ANDROID ? '<span>Get notified on Android</span>'
-        : APPLE + '<span>' + (v === 'b' ? 'Open another' : 'Get your free pack') + '</span>';
-    }
+    countUp(tv, cards.reduce(function (s, c) { return s + (c.price || 0); }, 0), 600);
+    var store = storeLink(o, 'tp-app');
+    store.setAttribute('aria-label', ANDROID ? 'Tracka. Get notified on Android' : 'Download Tracka on the App Store');
+    store.innerHTML = '<img src="/go/icon.png?v=3" width="52" height="52" alt="">' +
+      '<span class="tp-app-t"><b>Tracka</b><span>' + (ANDROID ? 'Coming to Android' : 'Free on iPhone') + '</span></span>' +
+      (ANDROID ? '<span class="tp-get">Notify me</span>' : '<span class="tp-badge tp-badge-foil">' + BADGE + '</span>');
     root.appendChild(topBox);
-    if (tiles.length) { root.appendChild(grid); root.appendChild(total); }
-    if (v === 'b') {
-      // B: the next pack, sealed, breathing, over the button; pack and button are one link.
-      var packW = Math.round(Math.min(118, Math.max(84, room * 0.15)));
-      var next = storeLink(o, 'tp-next');
-      next.setAttribute('aria-label', ANDROID ? 'Get notified on Android' : 'Open another pack in Tracka');
-      var art2 = el('div', 'tp-next-art', { width: packW, height: Math.round((packW * PACK_VIEW.h) / PACK_VIEW.w) });
-      art2.appendChild(softGlow('rgba(27,170,166,0.5)', null, packW * 2.2, packW * 2.2, 0.45, -packW * 0.6, -packW * 0.3));
-      art2.appendChild(foilPack(packW, o.set, null));
-      next.appendChild(art2);
-      var inner = el('span', 'tp-store');
-      inner.innerHTML = store.innerHTML;
-      next.appendChild(inner);
-      root.appendChild(next);
-      store = next;
-    } else root.appendChild(store);
-    return {
-      el: root,
-      focus: function () { store.focus({ preventScroll: true }); },
-      best: cards[bestPullIndex(cards)],
-      value: packValue,
-    };
+    root.appendChild(grid);
+    root.appendChild(total);
+    root.appendChild(store);
+    return { el: root, focus: function () { store.focus({ preventScroll: true }); }, best: cards[picked] };
   }
 
-  /** D: after the results are closed, the pull stays on the page in a bar with the store link (ct=packbar). */
+  /** After a close at the results: the pull stays on the page in a white bar with the store link (ct=packbar).
+      iPhone: the black Download on the App Store button (the homepage's). Android: Get notified in the header pill. */
   function pullBar(o, card) {
-    var bar = el('div', 'tp-bar' + (o.foil ? ' tp-bar-foil' : ''));
+    var bar = el('div', 'tp-bar');
     var a = storeLink(o, 'tp-bar-in', 'packbar');
-    a.setAttribute('aria-label', ANDROID ? 'Get notified on Android' : 'Get Tracka on the App Store');
+    a.setAttribute('aria-label', ANDROID ? 'Get notified on Android' : 'Download Tracka on the App Store');
     var f = tierFrame(card.tier, 34, Math.round(34 * CARD_RATIO), 4, 1.5);
     var i = el('img');
     i.alt = '';
@@ -1501,11 +1464,9 @@
     t.firstChild.textContent = card.name;
     t.lastChild.textContent = card.price !== null ? money(card.price) : '';
     a.appendChild(t);
-    // E on iPhone: the black Download on the App Store button (the homepage's); Android keeps its pill.
-    var badge = o.foil && !ANDROID;
-    var pill = el('span', badge ? 'tp-badge' : 'tp-bar-get');
-    pill.innerHTML = badge ? BADGE : ANDROID ? 'Get notified' : APPLE + 'Get the app';
-    a.appendChild(pill);
+    var btn = el('span', ANDROID ? 'tp-bar-get' : 'tp-badge');
+    btn.innerHTML = ANDROID ? 'Get notified' : BADGE;
+    a.appendChild(btn);
     bar.appendChild(a);
     document.body.appendChild(bar);
     requestAnimationFrame(function () { requestAnimationFrame(function () { bar.classList.add('on'); }); });
@@ -1640,7 +1601,6 @@
     if (entry) root.style.setProperty('--tp-o', Wd / 2 + 'px ' + (packTop + (packW * PACK_VIEW.h) / PACK_VIEW.w / 2) + 'px');
 
     var beat = 'sealed', cardAt = 0, finished = false, closed = false;
-    var variant = /^[abcde]$/.test(opts.results || '') ? opts.results : '';
     var tear = null, reveal = null, results = null;
 
     // Computer: once the black is fully in, the page under it is not drawn at all (its layers,
@@ -1654,8 +1614,12 @@
       track('web_pack_declined', { step: beat, card: beat === 'reveal' ? cardAt + 1 : null, via: via });
       root.classList.remove('on');
       root.classList.add('off');
-      // D: closed at the results, the pull stays on the page with the store link.
-      if ((variant === 'd' || variant === 'e') && beat === 'results' && results) pullBar({ preview: opts.preview, foil: variant === 'e' }, results.best);
+      // Closed at the results: the pull stays on the page with the store link (pullBar).
+      if (beat === 'results' && results) {
+        pullBar({ preview: opts.preview }, results.best);
+        // Once per page view (close runs once; the pack runs once). card: the pull's id, as web_pack_finished's tier is its tier.
+        track('web_pack_bar_shown', { card: results.best.id, tier: results.best.tier });
+      }
       setTimeout(teardown, RM ? 0 : 200);
     }
     // Leaving the page mid-pack (a back swipe, the in-app browser closed): said once, and the pack
@@ -1763,8 +1727,7 @@
       drawSparks();
       count.textContent = '';
       skip.style.display = 'none';
-      results = resultsStage({ preview: opts.preview, variant: variant, set: set, cards: cards, stageW: Wd, stageH: Hd, topInset: insets.top + 44, bottomInset: insets.bottom });
-      if (variant === 'a') root.classList.add('tp-quiet-x');
+      results = resultsStage({ preview: opts.preview, cards: cards, stageW: Wd, stageH: Hd, topInset: insets.top + 44, bottomInset: insets.bottom });
       stage.appendChild(results.el);
       renders.push(drawSparks);
       results.focus();

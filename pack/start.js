@@ -32,11 +32,9 @@
   var preview = !!m;
   var hit = m && /^(common|uncommon|rare|double|ultra|illus|sir|hyper)$/.test(m[1]) ? m[1] : null;
   var entry = /[?&]entry=([abc])(&|$)/.exec(q);
-  // Results options (11-16, preview only): &results=a|b|c|d|e (pack.js resultsStage). No flag = today's.
-  var results = preview ? /[?&]results=([abcde])(&|$)/.exec(q) : null;
   var KEY = 'tv_pack_seen';
   var DELAY_MS = 700; // his word 11-11: "get to the website and have it pop up"
-  var V = '8';
+  var V = '9';
 
   if (!preview) {
     try {
@@ -102,7 +100,6 @@
         hit: hit,
         preview: preview,
         entry: entry ? entry[1] : 'a', // Rise is the entrance (his pick 11-11); ?entry=b|c still previews the others
-        results: results ? results[1] : '',
         track: track,
         ok: function () { return preview || (!tapped && localStorage.getItem(KEY) !== '1'); },
         busy: busy,
