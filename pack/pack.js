@@ -1367,7 +1367,9 @@
      A  the hit, big, and one button; no grid; the X dimmed
      B  the next pack: a sealed pack over the button, "Open another"
      C  the app itself: Tracka's App Store row (icon, name, Get) in place of the button
-     D  today's screen; closing it leaves a bar on the page with the pull and Get the app (ct=packbar) */
+     D  today's screen; closing it leaves a bar on the page with the pull and Get the app (ct=packbar)
+     E  his pick (11-16), C + D: C's row with the homepage's Download on the App Store button in place of
+        Get, and D's bar after a close, its Get the app in the hero's foil (site.css --foil-teal) */
   function resultsStage(o) {
     var v = o.variant || '';
     var cards = o.cards, W = o.stageW;
@@ -1437,13 +1439,17 @@
     total.appendChild(tv);
     countUp(tv, packValue, 600);
     var store;
-    if (v === 'c') {
+    if (v === 'c' || v === 'e') {
       // C: the App Store's own row for Tracka. One link; "Get" is the store's word for free.
-      store = storeLink(o, 'tp-app');
-      store.setAttribute('aria-label', ANDROID ? 'Tracka. Get notified on Android' : 'Get Tracka free on the App Store');
+      // E: the same row ending in the homepage's own App Store button (index.html .cta-row a.store,
+      // site.css .store); Android keeps Notify me, no Apple mark.
+      store = storeLink(o, 'tp-app' + (v === 'e' ? ' tp-app-e' : ''));
+      store.setAttribute('aria-label', ANDROID ? 'Tracka. Get notified on Android' : v === 'e' ? 'Download Tracka on the App Store' : 'Get Tracka free on the App Store');
       store.innerHTML = '<img src="/go/icon.png?v=3" width="52" height="52" alt="">' +
         '<span class="tp-app-t"><b>Tracka</b><span>' + (ANDROID ? 'Coming to Android' : 'Free on iPhone') + '</span></span>' +
-        '<span class="tp-get">' + (ANDROID ? 'Notify me' : 'Get') + '</span>';
+        (ANDROID ? '<span class="tp-get">Notify me</span>'
+          : v === 'e' ? '<span class="tp-badge">' + APPLE + '<span><small>Download on the</small><b>App Store</b></span></span>'
+          : '<span class="tp-get">Get</span>');
     } else {
       store = storeLink(o, 'tp-store');
       // Android (his pick 11-11): the app is iPhone only, so no Apple glyph and no promise;
@@ -1478,7 +1484,7 @@
 
   /** D: after the results are closed, the pull stays on the page in a bar with the store link (ct=packbar). */
   function pullBar(o, card) {
-    var bar = el('div', 'tp-bar');
+    var bar = el('div', 'tp-bar' + (o.foil ? ' tp-bar-foil' : ''));
     var a = storeLink(o, 'tp-bar-in', 'packbar');
     a.setAttribute('aria-label', ANDROID ? 'Get notified on Android' : 'Get Tracka on the App Store');
     var f = tierFrame(card.tier, 34, Math.round(34 * CARD_RATIO), 4, 1.5);
@@ -1495,7 +1501,8 @@
     t.lastChild.textContent = card.price !== null ? money(card.price) : '';
     a.appendChild(t);
     var pill = el('span', 'tp-bar-get');
-    pill.innerHTML = ANDROID ? 'Get notified' : APPLE + 'Get the app';
+    pill.innerHTML = o.foil ? (ANDROID ? '' : APPLE) + '<span class="tp-foil-t">' + (ANDROID ? 'Get notified' : 'Get the app') + '</span>'
+      : ANDROID ? 'Get notified' : APPLE + 'Get the app';
     a.appendChild(pill);
     bar.appendChild(a);
     document.body.appendChild(bar);
@@ -1631,7 +1638,7 @@
     if (entry) root.style.setProperty('--tp-o', Wd / 2 + 'px ' + (packTop + (packW * PACK_VIEW.h) / PACK_VIEW.w / 2) + 'px');
 
     var beat = 'sealed', cardAt = 0, finished = false, closed = false;
-    var variant = /^[abcd]$/.test(opts.results || '') ? opts.results : '';
+    var variant = /^[abcde]$/.test(opts.results || '') ? opts.results : '';
     var tear = null, reveal = null, results = null;
 
     // Computer: once the black is fully in, the page under it is not drawn at all (its layers,
@@ -1646,7 +1653,7 @@
       root.classList.remove('on');
       root.classList.add('off');
       // D: closed at the results, the pull stays on the page with the store link.
-      if (variant === 'd' && beat === 'results' && results) pullBar({ preview: opts.preview }, results.best);
+      if ((variant === 'd' || variant === 'e') && beat === 'results' && results) pullBar({ preview: opts.preview, foil: variant === 'e' }, results.best);
       setTimeout(teardown, RM ? 0 : 200);
     }
     // Leaving the page mid-pack (a back swipe, the in-app browser closed): said once, and the pack

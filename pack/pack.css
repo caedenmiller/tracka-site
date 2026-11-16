@@ -113,6 +113,23 @@ html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
 .tp-bar-get{flex:none;height:44px;padding:0 16px;border-radius:22px;background:#1baaa6;color:#04100f;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;white-space:nowrap}
 .tp-bar-get svg{width:17px;height:17px;margin-top:-2px}
 @media (min-width:600px){.tp-bar{left:50%;right:auto;width:420px;margin-left:-210px}}
+/* E (his pick 11-16, C + D). The row ends in the homepage's own App Store button (site.css .store, its
+   numbers copied: black, a light rim, Apple mark, "Download on the / App Store" in the site's sans). */
+.tp-app-e{padding-right:10px}
+.tp-badge{flex:none;display:inline-flex;align-items:center;gap:9px;height:45px;padding:0 18px 0 14px;border-radius:999px;background:#000;color:#fff;border:1px solid rgba(255,255,255,.18);font-family:var(--sans,"Jakarta",-apple-system,system-ui,sans-serif)}
+.tp-badge svg{width:21px;height:21px;flex:none}
+.tp-badge>span{display:flex;flex-direction:column;text-align:left;line-height:1.1}
+.tp-badge small{font-size:10px;font-weight:500}
+.tp-badge b{font-size:16px;font-weight:600;letter-spacing:-.01em}
+@media (max-width:380px){.tp-app-e{gap:10px}.tp-app-e img{width:46px;height:46px;border-radius:11px}.tp-badge{padding:0 14px 0 12px}}
+/* E's bar: Get the app in the hero's foil (site.css .hero h1 .it: --foil-teal, the serif italic, clipped to the
+   letters, the same padding for the italic's overhang), on the homepage button's black. */
+.tp-bar-foil .tp-bar-get{background:#000;color:#fff;border:1px solid rgba(255,255,255,.18);gap:7px;padding:0 16px 0 14px}
+.tp-foil-t{font-family:var(--serif,"Instrument Serif",Georgia,serif);font-style:italic;font-weight:400;letter-spacing:-.01em;font-size:21px;line-height:1;color:var(--light,#cfe3da)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .tp-foil-t{background-image:var(--foil-teal);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding:.06em .08em .16em .04em;margin-top:-.06em;margin-bottom:-.16em}
+}
+@media (forced-colors:active){.tp-foil-t{background-image:none;color:CanvasText;-webkit-text-fill-color:CanvasText}}
 
 @media (prefers-reduced-motion:reduce){
   .tp,.tp.off{transition:none}
