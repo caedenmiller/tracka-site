@@ -1356,6 +1356,7 @@
   var STORE = 'https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=pack&mt=8';
   var ANDROID = /Android/i.test(navigator.userAgent);
   var APPLE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-apple"/></svg>';
+  var BADGE = APPLE + '<span><small>Download on the</small><b>App Store</b></span>';
   /** A real App Store link (track.js counts it, escape.js and android.js take it in TikTok and on Android). */
   function storeLink(o, cls, ct) {
     var a = el('a', cls);
@@ -1368,8 +1369,8 @@
      B  the next pack: a sealed pack over the button, "Open another"
      C  the app itself: Tracka's App Store row (icon, name, Get) in place of the button
      D  today's screen; closing it leaves a bar on the page with the pull and Get the app (ct=packbar)
-     E  his pick (11-16), C + D: C's row with the homepage's Download on the App Store button in place of
-        Get, and D's bar after a close, its button the header's Get the app (site.css .nav-cta) */
+     E  his pick (11-16), C + D: C's row ends in a foil Download on the App Store button (the homepage's
+        button in the header pill's --foil-true and #06222b); after a close, D's bar with the black one */
   function resultsStage(o) {
     var v = o.variant || '';
     var cards = o.cards, W = o.stageW;
@@ -1448,7 +1449,7 @@
       store.innerHTML = '<img src="/go/icon.png?v=3" width="52" height="52" alt="">' +
         '<span class="tp-app-t"><b>Tracka</b><span>' + (ANDROID ? 'Coming to Android' : 'Free on iPhone') + '</span></span>' +
         (ANDROID ? '<span class="tp-get">Notify me</span>'
-          : v === 'e' ? '<span class="tp-badge">' + APPLE + '<span><small>Download on the</small><b>App Store</b></span></span>'
+          : v === 'e' ? '<span class="tp-badge tp-badge-foil">' + BADGE + '</span>'
           : '<span class="tp-get">Get</span>');
     } else {
       store = storeLink(o, 'tp-store');
@@ -1500,8 +1501,10 @@
     t.firstChild.textContent = card.name;
     t.lastChild.textContent = card.price !== null ? money(card.price) : '';
     a.appendChild(t);
-    var pill = el('span', 'tp-bar-get');
-    pill.innerHTML = ANDROID ? 'Get notified' : APPLE + 'Get the app';
+    // E on iPhone: the black Download on the App Store button (the homepage's); Android keeps its pill.
+    var badge = o.foil && !ANDROID;
+    var pill = el('span', badge ? 'tp-badge' : 'tp-bar-get');
+    pill.innerHTML = badge ? BADGE : ANDROID ? 'Get notified' : APPLE + 'Get the app';
     a.appendChild(pill);
     bar.appendChild(a);
     document.body.appendChild(bar);

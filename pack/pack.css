@@ -121,11 +121,14 @@ html.tp-hide body>:not(.tp):not(.tt-sheet):not(.aw-scrim){visibility:hidden}
 .tp-badge>span{display:flex;flex-direction:column;text-align:left;line-height:1.1}
 .tp-badge small{font-size:10px;font-weight:500}
 .tp-badge b{font-size:16px;font-weight:600;letter-spacing:-.01em}
+/* E's row: the same button in the header pill's foil (site.css .nav-cta: --foil-true, #06222b). The rim stays, clear, so the size is the same. */
+.tp-badge-foil{background:var(--foil-true);color:#06222b;border-color:transparent}
 @media (max-width:380px){.tp-app-e{gap:10px}.tp-app-e img{width:46px;height:46px;border-radius:11px}.tp-badge{padding:0 14px 0 12px}}
-/* E's bar: its button is the header's Get the app (site.css .nav-cta: the site's sans at 700, --foil-true,
-   #06222b, a full pill; 13px on a phone as there). 44 tall for the thumb where the header's is 37. */
+/* E's bar on Android: Get notified as the header's Get the app (site.css .nav-cta: the site's sans at 700,
+   --foil-true, #06222b, a full pill; 13px on a phone as there). 44 tall for the thumb where the header's is 37.
+   On iPhone the bar holds the black .tp-badge instead. */
+.tp-bar-foil .tp-bar-in{padding-right:10px}
 .tp-bar-foil .tp-bar-get{background:var(--foil-true);color:#06222b;font:700 13.5px/1 var(--sans,"Jakarta",-apple-system,system-ui,sans-serif);border-radius:999px;padding:0 16px;gap:6px}
-.tp-bar-foil .tp-bar-get svg{width:15px;height:15px;margin-top:-1px}
 @media (max-width:560px){.tp-bar-foil .tp-bar-get{font-size:13px;padding:0 14px}}
 
 @media (prefers-reduced-motion:reduce){
