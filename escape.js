@@ -215,7 +215,8 @@
       var ct = /[?&]ct=([a-z0-9-]{1,40})(&|$)/i.exec(a.getAttribute('href') || '');
       ct = ct ? ct[1] : 'home';
       try { if (window.tvTrack) window.tvTrack('web_tiktok_handoff', { ct: ct }); } catch (err) { /* fine */ }
-      location.replace(location.pathname + '?app=' + ct);
+      // ?v= carries this visit's id through the reload and into Safari (track.js, 11-17)
+      location.replace(location.pathname + '?app=' + ct + (window.tvId ? '&v=' + encodeURIComponent(window.tvId) : ''));
     }
   }, true);
 })();

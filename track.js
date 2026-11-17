@@ -34,12 +34,18 @@
   var browser = /CriOS|Chrome|Chromium/i.test(ua) ? 'chrome' : /FxiOS|Firefox/i.test(ua) ? 'firefox' : /Safari/i.test(ua) ? 'safari' : 'other';
   var botHint = !!navigator.webdriver || /HeadlessChrome|bot\b|crawl|spider|slurp|Lighthouse|PageSpeed|facebookexternalhit|preview/i.test(ua);
 
+  // 11-17: one visit, one id. The TikTok handoff reloads the page and then hands it
+  // to Safari, and each of those started a new id, so one visitor showed up as three.
+  // escape.js now puts the id on the handoff address as ?v=, and a page loaded with it
+  // keeps it. Still one visit only: nothing is stored past the tab.
   var id;
+  var passed = /[?&]v=(web-[a-z0-9]{5,40})(&|$)/.exec(location.search);
   try {
-    id = sessionStorage.getItem('tv_sid');
-    if (!id) sessionStorage.setItem('tv_sid', (id = 'web-' + Math.random().toString(36).slice(2) + Date.now().toString(36)));
+    id = passed ? passed[1] : sessionStorage.getItem('tv_sid');
+    if (!id) id = 'web-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem('tv_sid', id);
   } catch (e) {
-    id = 'web-' + Math.random().toString(36).slice(2);
+    id = passed ? passed[1] : 'web-' + Math.random().toString(36).slice(2);
   }
 
   function send(event, props) {
@@ -123,4 +129,5 @@
 
   // For the other page scripts (android.js): same id, same in_app/os props.
   window.tvTrack = send;
+  window.tvId = id;
 })();
