@@ -22,6 +22,9 @@
 //   M  a creator page (/go/<code>/) hands off from TikTok to the store like the site (11-24)
 //   L  a close at the results leaves the white bar: ct=packbar, web_pack_bar_shown once, the tap counted; Android's
 //      waitlist; TikTok hands off ?app=packbar and Safari on it goes to the store with ct=packbar
+//   N  tracking (11-25): every event carries entry_source and entry_path, kept for the whole tab; a TikTok hold sends
+//      web_tiktok_hold, and TikTok leaving after it sends web_tiktok_hold_left + web_app_store_opened via hold; an
+//      iPhone Safari tap, a /go redirect and the old handoff send web_app_store_opened; WebKit sends nothing real
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -51,8 +54,11 @@ async function open(engine, ua, setup) {
   const b = await engine.launch();
   const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, userAgent: ua });
   const events = [];
-  // Chromium only: WebKit's sendBeacon skips Playwright's routing
-  await c.route('**/us.i.posthog.com/**', r => { try { const j = JSON.parse(r.request().postData()); events.push({ event: j.event, _id: j.distinct_id, ...j.properties }); } catch {} r.fulfill({ status: 200, body: '1' }); });
+  // WebKit's sendBeacon skips Playwright's routing, so a WebKit check used to reach the real PostHog (host
+  // 127.0.0.1 rows, found 11-25). sendBeacon says no here, track.js falls back to fetch, and the route catches
+  // that in every engine: nothing from a check leaves this machine.
+  await c.addInitScript(() => { try { Object.defineProperty(Navigator.prototype, 'sendBeacon', { value: () => false, configurable: true }); } catch {} });
+  await c.route('**/us.i.posthog.com/**', r => { try { const j = JSON.parse(r.request().postData()); events.push({ event: j.event, _id: j.distinct_id, ...j.properties }); } catch {} r.fulfill({ status: 200, body: '1', headers: { 'Access-Control-Allow-Origin': '*' } }); });
   await c.route('**/functions/v1/**', r => r.fulfill({ status: 200, body: '{}' }));
   if (setup) await setup(c);
   const p = await c.newPage();
@@ -514,6 +520,108 @@ try {
       check('L  Safari: ?app=packbar goes for the store with ct=packbar', storeL.some(u => /ct=packbar&/.test(u)), storeL.slice(-1).join(''));
       const l = events.find(e => e.event === 'web_tiktok_handoff_landed');
       check('L  Safari: web_tiktok_handoff_landed carries ct=packbar', l && l.ct === 'packbar', l && l.ct);
+      await b.close();
+    }
+  }
+  { // N: tracking (11-25)
+    const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
+    const store = [];
+    const watch = c => c.route('**/apps.apple.com/**', r => { store.push(r.request().url()); r.fulfill({ status: 204 }); });
+    const opened = evs => evs.filter(e => e.event === 'web_app_store_opened');
+    { // TikTok on the homepage: the source on every event, a real hold, then TikTok goes to the background
+      const { b, c, p, events } = await open(chromium, TT, watch);
+      await p.goto(BASE + '?nopack');
+      await p.waitForSelector('.cta-row a.store', { state: 'attached' });
+      await p.evaluate(() => document.querySelector('.cta-row a.store').click());
+      await p.waitForSelector('.tt-hold.on', { timeout: 3000 });
+      const cdp = await c.newCDPSession(p);
+      const r = await p.evaluate(() => { const q = document.querySelector('.tt-go').getBoundingClientRect(); return { x: q.x + q.width / 2, y: q.y + q.height / 2 }; });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x, y: r.y }] });
+      await p.waitForTimeout(650);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await p.evaluate(() => {
+        Object.defineProperty(document, 'hidden', { get: () => true, configurable: true });
+        Object.defineProperty(document, 'visibilityState', { get: () => 'hidden', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      await p.waitForTimeout(300);
+      const pv = events.find(e => e.event === 'web_pageview');
+      const tap = events.find(e => e.event === 'web_store_tap');
+      const hold = events.filter(e => e.event === 'web_tiktok_hold');
+      const left = events.filter(e => e.event === 'web_tiktok_hold_left');
+      check('N  TikTok: the pageview says entry_source tiktok, entry_path /', pv && pv.entry_source === 'tiktok' && pv.entry_path === '/', pv && pv.entry_source + ' ' + pv.entry_path);
+      check('N  TikTok: every event carries the same entry_source', events.length > 3 && events.every(e => e.entry_source === 'tiktok'), [...new Set(events.map(e => e.event + ':' + e.entry_source))].join(' '));
+      check('N  TikTok: the store tap sends no App Store arrival (the sheet holds it)', tap && tap.ct === 'home' && !opened(events).some(e => e.via === 'tap'));
+      check('N  TikTok: a hold sends web_tiktok_hold once, with the ct', hold.length === 1 && hold[0].ct === 'home', JSON.stringify(hold.map(e => e.ct)));
+      check('N  TikTok: leaving after the hold sends web_tiktok_hold_left and web_app_store_opened via hold, ct home',
+        left.length === 1 && opened(events).length === 1 && opened(events)[0].via === 'hold' && opened(events)[0].ct === 'home' && opened(events)[0]._id === pv._id,
+        JSON.stringify(opened(events).map(e => [e.via, e.ct])));
+      check('N  TikTok: a hold opens nothing by itself', !store.length, store.join(' '));
+      await b.close();
+    }
+    { // Safari, tagged link: the tag is the source and the ct tag, kept on the next page of the tab
+      store.length = 0;
+      const { b, p, events } = await open(chromium, IOS, watch);
+      await p.goto(BASE + 'privacy.html?utm_source=Discord'); // the local server has no /privacy rewrite
+      await p.goto(BASE + '?nopack');
+      await p.waitForSelector('.cta-row a.store', { state: 'attached' });
+      await p.evaluate(() => document.querySelector('.cta-row a.store').click());
+      await p.waitForTimeout(600);
+      const pvs = events.filter(e => e.event === 'web_pageview');
+      const o = opened(events);
+      check('N  Safari: ?utm_source= is the source, kept on the next page with the first path', pvs.length === 2 && pvs.every(e => e.entry_source === 'utm:discord' && e.entry_path === '/privacy.html' && e._id === pvs[0]._id), JSON.stringify(pvs.map(e => [e.path, e.entry_source, e.entry_path])));
+      check('N  Safari: a tap on the next page keeps the tag in its ct and is the arrival (via tap, ct home-discord)', o.length === 1 && o[0].via === 'tap' && o[0].ct === 'home-discord' && store.some(u => /ct=home-discord&/.test(u)), JSON.stringify(o.map(e => [e.via, e.ct])) + ' ' + store.join(' '));
+      await b.close();
+    }
+    { // a creator page in Safari: its source, and a badge tap is the arrival with the creator's ct
+      const { b, p, events } = await open(chromium, IOS, watch);
+      await p.goto(BASE + 'go/sampark/');
+      await p.waitForSelector('a.badge', { state: 'attached' });
+      await p.evaluate(() => document.querySelector('a.badge').click());
+      await p.waitForTimeout(600);
+      const pv = events.find(e => e.event === 'web_pageview');
+      const o = opened(events);
+      check('N  creator page: entry_source go/sampark', pv && pv.entry_source === 'go/sampark' && pv.entry_path === '/go/sampark/', pv && pv.entry_source);
+      check('N  creator page: a badge tap sends web_app_store_opened with ct c-SAMPARK', o.length === 1 && o[0].ct === 'c-SAMPARK' && o[0].via === 'tap', JSON.stringify(o.map(e => [e.via, e.ct])));
+      await b.close();
+    }
+    { // /go/reddit/ in Safari jumps by itself: the jump is the arrival
+      store.length = 0;
+      const { b, p, events } = await open(chromium, IOS, watch);
+      await p.goto(BASE + 'go/reddit/').catch(() => {});
+      await p.waitForTimeout(1500);
+      const o = opened(events);
+      check('N  /go/reddit/: the redirect sends web_app_store_opened via redirect, ct reddit, source go/reddit', o.length === 1 && o[0].via === 'redirect' && o[0].ct === 'reddit' && o[0].entry_source === 'go/reddit' && store.some(u => /ct=reddit&/.test(u)), JSON.stringify(o.map(e => [e.via, e.ct, e.entry_source])));
+      await b.close();
+    }
+    { // a computer on /go/reddit/: the jump is Apple's web page, not an arrival; Android taps never are
+      const DESK = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
+      const { b, p, events } = await open(chromium, DESK, watch);
+      await p.goto(BASE + 'go/reddit/').catch(() => {});
+      await p.waitForTimeout(1200);
+      check('N  computer: a /go jump is not an App Store arrival', !opened(events).length);
+      await b.close();
+      const a = await open(chromium, AND);
+      await a.p.goto(BASE + '?nopack');
+      await a.p.waitForSelector('.cta-row a.store', { state: 'attached' });
+      await a.p.evaluate(() => document.querySelector('.cta-row a.store').click());
+      await a.p.waitForTimeout(500);
+      check('N  Android: a store tap opens the waitlist, not an App Store arrival', !opened(a.events).length && a.events.some(e => e.event === 'web_android_sheet_shown' && e.entry_source === 'direct'), a.events.map(e => e.event).join(' '));
+      await a.b.close();
+    }
+    { // the old TikTok Safari landing: the arrival via handoff, same id
+      const { b, p, events } = await open(chromium, IOS, watch);
+      await p.goto(BASE + '?app=home&v=web-abc123').catch(() => {});
+      await p.waitForTimeout(1500);
+      const o = opened(events);
+      check('N  old handoff: web_app_store_opened via handoff, the passed id, source tiktok-handoff', o.length === 1 && o[0].via === 'handoff' && o[0]._id === 'web-abc123' && o[0].entry_source === 'tiktok-handoff', JSON.stringify(o.map(e => [e.via, e._id, e.entry_source])));
+      await b.close();
+    }
+    { // WebKit: events reach the route (so none reach the real PostHog)
+      const { b, p, events } = await open(webkit, IOS);
+      await p.goto(BASE + '?nopack');
+      await p.waitForTimeout(800);
+      check('N  WebKit: the pageview is caught locally, not sent to PostHog', events.some(e => e.event === 'web_pageview' && e.host === '127.0.0.1'));
       await b.close();
     }
   }

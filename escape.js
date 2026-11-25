@@ -48,7 +48,12 @@
   // Out of TikTok with the marker: straight to the store; this screen stays behind as the way on.
   function landed(ct) {
     var url = 'https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&ct=' + ct + '&mt=8';
-    try { if (window.tvTrack) window.tvTrack('web_tiktok_handoff_landed', { ct: ct }); } catch (e) { /* fine */ }
+    try {
+      if (window.tvTrack) {
+        window.tvTrack('web_tiktok_handoff_landed', { ct: ct });
+        window.tvTrack('web_app_store_opened', { ct: ct, via: 'handoff' }); // track.js, 11-25
+      }
+    } catch (e) { /* fine */ }
     css();
     var s = document.createElement('div');
     s.className = 'tt-sheet tt-landed on';
@@ -242,6 +247,7 @@
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && heldAt && Date.now() - heldAt < 20000 && sheet && !sheet.hidden) {
       track('web_tiktok_hold_left');
+      track('web_app_store_opened', { via: 'hold' }); // the one arrival event every path sends (track.js, 11-25)
       heldAt = 0;
     }
   });

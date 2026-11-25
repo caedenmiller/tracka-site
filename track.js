@@ -10,6 +10,15 @@
      web_link_tap   a tap on any other link (11-06)
      web_page_leave the page hiding: deepest scroll % and seconds (11-06),
                     once per page view (11-08)
+     web_app_store_opened  (11-25) the visit really left for the App Store, one
+                    event for every way it can: via tap (an App Store tap on an
+                    iPhone outside TikTok, where the link just opens), redirect
+                    (a /go page's own jump), handoff (escape.js, the old TikTok
+                    Safari landing), hold (escape.js, TikTok went to the
+                    background after a hold on the sheet's button). A proxy: the
+                    install itself is only in App Store Connect, by ct.
+   Every event also carries entry_source and entry_path (11-25): where this tab's
+   visit came in, worked out once on its first page (see entrySource).
    android.js adds web_android_sheet_shown (trigger) and
    web_android_waitlist_joined through window.tvTrack (never the email).
    No library, no cookies, no person profiles. The id lives in sessionStorage,
@@ -48,8 +57,46 @@
     id = passed ? passed[1] : 'web-' + Math.random().toString(36).slice(2);
   }
 
+  function refHost() {
+    try { return document.referrer ? new window.URL(document.referrer).hostname : null; } catch (e) { return null; }
+  }
+
+  var q = new URLSearchParams(location.search);
+  // utm_source, cut to what a campaign token may hold (letters, digits, 20 max)
+  var pageTag = (q.get('utm_source') || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+
+  // Where the visit came in (11-25). Before this, a store tap or a TikTok hold three pages
+  // in said nothing about the source; only the first pageview's path, in_app and referrer
+  // did, so every "by source" chart needed SQL. Worked out on the tab's first page and kept
+  // with the id in sessionStorage (same lifetime: the tab), so every event carries it and a
+  // plain funnel can split by it. In order: a /go/<code>/ page (creators, reddit, the old
+  // tiktok hop), a ?utm_source= tag, the old TikTok Safari landing (?app=), an in-app
+  // browser, then the referrer. TikTok's and Instagram's in-app browsers send no referrer,
+  // so a bio tap, a DM and a comment link all read 'tiktok' (or 'instagram'): only a
+  // ?utm_source= on the link itself can tell them apart.
+  function entrySource() {
+    var go = /^\/go\/([a-z0-9-]+)\//i.exec(location.pathname);
+    if (go) return 'go/' + go[1].toLowerCase();
+    if (pageTag) return 'utm:' + pageTag;
+    if (/[?&]app=/.test(location.search)) return 'tiktok-handoff';
+    if (inApp !== 'none') return inApp;
+    var r = (refHost() || '').toLowerCase();
+    if (/(^|\.)(google|bing|duckduckgo|yahoo|ecosia|baidu|yandex|brave|startpage|qwant)\.|googlequicksearchbox/.test(r)) return 'search';
+    if (r && !/(^|\.)gettracka\.com$/.test(r)) return 'ref:' + r.replace(/^www\./, '').slice(0, 60);
+    return 'direct';
+  }
+  var entry = null;
+  try { entry = JSON.parse(sessionStorage.getItem('tv_entry') || 'null'); } catch (e) {}
+  if (!entry || !entry.s) {
+    entry = { s: entrySource(), p: location.pathname };
+    try { sessionStorage.setItem('tv_entry', JSON.stringify(entry)); } catch (e) {}
+  }
+  // The tag for store links' ct (below): this page's, or the one the visit came in with, so a
+  // tagged link to /shows/ still says ct=home-<tag> after a tap on the homepage (11-25).
+  var srcTag = pageTag || (/^utm:/.test(entry.s) ? entry.s.slice(4) : '');
+
   function send(event, props) {
-    var p = { $process_person_profile: false, $lib: 'tcgvendr-web', site: 'tcgvendr.com', host: location.hostname, browser: browser, bot_hint: botHint, path: location.pathname, in_app: inApp, os: os };
+    var p = { $process_person_profile: false, $lib: 'tcgvendr-web', site: 'tcgvendr.com', host: location.hostname, browser: browser, bot_hint: botHint, path: location.pathname, in_app: inApp, os: os, entry_source: entry.s, entry_path: entry.p };
     for (var k in props) p[k] = props[k];
     var body = JSON.stringify({ api_key: KEY, event: event, distinct_id: id, timestamp: new Date().toISOString(), properties: p });
     try {
@@ -59,13 +106,6 @@
     try { fetch(ENDPOINT, { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'text/plain' } }); } catch (e) {}
   }
 
-  function refHost() {
-    try { return document.referrer ? new window.URL(document.referrer).hostname : null; } catch (e) { return null; }
-  }
-
-  var q = new URLSearchParams(location.search);
-  // utm_source, cut to what a campaign token may hold (letters, digits, 20 max)
-  var srcTag = (q.get('utm_source') || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
   send('web_pageview', {
     $current_url: location.href,
     $referrer: document.referrer || '$direct',
@@ -100,6 +140,13 @@
     // it, the App Store opens over Safari), so the tap carries the same numbers.
     depth();
     send('web_store_tap', { href: href, ct: ct ? ct[1] : null, max_scroll_pct: maxPct, seconds: secs() });
+    // On an iPhone outside TikTok an App Store link just opens the App Store, so the tap is the
+    // arrival (11-25). Inside TikTok escape.js holds it back (the hold sheet; it sends its own
+    // via hold), on Android android.js does (waitlist), on a computer it is Apple's web page,
+    // and a pack preview is his own look.
+    if (os === 'ios' && inApp !== 'tiktok' && /apps\.apple\.com/.test(href) && !(ct && /preview/.test(ct[1]))) {
+      send('web_app_store_opened', { ct: ct ? ct[1] : null, via: 'tap' });
+    }
   }, true);
 
   // How far a visit got (11-06): about 85% of TikTok visitors leave the
@@ -130,7 +177,7 @@
   });
   window.addEventListener('pagehide', function () { leave('pagehide'); });
 
-  // For the other page scripts (android.js): same id, same in_app/os props.
+  // For the other page scripts (android.js, escape.js, the /go pages' redirect): same id, same props.
   window.tvTrack = send;
   window.tvId = id;
 })();

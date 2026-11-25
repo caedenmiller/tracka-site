@@ -71,7 +71,7 @@ p span{color:var(--blue)}
 <div class="sub" id="sub">Free on iPhone</div>
 </main>
 <div class="foot" id="hint" hidden>Not opening? Tap ⋯ and choose Open in browser.</div>
-<script src="/track.js?v=7"></script>
+<script src="/track.js?v=8"></script>
 <script>
 (function(){
   // three or more cards still upcoming: drop the ended ones. Fewer: keep the
@@ -106,10 +106,14 @@ p span{color:var(--blue)}
   // get this page and the badge. Everyone else redirects on load.
   var inApp=/Instagram|FBAN|FBAV|FB_IAB|Barcelona|TikTok|musical_ly|BytedanceWebview/i.test(navigator.userAgent);
   if(inApp){document.getElementById("hint").hidden=false;}
-  else{location.replace(url);}
+  else{
+    // on an iPhone the jump is the arrival, with no tap to count (track.js web_app_store_opened, 11-25)
+    try{if(window.tvTrack&&/iPhone|iPad|iPod/i.test(navigator.userAgent))window.tvTrack("web_app_store_opened",{ct:/[?&]ct=([^&]+)/.exec(url)[1],via:"redirect"});}catch(e){}
+    location.replace(url);
+  }
 })();
 </script>
-<script src="/escape.js?v=17" defer></script>
+<script src="/escape.js?v=18" defer></script>
 <script src="/android.js?v=4" defer></script>
 </body>
 </html>
