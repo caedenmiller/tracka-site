@@ -18,6 +18,7 @@
 //      and the Tap to open cue is gone within 200 ms of that tap, for good
 //   K  the results (his pick 11-16): Tracka's row with the foil Download on the App Store button, ct=pack, inside 375 px
 //      (Android: Coming to Android, Notify me, no Apple mark)
+//   M  a creator page (/go/<code>/) hands off from TikTok to the store like the site (11-24)
 //   L  a close at the results leaves the white bar: ct=packbar, web_pack_bar_shown once, the tap counted; Android's
 //      waitlist; TikTok hands off ?app=packbar and Safari on it goes to the store with ct=packbar
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
@@ -239,6 +240,41 @@ try {
       check('J  Safari: a Get the app button stays if the jump does not fire', await p.evaluate(() => { const a = document.querySelector('.tt-sheet .tt-get'); return !!a && /ct=pack/.test(a.href) && a.getBoundingClientRect().height >= 44; }));
       const l = events.find(e => e.event === 'web_tiktok_handoff_landed');
       check('J  Safari: web_tiktok_handoff_landed carries the ct', l && l.ct === 'pack', l && l.ct);
+      await b.close();
+    }
+  }
+  { // M (11-24): a creator page hands off like the site. In TikTok its badge loads ?app=<its ct> with the code
+    // sheet; Safari on that address goes to the store with the creator's ct; a plain Safari visit stays on the page.
+    const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
+    const GO = BASE + 'go/faithlovesfish/';
+    const store = [];
+    const watch = c => c.route('**/apps.apple.com/**', r => { store.push(r.request().url()); r.fulfill({ status: 204 }); });
+    let handoff = '';
+    {
+      const { b, p } = await open(chromium, TT, watch);
+      await p.goto(GO);
+      await p.waitForSelector('a.badge', { state: 'attached' });
+      await p.evaluate(() => document.querySelector('a.badge').click());
+      await p.waitForURL(/\?app=c-FAITHLOVESFISH&v=web-[a-z0-9]+$/, { timeout: 5000 }).catch(() => {});
+      handoff = p.url();
+      check('M  TikTok: a creator badge tap loads the page with ?app=<its ct>', /\/go\/faithlovesfish\/\?app=c-FAITHLOVESFISH&v=web-[a-z0-9]+$/.test(handoff), handoff);
+      check('M  TikTok: the sheet is up with the code', await p.waitForSelector('.tt-sheet.on .tt-code b', { timeout: 4000 }).then(() => true, () => false));
+      check('M  TikTok: no store navigation', !store.length, store.join(' '));
+      await b.close();
+    }
+    {
+      const { b, p } = await open(chromium, IOS, watch);
+      await p.goto(handoff).catch(() => {});
+      await p.waitForTimeout(2500);
+      check('M  Safari: the handoff address goes to the store with the creator ct', store.length >= 1 && /[?&]ct=c-FAITHLOVESFISH(&|$)/.test(store[0]), store[0]);
+      await b.close();
+    }
+    {
+      store.length = 0;
+      const { b, p } = await open(chromium, IOS, watch);
+      await p.goto(GO).catch(() => {});
+      await p.waitForTimeout(2000);
+      check('M  Safari: a plain visit stays on the creator page', !store.length && new URL(p.url()).pathname === '/go/faithlovesfish/', store.join(' '));
       await b.close();
     }
   }

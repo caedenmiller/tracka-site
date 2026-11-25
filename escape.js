@@ -31,7 +31,11 @@
   var preview = /[?&]preview_tiktok=1(&|$)/.test(location.search);
   var inTikTok = /TikTok|musical_ly|BytedanceWebview|trill_/i.test(ua) && /iPhone|iPad|iPod/i.test(ua);
   var app = /[?&]app=([a-z0-9-]{1,40})(&|$)/i.exec(location.search);
-  app = app && location.pathname.indexOf('/go/') !== 0 ? app[1] : null;
+  // 11-24: creator pages too. They never redirected on their own (they show the code and
+  // the creator's tables), so Open in browser left Safari on the page and the store still
+  // needed a tap (Caeden's phone, /go/faithlovesfish). Only the old /go/tiktok/ hop keeps
+  // its own redirect.
+  app = app && location.pathname !== '/go/tiktok/' ? app[1] : null;
   if (app && !inTikTok && !preview) { landed(app); return; }
   if (!preview && !inTikTok) return;
 
@@ -196,6 +200,7 @@
   function start() {
     if (onLanding) show();
     else if (!onGo) { bar(); if (app) show(true); } // the handoff load: the sheet at once
+    else if (app) show(true); // a creator page's handoff load: the sheet, with the code
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
@@ -209,7 +214,7 @@
     // blocks the /go/tiktok/ load for normal visitors).
     // A site page: load it again with the marker, so Open in browser hands Safari an address
     // that goes to the store (see the 11-11 note above). Already on it, or a preview: the sheet.
-    if (onGo) show();
+    if (onLanding) show();
     else if (app || preview) show(true);
     else {
       var ct = /[?&]ct=([a-z0-9-]{1,40})(&|$)/i.exec(a.getAttribute('href') || '');
