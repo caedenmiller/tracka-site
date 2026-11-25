@@ -45,7 +45,7 @@
     try { if (window.tvTrack) window.tvTrack('web_tiktok_handoff_landed', { ct: ct }); } catch (e) { /* fine */ }
     css();
     var s = document.createElement('div');
-    s.className = 'tt-sheet on';
+    s.className = 'tt-sheet tt-landed on';
     s.setAttribute('role', 'dialog');
     s.setAttribute('aria-modal', 'true');
     s.setAttribute('aria-label', 'Get Tracka');
@@ -104,6 +104,9 @@
       '.tt-mark img{display:block;width:84px;height:84px;border-radius:20px;border:1.5px solid rgba(255,255,255,.22);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 12px 34px rgba(139,116,255,.22)}' +
       '.tt-mark b{font-size:22px;font-weight:800;line-height:1;letter-spacing:.18em;padding-left:.18em;text-transform:uppercase}' +
       '.tt-close{flex:none;align-self:center;margin-top:auto;height:52px;min-width:168px;padding:0 34px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:#1B1B20;color:#fff;font:700 16px "Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif}' +
+      // The Safari landing: iOS's "Open in App Store?" box sits mid-screen, so the code sits
+      // high, clear of it (his phone 11-24: the box covered the code).
+      '.tt-landed .tt-code,.tt-landed .tt-mark{margin:11vh 0 auto}' +
       '.tt-code+.tt-close,.tt-mark+.tt-close{margin-top:24px}' +
       '.tt-get{flex:none;display:flex;align-items:center;justify-content:center;height:58px;margin-top:24px;border-radius:999px;background:#fff;color:#08080A;font:800 18px "Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif;text-decoration:none}' +
       '.tt-get:active{opacity:.85}.tt-get+.tt-close{margin-top:14px}' +
