@@ -1568,7 +1568,7 @@
     // one built earlier (a tap before the pack) must stay usable, or it covers the
     // pack's X with a Close that can't be tapped.
     Array.prototype.forEach.call(document.body.children, function (c) {
-      if (c.tagName === 'SCRIPT' || c.inert || c.matches('.tt-sheet, .aw-scrim')) return;
+      if (c.tagName === 'SCRIPT' || c.inert || c.matches('.tt-sheet, .tt-hold, .aw-scrim')) return;
       c.inert = true;
       c.setAttribute('aria-hidden', 'true');
       inerted.push(c);

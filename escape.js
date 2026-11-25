@@ -24,6 +24,12 @@
    /go/tiktok/ redirect TikTok refuses, so it should load (his phone has to confirm).
    In Safari a load with ?app= shows no pack (start.js) and goes straight to the App Store
    with that ct, with a Get the app button left on screen in case the jump does not fire.
+   11-25, the hold (Caeden's find on CardSheet's site, proven on his phone): TikTok blocks a
+   TAP on an App Store link, but a press-and-hold brings up iOS's own link menu, and its
+   Open Link goes straight to the App Store with no browser in between. So in TikTok a store
+   tap no longer reloads anything: it opens a bottom sheet whose one button is the real store
+   link (the tapped link's ct kept), to be held, not tapped. The ?app= handoff below stays
+   for old links and anyone who still takes Open in browser.
    PREVIEW ONLY: ?preview_tiktok=1 shows it in any browser so it can be looked at
    without TikTok; nothing is tracked in a preview. */
 (function () {
@@ -65,12 +71,6 @@
     location.replace(url);
   }
 
-  var LANDING = '/go/tiktok/';
-  var onLanding = location.pathname === LANDING;
-  var sheet = null;
-  // /go pages redirect to the store on their own once in Safari: no step 3
-  var onGo = location.pathname.indexOf('/go/') === 0;
-
 
   var styled = false;
   function css() {
@@ -88,10 +88,7 @@
       // sheet stayed as an invisible full-screen layer eating every tap (10-22)
       '.tt-sheet[hidden]{display:none}' +
       '.tt-sheet.on{opacity:1}' +
-      '.tt-arrow{flex:none;align-self:flex-end;width:56px;height:74px;margin-right:-10px;animation:tt-nudge 1.4s ease-in-out infinite}' +
       '@keyframes tt-nudge{0%,100%{transform:translate(0,0)}50%{transform:translate(4px,-6px)}}' +
-      '.tt-tip{flex:none;margin:12px 0 0;max-width:none;text-align:right;color:#fff;font-size:29px;font-weight:800;line-height:1.32;letter-spacing:-.02em}' +
-      '.tt-tip b{display:inline-block;padding:0 10px;border-radius:10px;background:#fff;color:#08080A;line-height:1.22}' +
       // the creator code, repeated big: the link doesn't carry it, so it has to be
       // remembered through Safari and the App Store and typed at sign up
       '.tt-code{flex:none;margin:auto 0;padding:20px 16px 18px;border:1.5px solid transparent;border-radius:20px;background:linear-gradient(#131316,#131316) padding-box,linear-gradient(115deg,#cd65e5,#8976ff 30%,#2f9aff 58%,#9cecff 80%,#00decd) border-box}' +
@@ -111,7 +108,7 @@
       '.tt-get{flex:none;display:flex;align-items:center;justify-content:center;height:58px;margin-top:24px;border-radius:999px;background:#fff;color:#08080A;font:800 18px "Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif;text-decoration:none}' +
       '.tt-get:active{opacity:.85}.tt-get+.tt-close{margin-top:14px}' +
       '.tt-close:focus{outline:none}.tt-close:active{background:#2A2A31}' +
-      '@media(max-height:600px){.tt-arrow{width:44px;height:58px}.tt-mark img{width:64px;height:64px;border-radius:15px}.tt-tip{font-size:25px;margin-top:6px}.tt-code{padding:14px 14px 12px}.tt-code b{font-size:min(42px,calc((100vw - 84px) / var(--n,7) / .8))}.tt-close{height:48px}}' +
+      '@media(max-height:600px){.tt-mark img{width:64px;height:64px;border-radius:15px}.tt-code{padding:14px 14px 12px}.tt-code b{font-size:min(42px,calc((100vw - 84px) / var(--n,7) / .8))}.tt-close{height:48px}}' +
       // the pinned bar: one line at a FIXED 40px, and the nav and the page sit 40px
       // lower. It used to be measured by script once on load (offsetHeight into
       // --ttb); in an iOS in-app browser sheet that number came out far too big and
@@ -123,117 +120,168 @@
       '.tt-bar svg{flex:none;width:20px;height:20px;color:#205e54;animation:tt-nudge 1.4s ease-in-out infinite}' +
       'html.tt-in body{padding-top:40px}' +
       'html.tt-in .nav{top:40px}' +
-      '@media(prefers-reduced-motion:reduce){.tt-arrow,.tt-bar svg{animation:none}.tt-sheet{transition:none}}';
+      // the hold sheet (11-25), after CardSheet's: a panel from the bottom, held button in white
+      '.tt-hold{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;background:rgba(0,0,0,.6);opacity:0;transition:opacity .2s ease-out;-webkit-tap-highlight-color:transparent;font-family:"Plus Jakarta Sans",Jakarta,-apple-system,system-ui,sans-serif}' +
+      '.tt-hold[hidden]{display:none}.tt-hold.on{opacity:1}' +
+      '.tt-panel{position:relative;box-sizing:border-box;width:100%;display:flex;flex-direction:column;align-items:center;padding:30px max(16px,env(safe-area-inset-right)) calc(30px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));border-radius:28px 28px 0 0;background:#131316;border-top:1px solid rgba(255,255,255,.1);color:#fff;text-align:center;transform:translateY(40px);transition:transform .28s cubic-bezier(.2,.8,.2,1)}' +
+      '.tt-hold.on .tt-panel{transform:none}' +
+      '.tt-x{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right));width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:#24242A;color:#fff}' +
+      '.tt-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}' +
+      '.tt-icon{display:block;width:60px;height:60px;border-radius:14px;border:1.5px solid rgba(255,255,255,.22);box-shadow:0 10px 28px rgba(139,116,255,.22)}' +
+      '.tt-panel h2{margin:14px 0 0;font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.02em}' +
+      '.tt-panel h2 span{background-image:linear-gradient(105deg,#cd65e5,#8976ff,#2f9aff,#9cecff,#00decd);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}' +
+      '.tt-vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0!important}' +
+      '.tt-code-sm{align-self:stretch;margin:36px 0 0;padding:14px 14px 13px}' +
+      '.tt-code-sm b{font-size:min(36px,calc((100vw - 76px) / var(--n,7) / .8))}' +
+      '.tt-code-sm span{font-size:14px}' +
+      '.tt-row{position:relative;width:100%;max-width:420px;margin-top:58px}' +
+      '.tt-go{display:flex;align-items:center;justify-content:center;gap:10px;min-height:60px;border-radius:999px;background:#fff;color:#08080A;font-size:18px;font-weight:800;letter-spacing:-.01em;text-decoration:none;-webkit-touch-callout:default;-webkit-user-select:none;user-select:none}' +
+      '.tt-go svg{flex:none;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
+      '.tt-shake{animation:tt-shake .4s ease}' +
+      '@keyframes tt-shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}' +
+      '.tt-pt{position:absolute;top:-48px;width:40px;height:40px;pointer-events:none;fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;animation:tt-pt 1s ease-in-out infinite}' +
+      '.tt-pt-l{left:10%}.tt-pt-r{right:10%;transform:scaleX(-1);animation-name:tt-pt-r}' +
+      '@keyframes tt-pt{50%{transform:translate(6px,6px)}}' +
+      '@keyframes tt-pt-r{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translate(6px,6px)}}' +
+      '@media(max-height:600px){.tt-panel{padding-top:22px}.tt-row{margin-top:48px}.tt-icon{width:48px;height:48px;border-radius:11px}.tt-panel h2{font-size:22px;margin-top:10px}}' +
+      '@media(prefers-reduced-motion:reduce){.tt-bar svg,.tt-pt,.tt-shake{animation:none}.tt-sheet,.tt-hold,.tt-panel{transition:none}}';
     document.head.appendChild(s);
   }
 
-  // A creator page (/go/<code>/ with its code box) repeats the code on the sheet.
-  function codeCard() {
+  var LANDING = '/go/tiktok/';
+  var onLanding = location.pathname === LANDING;
+  var onGo = location.pathname.indexOf('/go/') === 0;
+  var STORE = 'https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&mt=8&ct=';
+
+  function ctOf(href) {
+    var m = /[?&]ct=([a-z0-9-]{1,40})(&|$)/i.exec(href || '');
+    return m ? m[1] : null;
+  }
+  // the page's own store link sets the ct when the sheet opens by itself (?app=, /go/tiktok/)
+  function pageCt() {
+    if (app) return app;
+    var a = document.querySelector('a[href*="apps.apple.com"]');
+    return (a && ctOf(a.getAttribute('href'))) || (onLanding ? 'tiktok' : 'home');
+  }
+
+  // The sheet (11-25): Get Tracka (or the creator's code), two arrows into one white button,
+  // which is the store link itself. Held, iOS shows its menu with Open Link; tapped, it shakes.
+  var sheet = null, go = null, label = null, ct = 'home', holdTimer = 0, heldAt = 0, tapped = false;
+  var HOLD = 'Tap and hold to open', HOLDING = 'Keep holding to open link';
+
+  function track(event, extra) {
+    if (!window.tvTrack || preview) return;
+    var props = { ct: ct, page: onLanding ? 'landing' : onGo ? 'go' : 'site' };
+    for (var k in extra || {}) props[k] = extra[k];
+    try { window.tvTrack(event, props); } catch (e) { /* fine */ }
+  }
+
+  function top() {
     var el = onGo && document.querySelector('#code b');
     var code = el && el.textContent.trim();
-    if (!code) return '<div class="tt-mark" aria-hidden="true"><img src="/go/icon.png?v=3" width="84" height="84" alt=""><b>Tracka</b></div>';
+    if (!code) return '<img class="tt-icon" src="/go/icon.png?v=3" width="60" height="60" alt=""><h2 id="tt-title">Get <span>Tracka</span></h2>';
     var t = document.createElement('i');
     t.textContent = code;
-    return '<div class="tt-code"><small>Your code</small><b>' + t.innerHTML + '</b><span>Type it when you sign up</span></div>';
+    return '<h2 id="tt-title" class="tt-vh">Get Tracka</h2><div class="tt-code tt-code-sm"><small>Your code</small><b style="--n:' + Math.max(7, code.length) + '">' + t.innerHTML + '</b><span>Type it when you sign up</span></div>';
   }
 
   function build() {
     css();
+    var arrow = function (side) {
+      return '<svg class="tt-pt tt-pt-' + side + '" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l13 13M18 8v10H8"/></svg>';
+    };
     sheet = document.createElement('div');
-    sheet.className = 'tt-sheet';
-    sheet.setAttribute('role', 'dialog');
-    sheet.setAttribute('aria-modal', 'true');
-    sheet.setAttribute('aria-labelledby', 'tt-title');
+    sheet.className = 'tt-hold';
+    sheet.hidden = true;
     sheet.innerHTML =
-      // the arrow in the page's foil, pointing up at TikTok's ⋯ (top right)
-      '<svg class="tt-arrow" viewBox="0 0 64 84" fill="none" stroke="url(#tt-foil)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<defs><linearGradient id="tt-foil" gradientUnits="userSpaceOnUse" x1="8" y1="76" x2="52" y2="2">' +
-          '<stop offset="0" stop-color="#cd65e5"/><stop offset=".35" stop-color="#8976ff"/><stop offset=".65" stop-color="#2f9aff"/><stop offset="1" stop-color="#9cecff"/></linearGradient></defs>' +
-        '<path d="M8 72C12 40 26 18 48 4"/><path d="M30 3h19v19"/></svg>' +
-      '<p class="tt-tip" id="tt-title">Tap <b>⋯</b> then<br><b>Open in browser</b></p>' +
-      codeCard() +
-      '<button class="tt-close" type="button">Close</button>';
-    var b = sheet.querySelector('.tt-code b');
-    if (b) b.style.setProperty('--n', Math.max(7, b.textContent.length));
+      '<div class="tt-panel" role="dialog" aria-modal="true" aria-labelledby="tt-title">' +
+        '<button class="tt-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+        top() +
+        '<div class="tt-row">' + arrow('l') +
+          '<a class="tt-go" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-4 0"/><path d="M14 10V9a2 2 0 0 0-4 0v1"/><path d="M10 9.5V4a2 2 0 0 0-4 0v10"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg><span>' + HOLD + '</span></a>' +
+        arrow('r') + '</div>' +
+      '</div>';
+    go = sheet.querySelector('.tt-go');
+    label = go.querySelector('span');
+    // the words follow the finger; a hold past 0.4 s is counted once per opening
+    go.addEventListener('touchstart', function () {
+      label.textContent = HOLDING;
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(function () { if (!heldAt) track('web_tiktok_hold'); heldAt = Date.now(); }, 400);
+    }, { passive: true });
+    ['touchend', 'touchcancel'].forEach(function (t) {
+      go.addEventListener(t, function () { clearTimeout(holdTimer); label.textContent = HOLD; });
+    });
     sheet.addEventListener('click', function (e) {
-      if (e.target === sheet || e.target.closest('.tt-close')) hide();
+      if (e.target === sheet || e.target.closest('.tt-x')) hide();
     });
     document.body.appendChild(sheet);
   }
 
-  // PostHog (10-21): the in-TikTok load of /go/tiktok/ never showed up as a
-  // pageview, not even in Caeden's own test, so the sheet reports itself.
-  // Shown, then Got it; a later /go/tiktok/ pageview with in_app none is
-  // the visitor arriving in Safari.
-  // 10-21 night: the sheet now opens IN PLACE on the page the visitor is on
-  // ('inline'). For a normal visitor TikTok refuses to load /go/tiktok/ at all
-  // (its grey "Open this link in your browser" screen; the account owner's phone
-  // isn't blocked, so his tests passed). Open in browser now hands Safari this
-  // page, where the App Store button works: one extra tap, Caeden's call.
-  var inline = false;
-  function track(event) {
-    if (window.tvTrack && !preview) window.tvTrack(event, { page: inline ? 'inline' : onLanding ? 'landing' : 'go' });
-  }
-
-  function show(asInline) {
+  function show(forCt) {
     if (!sheet) build();
-    inline = !!asInline;
+    ct = forCt || pageCt();
+    go.href = STORE + ct;
+    heldAt = 0;
+    tapped = false;
+    label.textContent = HOLD;
     track('web_tiktok_sheet_shown');
     sheet.hidden = false;
     requestAnimationFrame(function () { requestAnimationFrame(function () { sheet.classList.add('on'); }); });
   }
 
   function hide() {
-    track('web_tiktok_sheet_dismissed');
+    track('web_tiktok_sheet_dismissed', { held: !!heldAt });
     sheet.classList.remove('on');
-    // came here from one of our pages: Got it goes back there (the old hop only)
-    if (onLanding && !inline && document.referrer.indexOf(location.origin) === 0 && history.length > 1) {
-      history.back();
-      return;
-    }
     setTimeout(function () { sheet.hidden = true; }, 220);
   }
 
-  // /go pages have their own "Not opening?" line, so the bar is site pages only
+  // TikTok goes to the background soon after a hold: Open Link took them to the App Store
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && heldAt && Date.now() - heldAt < 20000 && sheet && !sheet.hidden) {
+      track('web_tiktok_hold_left');
+      heldAt = 0;
+    }
+  });
+
+  // Site pages (not /go: those carry their own line under the badge): a bar pinned on load
+  // with the way in, pointing down at the nav's Get the app.
   function bar() {
     css();
     var b = document.createElement('div');
     b.className = 'tt-bar';
     b.setAttribute('role', 'note');
     b.innerHTML =
-      '<span>To get the app, tap <b>⋯</b> then <b>Open in browser</b></span>' +
+      '<span><b>Press and hold</b> Get the app, then <b>Open Link</b></span>' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="M6 18L18 6"/><path d="M9 6h9v9"/></svg>';
+        '<path d="M6 6l12 12"/><path d="M18 9v9H9"/></svg>';
     document.body.insertBefore(b, document.body.firstChild);
-    var root = document.documentElement;
-    root.classList.add('tt-in');
+    document.documentElement.classList.add('tt-in');
   }
 
   function start() {
-    if (onLanding) show();
-    else if (!onGo) { bar(); if (app) show(true); } // the handoff load: the sheet at once
-    else if (app) show(true); // a creator page's handoff load: the sheet, with the code
+    if (onGo && !onLanding) {
+      var hint = document.getElementById('hint');
+      if (hint) hint.textContent = 'Press and hold the button, then tap Open Link.';
+    } else if (!onLanding) bar();
+    if (onLanding || app) show(); // an old handoff address, or the old /go/tiktok/ hop
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 
   document.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a[href*="apps.apple.com"]');
+    var a = e.target.closest && e.target.closest('a[href*="apps.apple.com"],a.tt-go');
     if (!a) return;
     e.preventDefault();
-    // /go pages already redirect in Safari: just show the sheet there.
-    // Everywhere else the sheet opens on this page (no navigation: TikTok
-    // blocks the /go/tiktok/ load for normal visitors).
-    // A site page: load it again with the marker, so Open in browser hands Safari an address
-    // that goes to the store (see the 11-11 note above). Already on it, or a preview: the sheet.
-    if (onLanding) show();
-    else if (app || preview) show(true);
-    else {
-      var ct = /[?&]ct=([a-z0-9-]{1,40})(&|$)/i.exec(a.getAttribute('href') || '');
-      ct = ct ? ct[1] : 'home';
-      try { if (window.tvTrack) window.tvTrack('web_tiktok_handoff', { ct: ct }); } catch (err) { /* fine */ }
-      // ?v= carries this visit's id through the reload and into Safari (track.js, 11-17)
-      location.replace(location.pathname + '?app=' + ct + (window.tvId ? '&v=' + encodeURIComponent(window.tvId) : ''));
+    if (a === go) {
+      // a tap, not a hold: TikTok would say "Action can't be completed"; shake the button instead
+      if (!tapped) track('web_tiktok_hold_tapped');
+      tapped = true;
+      go.classList.remove('tt-shake');
+      void go.offsetWidth;
+      go.classList.add('tt-shake');
+      return;
     }
+    show(ctOf(a.getAttribute('href')) || pageCt());
   }, true);
 })();

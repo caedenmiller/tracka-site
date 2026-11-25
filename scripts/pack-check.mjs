@@ -2,7 +2,8 @@
 // Checks for the first-visit pack's loader and page handling (11-11 review),
 // headless, against this checkout served on a local port. Each one failed
 // before its fix on branch site-pack:
-//   J  the TikTok handoff: a store tap in TikTok loads ?app=<ct> with the sheet; Safari on ?app= goes to the store
+//   J  TikTok (11-25, the hold): a store tap opens the hold sheet in place, its button the store link with the
+//      tapped ct; a tap on that button shakes it and goes nowhere; Safari on an old ?app= address still goes to the store
 //   A  Android: hero Get notified tapped first, so no pack (and a waitlist
 //      sheet built before the pack is never inert)
 //   B  closing puts a scrolled page back at once (no smooth glide)
@@ -196,19 +197,34 @@ try {
       const { b, p, events } = await open(chromium, TT, watch);
       await p.goto(BASE, { waitUntil: 'commit' });
       await p.waitForSelector('.cta-row a.store', { state: 'attached' });
+      await p.waitForSelector('.tt-bar', { timeout: 4000 }).catch(() => {});
+      check('J  TikTok: the bar says press and hold', /Press and hold/.test(await p.textContent('.tt-bar').catch(() => '')));
+      const before = p.url();
       await p.evaluate(() => document.querySelector('.cta-row a.store').click());
-      await p.waitForURL(/\?app=home&v=web-[a-z0-9]+$/, { timeout: 5000 }).catch(() => {});
-      check('J  TikTok: a store tap loads the page with ?app= and the visit id', /\?app=home&v=web-[a-z0-9]+$/.test(p.url()), p.url());
-      handoffUrl = p.url();
-      check('J  TikTok: the sheet is up on that load', await p.waitForSelector('.tt-sheet.on', { timeout: 4000 }).then(() => true, () => false));
-      await p.waitForTimeout(2500);
-      check('J  TikTok: no pack on the handoff load, nothing marked seen', !(await p.$('.tp')) && (await p.evaluate(() => localStorage.getItem('tv_pack_seen'))) === null);
+      check('J  TikTok: a store tap opens the hold sheet', await p.waitForSelector('.tt-hold.on', { timeout: 3000 }).then(() => true, () => false));
+      check('J  TikTok: no reload, no navigation', p.url() === before, p.url());
+      const go = await p.evaluate(() => { const a = document.querySelector('.tt-hold .tt-go'); const r = a.getBoundingClientRect(); return { href: a.href, h: r.height, w: r.width, callout: getComputedStyle(a).webkitTouchCallout, text: a.textContent.trim() }; });
+      check('J  TikTok: the held button is the store link with ct=home', /^https:\/\/apps\.apple\.com\/.*[?&]ct=home(&|$)/.test(go.href), go.href);
+      check('J  TikTok: the button is big, says Tap and hold, and keeps the iOS link menu', go.h >= 56 && go.w >= 300 && go.text === 'Tap and hold to open' && go.callout !== 'none', JSON.stringify(go));
+      await p.evaluate(() => document.querySelector('.tt-hold .tt-go').click());
+      await p.waitForTimeout(500);
+      check('J  TikTok: a tap on the held button shakes, goes nowhere', p.url() === before && !store.length && await p.$('.tt-go.tt-shake') !== null, p.url());
+      const shown = events.find(e => e.event === 'web_tiktok_sheet_shown');
+      check('J  TikTok: web_tiktok_sheet_shown carries the ct', shown && shown.ct === 'home', shown && shown.ct);
+      check('J  TikTok: web_tiktok_hold_tapped counted', events.some(e => e.event === 'web_tiktok_hold_tapped'));
+      await p.click('.tt-x');
+      await p.waitForTimeout(400);
+      check('J  TikTok: Close hides the sheet', await p.evaluate(() => document.querySelector('.tt-hold').hidden));
       check('J  TikTok: no store navigation', !store.length, store.join(' '));
-      const h = events.find(e => e.event === 'web_tiktok_handoff');
-      check('J  TikTok: web_tiktok_handoff carries the ct', h && h.ct === 'home', h && h.ct);
-      const ids = [...new Set(events.map(e => e._id))];
-      check('J  TikTok: the first load and the handoff load are one visit (one id)', ids.length === 1 && handoffUrl.endsWith('v=' + ids[0]) && events.some(e => e.event === 'web_tiktok_sheet_shown'), ids.join(' '));
-      visitId = ids[0];
+      await b.close();
+    }
+    { // an old handoff address opened in TikTok: the hold sheet on load, with its ct; one visit id kept
+      const { b, p, events } = await open(chromium, TT, watch);
+      await p.goto(BASE + '?app=home&v=web-abc123');
+      check('J  TikTok: an old ?app= address opens the hold sheet', await p.waitForSelector('.tt-hold.on', { timeout: 4000 }).then(() => true, () => false));
+      check('J  TikTok: no pack on it, nothing marked seen', !(await p.$('.tp')) && (await p.evaluate(() => localStorage.getItem('tv_pack_seen'))) === null);
+      handoffUrl = BASE + '?app=home&v=web-abc123';
+      visitId = 'web-abc123';
       await b.close();
     }
     { // 11-17: Open in browser hands Safari the handoff address; Safari keeps the same id
@@ -225,10 +241,11 @@ try {
       await p.goto(BASE + '?pack=1');
       await p.waitForSelector('.tp.on', { timeout: 9000 });
       await toResults(p);
+      const before = p.url();
       await p.click('.tp-app');
-      await p.waitForURL(/\?app=pack-preview&v=web-[a-z0-9]+$/, { timeout: 5000 }).catch(() => {});
-      check('J  TikTok: the pack\'s store button hands off with its ct', /\?app=pack-preview&v=web-[a-z0-9]+$/.test(p.url()) && !store.length, p.url());
-      check('J  TikTok: the sheet is up after the pack\'s handoff', await p.waitForSelector('.tt-sheet.on', { timeout: 4000 }).then(() => true, () => false));
+      check('J  TikTok: the pack\'s store button opens the hold sheet over the pack', await p.waitForSelector('.tt-hold.on', { timeout: 3000 }).then(() => true, () => false) && p.url() === before && !store.length, p.url());
+      check('J  TikTok: the held button carries the pack\'s ct', /[?&]ct=pack-preview(&|$)/.test(await p.evaluate(() => document.querySelector('.tt-go').href)));
+      check('J  TikTok: the sheet sits above the pack', await p.evaluate(() => { const r = document.querySelector('.tt-go').getBoundingClientRect(); const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !!el && !!el.closest('.tt-go'); }));
       await b.close();
     }
     {
@@ -254,12 +271,13 @@ try {
       const { b, p } = await open(chromium, TT, watch);
       await p.goto(GO);
       await p.waitForSelector('a.badge', { state: 'attached' });
+      check('M  TikTok: the line under the badge says press and hold', /Press and hold/.test(await p.textContent('#hint')) && await p.isVisible('#hint'));
       await p.evaluate(() => document.querySelector('a.badge').click());
-      await p.waitForURL(/\?app=c-FAITHLOVESFISH&v=web-[a-z0-9]+$/, { timeout: 5000 }).catch(() => {});
-      handoff = p.url();
-      check('M  TikTok: a creator badge tap loads the page with ?app=<its ct>', /\/go\/faithlovesfish\/\?app=c-FAITHLOVESFISH&v=web-[a-z0-9]+$/.test(handoff), handoff);
-      check('M  TikTok: the sheet is up with the code', await p.waitForSelector('.tt-sheet.on .tt-code b', { timeout: 4000 }).then(() => true, () => false));
+      check('M  TikTok: a badge tap opens the hold sheet with the code', await p.waitForSelector('.tt-hold.on .tt-code b', { timeout: 3000 }).then(() => true, () => false) && /\/go\/faithlovesfish\/$/.test(p.url()), p.url());
+      check('M  TikTok: the code on the sheet is the creator\'s', (await p.textContent('.tt-hold .tt-code b')).trim() === 'FAITHLOVESFISH');
+      check('M  TikTok: the held button carries the creator ct', /[?&]ct=c-FAITHLOVESFISH(&|$)/.test(await p.evaluate(() => document.querySelector('.tt-go').href)));
       check('M  TikTok: no store navigation', !store.length, store.join(' '));
+      handoff = GO + '?app=c-FAITHLOVESFISH&v=web-abc123';
       await b.close();
     }
     {
@@ -485,8 +503,8 @@ try {
       const { b, p } = await open(chromium, TT, watchL);
       await toBar(p);
       await p.click('.tp-bar a');
-      await p.waitForURL(/\?app=packbar&v=web-[a-z0-9]+$/, { timeout: 5000 }).catch(() => {});
-      check('L  TikTok: the bar hands off with ?app=packbar', /\?app=packbar&v=web-[a-z0-9]+$/.test(p.url()) && storeL.length === before, p.url());
+      const ok = await p.waitForSelector('.tt-hold.on', { timeout: 3000 }).then(() => true, () => false);
+      check('L  TikTok: the bar opens the hold sheet with ct=packbar', ok && /[?&]ct=packbar(&|$)/.test(await p.evaluate(() => document.querySelector('.tt-go').href)) && storeL.length === before);
       await b.close();
     }
     {
