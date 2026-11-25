@@ -81,6 +81,8 @@
     if (/[?&]app=/.test(location.search)) return 'tiktok-handoff';
     if (inApp !== 'none') return inApp;
     var r = (refHost() || '').toLowerCase();
+    // mail.google.com, docs.google.com, Gmail's app: a shared link, not a search (11-25 review)
+    if (/^(mail|docs|drive|calendar|chat)\.google\.|^com\.google\.android\.gm$/.test(r)) return 'ref:' + r.slice(0, 60);
     if (/(^|\.)(google|bing|duckduckgo|yahoo|ecosia|baidu|yandex|brave|startpage|qwant)\.|googlequicksearchbox/.test(r)) return 'search';
     if (r && !/(^|\.)gettracka\.com$/.test(r)) return 'ref:' + r.replace(/^www\./, '').slice(0, 60);
     return 'direct';
@@ -144,7 +146,7 @@
     // arrival (11-25). Inside TikTok escape.js holds it back (the hold sheet; it sends its own
     // via hold), on Android android.js does (waitlist), on a computer it is Apple's web page,
     // and a pack preview is his own look.
-    if (os === 'ios' && inApp !== 'tiktok' && /apps\.apple\.com/.test(href) && !(ct && /preview/.test(ct[1]))) {
+    if (os === 'ios' && inApp !== 'tiktok' && /apps\.apple\.com/.test(href) && !(ct && /preview/.test(ct[1])) && !/[?&]preview_(tiktok|android)=1(&|$)/.test(location.search)) {
       send('web_app_store_opened', { ct: ct ? ct[1] : null, via: 'tap' });
     }
   }, true);

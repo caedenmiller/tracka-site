@@ -51,7 +51,8 @@
     try {
       if (window.tvTrack) {
         window.tvTrack('web_tiktok_handoff_landed', { ct: ct });
-        window.tvTrack('web_app_store_opened', { ct: ct, via: 'handoff' }); // track.js, 11-25
+        // an iPhone only: an old ?app= link opened on Android or a computer reaches no App Store
+        if (/iPhone|iPad|iPod/i.test(ua)) window.tvTrack('web_app_store_opened', { ct: ct, via: 'handoff' }); // track.js, 11-25
       }
     } catch (e) { /* fine */ }
     css();
