@@ -166,7 +166,7 @@
 
   // The sheet (11-25): Get Tracka (or the creator's code), two arrows into one white button,
   // which is the store link itself. Held, iOS shows its menu with Open Link; tapped, it shakes.
-  var sheet = null, go = null, label = null, ct = 'home', holdTimer = 0, heldAt = 0, tapped = false;
+  var sheet = null, go = null, label = null, ct = 'home', holdTimer = 0, hideTimer = 0, heldAt = 0, held = false, tapped = false;
   var HOLD = 'Tap and hold to open', HOLDING = 'Keep holding to open link';
 
   function track(event, extra) {
@@ -207,7 +207,7 @@
     go.addEventListener('touchstart', function () {
       label.textContent = HOLDING;
       clearTimeout(holdTimer);
-      holdTimer = setTimeout(function () { if (!heldAt) track('web_tiktok_hold'); heldAt = Date.now(); }, 400);
+      holdTimer = setTimeout(function () { if (!held) track('web_tiktok_hold'); held = true; heldAt = Date.now(); }, 400);
     }, { passive: true });
     ['touchend', 'touchcancel'].forEach(function (t) {
       go.addEventListener(t, function () { clearTimeout(holdTimer); label.textContent = HOLD; });
@@ -222,7 +222,9 @@
     if (!sheet) build();
     ct = forCt || pageCt();
     go.href = STORE + ct;
+    clearTimeout(hideTimer); // a close a moment ago must not hide this opening
     heldAt = 0;
+    held = false;
     tapped = false;
     label.textContent = HOLD;
     track('web_tiktok_sheet_shown');
@@ -231,9 +233,9 @@
   }
 
   function hide() {
-    track('web_tiktok_sheet_dismissed', { held: !!heldAt });
+    track('web_tiktok_sheet_dismissed', { held: held });
     sheet.classList.remove('on');
-    setTimeout(function () { sheet.hidden = true; }, 220);
+    hideTimer = setTimeout(function () { sheet.hidden = true; }, 220);
   }
 
   // TikTok goes to the background soon after a hold: Open Link took them to the App Store
@@ -260,7 +262,7 @@
   }
 
   function start() {
-    if (onGo && !onLanding) {
+    if (onGo) {
       var hint = document.getElementById('hint');
       if (hint) hint.textContent = 'Press and hold the button, then tap Open Link.';
     } else if (!onLanding) bar();

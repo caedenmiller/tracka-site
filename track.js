@@ -77,6 +77,9 @@
   document.addEventListener('click', function (e) {
     var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
     if (!a) return;
+    // the TikTok hold sheet's button (escape.js): a tap there only shakes it, and the hold that
+    // works sends no click; escape.js counts both itself (11-25)
+    if (a.classList.contains('tt-go')) return;
     var href = a.getAttribute('href');
     if (!/apps\.apple\.com|^\/go\//.test(href)) {
       // Any other link (See how, the menu, footer): which ones people try.
