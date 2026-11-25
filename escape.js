@@ -149,6 +149,13 @@
       '.tt-pt-l{left:10%}.tt-pt-r{right:10%;transform:scaleX(-1);animation-name:tt-pt-r}' +
       '@keyframes tt-pt{50%{transform:translate(6px,6px)}}' +
       '@keyframes tt-pt-r{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translate(6px,6px)}}' +
+      '.tt-light{background:rgba(0,0,0,.4)}' +
+      '.tt-light .tt-panel{background:#fff;color:#08080A;border-top-color:rgba(0,0,0,.06)}' +
+      '.tt-light .tt-x{background:#EFEFF2;color:#08080A}' +
+      '.tt-light .tt-icon{border-color:rgba(0,0,0,.08);box-shadow:0 10px 28px rgba(139,116,255,.28)}' +
+      '.tt-light .tt-panel h2 span{background-image:linear-gradient(105deg,#b44fd0,#7a63f5,#2a86e8,#1fb5c9,#00b3a5)}' +
+      '.tt-light .tt-go{background:#08080A;color:#fff}' +
+      '.tt-light .tt-pt{stroke:#08080A}' +
       '@media(max-height:600px){.tt-panel{padding-top:22px}.tt-row{margin-top:48px}.tt-icon{width:48px;height:48px;border-radius:11px}.tt-panel h2{font-size:22px;margin-top:10px}}' +
       '@media(prefers-reduced-motion:reduce){.tt-bar svg,.tt-pt,.tt-shake{animation:none}.tt-sheet,.tt-hold,.tt-panel{transition:none}}';
     document.head.appendChild(s);
@@ -197,7 +204,8 @@
       return '<svg class="tt-pt tt-pt-' + side + '" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l13 13M18 8v10H8"/></svg>';
     };
     sheet = document.createElement('div');
-    sheet.className = 'tt-hold';
+    // 11-25 (his ask): the main site's sheet is light; creator pages (a code on screen) stay dark.
+    sheet.className = 'tt-hold' + (onGo && document.querySelector('#code b') ? '' : ' tt-light');
     sheet.hidden = true;
     sheet.innerHTML =
       '<div class="tt-panel" role="dialog" aria-modal="true" aria-labelledby="tt-title">' +
