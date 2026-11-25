@@ -267,6 +267,7 @@ try {
       await p.goto(handoff).catch(() => {});
       await p.waitForTimeout(2500);
       check('M  Safari: the handoff address goes to the store with the creator ct', store.length >= 1 && /[?&]ct=c-FAITHLOVESFISH(&|$)/.test(store[0]), store[0]);
+      check('M  Safari: the code stays on screen with Get the app', await p.evaluate(() => { const b = document.querySelector('.tt-sheet .tt-code b'); const a = document.querySelector('.tt-sheet .tt-get'); return !!b && b.textContent.trim().length > 0 && !!a && /ct=c-FAITHLOVESFISH/.test(a.href); }));
       await b.close();
     }
     {

@@ -49,8 +49,17 @@
     s.setAttribute('role', 'dialog');
     s.setAttribute('aria-modal', 'true');
     s.setAttribute('aria-label', 'Get Tracka');
-    s.innerHTML = '<div class="tt-mark" aria-hidden="true"><img src="/go/icon.png?v=3" width="84" height="84" alt=""><b>Tracka</b></div>' +
-      '<a class="tt-get" href="' + url + '">Get the app</a><button class="tt-close" type="button">Close</button>';
+    // A creator page keeps its code on this screen (11-24, his phone: Safari asks before it opens
+    // the store, and someone who taps Cancel or comes back must still see the code to type).
+    var codeEl = location.pathname.indexOf('/go/') === 0 && document.querySelector('#code b');
+    var code = codeEl && codeEl.textContent.trim();
+    var top = '<div class="tt-mark" aria-hidden="true"><img src="/go/icon.png?v=3" width="84" height="84" alt=""><b>Tracka</b></div>';
+    if (code) {
+      var t = document.createElement('i');
+      t.textContent = code;
+      top = '<div class="tt-code"><small>Your code</small><b style="--n:' + Math.max(7, code.length) + '">' + t.innerHTML + '</b><span>Type it when you sign up</span></div>';
+    }
+    s.innerHTML = top + '<a class="tt-get" href="' + url + '">Get the app</a><button class="tt-close" type="button">Close</button>';
     s.querySelector('.tt-close').addEventListener('click', function () { s.hidden = true; });
     document.body.appendChild(s);
     location.replace(url);
