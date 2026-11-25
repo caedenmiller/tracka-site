@@ -140,24 +140,19 @@
       '.tt-code-sm{align-self:stretch;margin:36px 0 0;padding:14px 14px 13px}' +
       '.tt-code-sm b{font-size:min(36px,calc((100vw - 76px) / var(--n,7) / .8))}' +
       '.tt-code-sm span{font-size:14px}' +
-      '.tt-row{position:relative;width:100%;max-width:420px;margin-top:58px}' +
+      '.tt-row{position:relative;width:100%;max-width:420px;margin-top:24px}' +
       '.tt-go{display:flex;align-items:center;justify-content:center;gap:10px;min-height:60px;border-radius:999px;background:#fff;color:#08080A;font-size:18px;font-weight:800;letter-spacing:-.01em;text-decoration:none;-webkit-touch-callout:default;-webkit-user-select:none;user-select:none}' +
       '.tt-go svg{flex:none;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
       '.tt-shake{animation:tt-shake .4s ease}' +
       '@keyframes tt-shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}' +
-      '.tt-pt{position:absolute;top:-48px;width:40px;height:40px;pointer-events:none;fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;animation:tt-pt 1s ease-in-out infinite}' +
-      '.tt-pt-l{left:10%}.tt-pt-r{right:10%;transform:scaleX(-1);animation-name:tt-pt-r}' +
-      '@keyframes tt-pt{50%{transform:translate(6px,6px)}}' +
-      '@keyframes tt-pt-r{0%,100%{transform:scaleX(-1)}50%{transform:scaleX(-1) translate(6px,6px)}}' +
       '.tt-light{background:rgba(0,0,0,.4)}' +
       '.tt-light .tt-panel{background:#fff;color:#08080A;border-top-color:rgba(0,0,0,.06)}' +
       '.tt-light .tt-x{background:#EFEFF2;color:#08080A}' +
       '.tt-light .tt-icon{border-color:rgba(0,0,0,.08);box-shadow:0 10px 28px rgba(139,116,255,.28)}' +
       '.tt-light .tt-panel h2 span{background-image:linear-gradient(105deg,#b44fd0,#7a63f5,#2a86e8,#1fb5c9,#00b3a5)}' +
       '.tt-light .tt-go{background:#08080A;color:#fff}' +
-      '.tt-light .tt-pt{stroke:#08080A}' +
-      '@media(max-height:600px){.tt-panel{padding-top:22px}.tt-row{margin-top:48px}.tt-icon{width:48px;height:48px;border-radius:11px}.tt-panel h2{font-size:22px;margin-top:10px}}' +
-      '@media(prefers-reduced-motion:reduce){.tt-bar svg,.tt-pt,.tt-shake{animation:none}.tt-sheet,.tt-hold,.tt-panel{transition:none}}';
+      '@media(max-height:600px){.tt-panel{padding-top:22px}.tt-row{margin-top:20px}.tt-icon{width:48px;height:48px;border-radius:11px}.tt-panel h2{font-size:22px;margin-top:10px}}' +
+      '@media(prefers-reduced-motion:reduce){.tt-bar svg,.tt-shake{animation:none}.tt-sheet,.tt-hold,.tt-panel{transition:none}}';
     document.head.appendChild(s);
   }
 
@@ -200,9 +195,6 @@
 
   function build() {
     css();
-    var arrow = function (side) {
-      return '<svg class="tt-pt tt-pt-' + side + '" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l13 13M18 8v10H8"/></svg>';
-    };
     sheet = document.createElement('div');
     // 11-25 (his ask): the main site's sheet is light; creator pages (a code on screen) stay dark.
     sheet.className = 'tt-hold' + (onGo && document.querySelector('#code b') ? '' : ' tt-light');
@@ -211,9 +203,9 @@
       '<div class="tt-panel" role="dialog" aria-modal="true" aria-labelledby="tt-title">' +
         '<button class="tt-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
         top() +
-        '<div class="tt-row">' + arrow('l') +
+        '<div class="tt-row">' +
           '<a class="tt-go" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 14a8 8 0 0 1-8 8"/><path d="M18 11v-1a2 2 0 0 0-4 0"/><path d="M14 10V9a2 2 0 0 0-4 0v1"/><path d="M10 9.5V4a2 2 0 0 0-4 0v10"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg><span>' + HOLD + '</span></a>' +
-        arrow('r') + '</div>' +
+        '</div>' +
       '</div>';
     go = sheet.querySelector('.tt-go');
     label = go.querySelector('span');
