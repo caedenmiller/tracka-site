@@ -174,7 +174,7 @@
 
   // The sheet (11-25): Get Tracka (or the creator's code), two arrows into one white button,
   // which is the store link itself. Held, iOS shows its menu with Open Link; tapped, it shakes.
-  var sheet = null, go = null, label = null, ct = 'home', holdTimer = 0, hideTimer = 0, heldAt = 0, held = false, tapped = false;
+  var sheet = null, go = null, label = null, ct = 'home', holdTimer = 0, pressAt = 0, hideTimer = 0, heldAt = 0, held = false, tapped = false;
   var HOLD = 'Tap and hold to open', HOLDING = 'Keep holding to open link';
 
   function track(event, extra) {
@@ -210,14 +210,23 @@
     go = sheet.querySelector('.tt-go');
     label = go.querySelector('span');
     // the words follow the finger; a hold past 0.4 s is counted once per opening
+    // 11-26: no hold was ever recorded, though people installed seconds after the sheet. iOS
+    // takes a link long-press over with touchcancel, likely before 0.4 s, which cleared the
+    // timer. A system cancel 0.25 s or more into a press is the long-press itself: count it.
+    function markHold() { if (!held) track('web_tiktok_hold'); held = true; heldAt = Date.now(); }
     go.addEventListener('touchstart', function () {
       label.textContent = HOLDING;
+      pressAt = Date.now();
       clearTimeout(holdTimer);
-      holdTimer = setTimeout(function () { if (!held) track('web_tiktok_hold'); held = true; heldAt = Date.now(); }, 400);
+      holdTimer = setTimeout(markHold, 400);
     }, { passive: true });
-    ['touchend', 'touchcancel'].forEach(function (t) {
-      go.addEventListener(t, function () { clearTimeout(holdTimer); label.textContent = HOLD; });
+    go.addEventListener('touchcancel', function () {
+      clearTimeout(holdTimer);
+      if (pressAt && Date.now() - pressAt >= 250) markHold();
+      pressAt = 0;
+      label.textContent = HOLD;
     });
+    go.addEventListener('touchend', function () { clearTimeout(holdTimer); pressAt = 0; label.textContent = HOLD; });
     sheet.addEventListener('click', function (e) {
       if (e.target === sheet || e.target.closest('.tt-x')) hide();
     });
