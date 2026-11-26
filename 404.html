@@ -10,8 +10,22 @@
 (function () {
   var p = location.pathname;
   if (/^\/go\//i.test(p) && /[A-Z]/.test(p)) location.replace(p.toLowerCase() + location.search + location.hash);
+  /* 11-26: a public binder, /@handle/binder-slug. binder.js draws it over this page (the 404
+     body stays hidden meanwhile); a capital in the address goes to the lower case one first. */
+  if (/^\/@[A-Za-z0-9_]{3,24}\/[A-Za-z0-9-]{1,60}\/?$/.test(p)) {
+    if (/[A-Z]/.test(p)) { location.replace(p.toLowerCase() + location.search + location.hash); return; }
+    document.documentElement.className += ' bp';
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = '/binder.css?v=1';
+    document.head.appendChild(l);
+    var s = document.createElement('script');
+    s.src = '/binder.js?v=1';
+    document.head.appendChild(s);
+  }
 })();
 </script>
+<style>html.bp .nav,html.bp main.lost{display:none}html.bp,html.bp body{background:#08080A}</style>
 <script src="/track.js?v=9"></script>
 <title>Page not found: Tracka</title>
 <meta name="description" content="There’s nothing at this address on gettracka.com.">
@@ -40,7 +54,7 @@
     <a class="pill" href="/">Back to gettracka.com</a>
   </div>
 </main>
-<script src="/escape.js?v=22" defer></script>
+<script src="/escape.js?v=23" defer></script>
 <script src="/android.js?v=4" defer></script>
 </body>
 </html>
