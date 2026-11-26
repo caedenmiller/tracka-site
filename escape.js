@@ -159,6 +159,10 @@
   var LANDING = '/go/tiktok/';
   var onLanding = location.pathname === LANDING;
   var onGo = location.pathname.indexOf('/go/') === 0;
+  // 11-26: a public binder (/@handle/slug, drawn by binder.js over 404.html) works like a creator
+  // page: no pinned bar (its Get Tracka sits in its own bar at the bottom), and a creator's code
+  // on it (#code b) gives the dark sheet with the code.
+  var onBinder = /^\/@[^/]+\/[^/]+\/?$/.test(location.pathname);
   var STORE = 'https://apps.apple.com/app/apple-store/id6778956833?pt=129011221&mt=8&ct=';
 
   function ctOf(href) {
@@ -179,14 +183,19 @@
 
   function track(event, extra) {
     if (!window.tvTrack || preview) return;
-    var props = { ct: ct, page: onLanding ? 'landing' : onGo ? 'go' : 'site' };
+    var props = { ct: ct, page: onLanding ? 'landing' : onGo ? 'go' : onBinder ? 'binder' : 'site' };
     for (var k in extra || {}) props[k] = extra[k];
     try { window.tvTrack(event, props); } catch (e) { /* fine */ }
   }
 
+  // the creator's code on screen: /go pages and binder pages only
+  function pageCode() {
+    var el = (onGo || onBinder) && document.querySelector('#code b');
+    return (el && el.textContent.trim()) || null;
+  }
+
   function top() {
-    var el = onGo && document.querySelector('#code b');
-    var code = el && el.textContent.trim();
+    var code = pageCode();
     if (!code) return '<img class="tt-icon" src="/go/icon.png?v=3" width="60" height="60" alt=""><h2 id="tt-title">Get <span>Tracka</span></h2>';
     var t = document.createElement('i');
     t.textContent = code;
@@ -197,7 +206,7 @@
     css();
     sheet = document.createElement('div');
     // 11-25 (his ask): the main site's sheet is light; creator pages (a code on screen) stay dark.
-    sheet.className = 'tt-hold' + (onGo && document.querySelector('#code b') ? '' : ' tt-light');
+    sheet.className = 'tt-hold' + (pageCode() ? '' : ' tt-light');
     sheet.hidden = true;
     sheet.innerHTML =
       '<div class="tt-panel" role="dialog" aria-modal="true" aria-labelledby="tt-title">' +
@@ -281,7 +290,7 @@
     if (onGo) {
       var hint = document.getElementById('hint');
       if (hint) hint.textContent = 'Press and hold the button, then tap Open Link.';
-    } else if (!onLanding) bar();
+    } else if (!onLanding && !onBinder) bar();
     if (onLanding || app) show(); // an old handoff address, or the old /go/tiktok/ hop
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
