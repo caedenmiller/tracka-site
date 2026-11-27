@@ -28,7 +28,8 @@
 //   P-V  public binder pages (11-26), /@<handle>/<slug> on 404.html with the public-binder function routed to fixtures:
 //      P renders (name, stat line, 9 pockets, flipper, swipe, keys, lightbox); Q the bar's ct and creator code (Android:
 //      the waitlist); R TikTok opens the hold sheet with the creator's code; S a miss is the dark state with the bar;
-//      T any other unknown address is still the plain 404; U user text stays text; V values only when sent
+//      T any other unknown address is still the plain 404; U user text stays text; V values only when sent;
+//      W 404.html previews as "Tracka binder" (og tags, read without script), the tab says Page not found off a binder route
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -807,6 +808,28 @@ try {
         check('T  /' + addr + ' is still the plain 404', /^Nothing here/.test(st.h || '') && !st.bp && st.vis && !scripts.length, JSON.stringify(st) + ' ' + scripts.join(' '));
         await b.close();
       }
+    }
+    { // W: a shared binder link previews as a Tracka binder (link previews read 404.html as served, no script);
+      // the tab still says Page not found off a binder address, and a binder titles itself
+      const raw = await readFile(join(SITE, '404.html'), 'utf8');
+      const meta = (attr, key) => (raw.match(new RegExp('<meta ' + attr + '="' + key.replace(/[.:]/g, '\\$&') + '" content="([^"]*)"')) || [])[1];
+      const title = (raw.match(/<title>([^<]*)<\/title>/) || [])[1];
+      const og = { title: meta('property', 'og:title'), desc: meta('property', 'og:description'), image: meta('property', 'og:image'), tw: meta('name', 'twitter:card'), d: meta('name', 'description') };
+      check('W  404.html as served: og:title Tracka binder, an image, a neutral description and title',
+        og.title === 'Tracka binder' && /^https:\/\/gettracka\.com\/og\.jpg/.test(og.image || '') && og.tw === 'summary_large_image' && title === 'Tracka'
+          && ![og.title, og.desc, og.d, title].some(t => /not found|nothing at/i.test(t || '')), JSON.stringify({ ...og, title }));
+      for (const addr of ['nope', 'go/Nope-At-All']) {
+        const { b, p } = await open(chromium, IOS, binder());
+        await p.goto(BASE + addr);
+        await p.waitForTimeout(300);
+        check('W  /' + addr + ': the tab says Page not found, the page Nothing here', (await p.title()) === 'Page not found: Tracka' && /^Nothing here/.test(await p.textContent('main.lost h1')), await p.title());
+        await b.close();
+      }
+      const { b, p } = await open(chromium, IOS, binder());
+      await p.goto(BASE + '@pinkmorpeko/eevee-collection');
+      await p.waitForSelector('.bp-name', { timeout: 6000 });
+      check('W  a binder address never says Page not found', (await p.title()) === 'Eevee Collection by PinkMorpeko · Tracka', await p.title());
+      await b.close();
     }
     { // U: user text stays text
       const { b, p } = await open(chromium, IOS, binder());
