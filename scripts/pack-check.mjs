@@ -25,6 +25,10 @@
 //   N  tracking (11-25): every event carries entry_source and entry_path, kept for the whole tab; a TikTok hold sends
 //      web_tiktok_hold, and TikTok leaving after it sends web_tiktok_hold_left + web_app_store_opened via hold; an
 //      iPhone Safari tap, a /go redirect and the old handoff send web_app_store_opened; WebKit sends nothing real
+//   P-V  public binder pages (11-26), /@<handle>/<slug> on 404.html with the public-binder function routed to fixtures:
+//      P renders (name, stat line, 9 pockets, flipper, swipe, keys, lightbox); Q the bar's ct and creator code (Android:
+//      the waitlist); R TikTok opens the hold sheet with the creator's code; S a miss is the dark state with the bar;
+//      T any other unknown address is still the plain 404; U user text stays text; V values only when sent
 // Needs Playwright with Chromium and WebKit. Run it from a folder where
 // `playwright` is installed (it is loaded from the current folder):
 //   node ~/projects/tracka-site-pack/scripts/pack-check.mjs
@@ -40,7 +44,11 @@ const server = createServer(async (req, res) => {
   let path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (path.endsWith('/')) path += 'index.html';
   try { const body = await readFile(join(SITE, path)); res.writeHead(200, { 'Content-Type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
-  catch { res.writeHead(404); res.end(); }
+  catch {
+    // GitHub Pages answers a page address it doesn't have with 404.html (status 404); the binder pages live on that
+    if (!extname(path) || extname(path) === '.html') { res.writeHead(404, { 'Content-Type': 'text/html' }); res.end(await readFile(join(SITE, '404.html'))); }
+    else { res.writeHead(404); res.end(); }
+  }
 }).listen(0, '127.0.0.1');
 await new Promise(r => server.once('listening', r));
 const BASE = `http://127.0.0.1:${server.address().port}/`;
@@ -622,6 +630,216 @@ try {
       await p.goto(BASE + '?nopack');
       await p.waitForTimeout(800);
       check('N  WebKit: the pageview is caught locally, not sent to PostHog', events.some(e => e.event === 'web_pageview' && e.host === '127.0.0.1'));
+      await b.close();
+    }
+  }
+  { // P-V: public binder pages (11-26)
+    const TT = IOS + ' musical_ly_36.0.0 BytedanceWebview/d8a21c6';
+    const card = (n, extra) => ({ name: 'Card ' + n, image: 'https://images.scrydex.com/pokemon/sv8pt5-' + n + '/small', set: 'Prismatic Evolutions', number: String(n), missing: false, value: null, ...extra });
+    const nine = (from, holes = []) => Array.from({ length: 9 }, (_, i) => holes.includes(i) ? null : card(from + i));
+    const FIX = {
+      'pinkmorpeko/eevee-collection': {
+        owner: { name: 'PinkMorpeko', handle: 'pinkmorpeko', avatar: null },
+        binder: { name: 'Eevee Collection', slug: 'eevee-collection', kind: 'custom', color: 'bubblegum', logo: null, cards: 48, total: null, pageCount: 6, hearts: 128, value: null },
+        pages: [{ index: 0, pockets: nine(1) }, { index: 2, pockets: nine(10, [7, 8]) }, { index: 5, pockets: nine(20, [1, 2, 3, 4, 5, 6, 7, 8]) }],
+        creator: { code: 'PINK' },
+      },
+      'devpatel/151': {
+        owner: { name: 'Dev Patel', handle: 'devpatel', avatar: 'https://example.com/a.png' },
+        binder: { name: '151', slug: '151', kind: 'master', color: 'green', logo: null, cards: 84, total: 207, pageCount: 23, hearts: 0, value: 1234.56 },
+        pages: [{ index: 0, pockets: nine(1).map((p, i) => ({ ...p, missing: i % 2 === 1, value: 12.34 })) }, { index: 1, pockets: nine(10) }],
+        creator: null,
+      },
+      'evil_user/xss': {
+        owner: { name: '<img src=x onerror="window.__xss=1">', handle: 'evil_user', avatar: 'javascript:alert(1)' },
+        binder: { name: '<b>bold</b><img src=x onerror="window.__xss=2">', slug: 'xss', kind: 'custom', color: 'constructor', logo: null, cards: 1, total: null, pageCount: 1, hearts: 0, value: null },
+        pages: [{ index: 0, pockets: [{ name: '<img src=x onerror="window.__xss=3">', image: '"><img src=x onerror="window.__xss=4">', set: '<i>s</i>', number: '1', missing: false, value: null }, null, null, null, null, null, null, null, null] }],
+        creator: { code: '<script>' },
+      },
+    };
+    const PNG = await readFile(join(SITE, 'go/icon.png'));
+    const asked = [];
+    const binder = (extra) => async c => {
+      await c.route('**/functions/v1/public-binder**', r => {
+        const u = new URL(r.request().url());
+        asked.push(u.search);
+        const key = u.searchParams.get('handle') + '/' + u.searchParams.get('slug');
+        if (key === 'broken/net') return r.abort();
+        const hit = FIX[key];
+        r.fulfill({ status: hit ? 200 : 404, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(hit || { error: 'not_found' }) });
+      });
+      await c.route('**/images.scrydex.com/**', r => r.fulfill({ status: 200, contentType: 'image/png', body: PNG }));
+      await c.route('**/example.com/**', r => r.fulfill({ status: 404 }));
+      if (extra) await extra(c);
+    };
+    const store = [];
+    const watch = c => c.route('**/apps.apple.com/**', r => { store.push(r.request().url()); r.fulfill({ status: 204 }); });
+    const swipe = (p, dx) => p.evaluate(dx => {
+      const el = document.querySelector('#bp-spread'), r = el.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2;
+      const t = (cx) => new Touch({ identifier: 1, target: el, clientX: cx, clientY: y });
+      el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [t(x)], changedTouches: [t(x)] }));
+      el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, touches: [], changedTouches: [t(x + dx)] }));
+    }, dx);
+    const count = p => p.textContent('.bp-count');
+
+    { // P: a custom binder renders, flips, swipes, keys, opens a card
+      const { b, p, events } = await open(chromium, IOS, binder(watch));
+      await p.goto(BASE + '@PinkMorpeko/Eevee-Collection');
+      const shown = await p.waitForSelector('.bp-name', { timeout: 6000 }).then(() => true, () => false);
+      check('P  binder: a capitalised address lands on the lower case one and renders', shown && /\/@pinkmorpeko\/eevee-collection$/.test(p.url()), p.url());
+      check('P  binder: name, owner and title', (await p.textContent('.bp-name')) === 'Eevee Collection' && (await p.textContent('.bp-owner')) === 'PinkMorpeko' && (await p.title()) === 'Eevee Collection by PinkMorpeko · Tracka', await p.title());
+      check('P  binder: the stat line', (await p.textContent('.bp-stat')) === '48 cards · 6 pages · ♥ 128', await p.textContent('.bp-stat'));
+      check('P  binder: 9 pockets, 9 cards on page 1, the 404 body gone', (await p.$$('.bp-pk')).length === 9 && (await p.$$('.bp-pk img')).length === 9 && !(await p.$('main.lost')) && !(await p.$('header.nav')));
+      check('P  binder: still noindex, dark', await p.evaluate(() => document.querySelector('meta[name=robots]').content === 'noindex' && getComputedStyle(document.body).backgroundColor === 'rgb(8, 8, 10)'));
+      const c1 = await count(p);
+      await p.click('.bp-next');
+      const c2 = await count(p);
+      check('P  binder: the flipper goes 1 / 3 to 2 / 3, empty pockets stay sleeves', c1 === '1 / 3' && c2 === '2 / 3' && (await p.$$('.bp-pk img')).length === 7, c1 + ' → ' + c2);
+      await swipe(p, -120);
+      const c3 = await count(p);
+      await swipe(p, 120);
+      const c4 = await count(p);
+      check('P  binder: a swipe left turns on, a swipe right turns back', c3 === '3 / 3' && c4 === '2 / 3', c3 + ' ' + c4);
+      await p.keyboard.press('ArrowRight');
+      const c5 = await count(p);
+      check('P  binder: the arrow keys turn; the last page disables ›', c5 === '3 / 3' && await p.isDisabled('.bp-next'), c5);
+      await p.keyboard.press('ArrowLeft'); await p.keyboard.press('ArrowLeft');
+      check('P  binder: back on page 1, ‹ disabled', (await count(p)) === '1 / 3' && await p.isDisabled('.bp-prev'));
+      await p.waitForTimeout(450); // past the swipe's guard on taps
+      await p.click('.bp-pk >> nth=4');
+      const lb = await p.waitForSelector('.bp-lb.on', { timeout: 2000 }).then(() => true, () => false);
+      const cap = lb ? await p.textContent('.bp-lb figcaption') : '';
+      check('P  binder: a pocket opens the card, name and Set · #number', lb && /Card 5/.test(cap) && /Prismatic Evolutions · #5/.test(cap) && !/\$/.test(cap), cap);
+      await p.keyboard.press('Escape');
+      check('P  binder: Esc closes the card and the arrows still turn', await p.evaluate(() => document.querySelector('.bp-lb').hidden) && (await p.keyboard.press('ArrowRight'), (await count(p)) === '2 / 3'));
+      const v = events.filter(e => e.event === 'web_binder_view');
+      check('P  binder: one web_binder_view with handle, slug, kind, creator', v.length === 1 && v[0].handle === 'pinkmorpeko' && v[0].slug === 'eevee-collection' && v[0].kind === 'custom' && v[0].creator === 'PINK', JSON.stringify(v.map(e => [e.handle, e.slug, e.kind, e.creator])));
+      check('P  binder: the function is asked for handle and slug', asked.some(q => q === '?handle=pinkmorpeko&slug=eevee-collection'), asked.join(' '));
+      const fit = await p.evaluate(() => ({ over: document.documentElement.scrollWidth - window.innerWidth, bar: document.querySelector('.bp-bar').getBoundingClientRect().width }));
+      check('P  binder: no sideways scroll at 390, the bar 12 px in from each side (378 at most)', fit.over <= 0 && Math.round(fit.bar) === 366, JSON.stringify(fit));
+      await p.setViewportSize({ width: 1280, height: 900 });
+      await p.waitForTimeout(150);
+      const desk = await p.evaluate(() => { const m = document.querySelector('.bp-main').getBoundingClientRect(), s = document.querySelector('#bp-spread').getBoundingClientRect(); return { w: m.width, mid: m.x + m.width / 2, sw: s.width, over: document.documentElement.scrollWidth - window.innerWidth }; });
+      check('P  binder: desktop keeps it a centred column', desk.w <= 440 && Math.abs(desk.mid - 640) < 2 && desk.sw < 440 && desk.over <= 0, JSON.stringify(desk));
+      await b.close();
+    }
+    { // P on WebKit (Safari's engine): it renders the same
+      const { b, p } = await open(webkit, IOS, binder());
+      await p.goto(BASE + '@pinkmorpeko/eevee-collection');
+      const ok = await p.waitForSelector('.bp-pk img', { timeout: 6000 }).then(() => true, () => false);
+      check('P  WebKit: the binder renders', ok && (await count(p)) === '1 / 3');
+      await b.close();
+    }
+    { // Q: the bar's link and code
+      store.length = 0;
+      const { b, p, events } = await open(chromium, IOS, binder(watch));
+      await p.goto(BASE + '@pinkmorpeko/eevee-collection');
+      await p.waitForSelector('.bp-bar');
+      const href = await p.getAttribute('.bp-get', 'href');
+      check('Q  creator: the code box says PINK, Get Tracka has ct=c-PINK', (await p.textContent('#code b')) === 'PINK' && /CREATOR CODE/.test(await p.textContent('#code small')) && /[?&]ct=c-PINK&mt=8$/.test(href) && !(await p.$('.bp-app')), href);
+      await p.click('.bp-get').catch(() => {});
+      await p.waitForTimeout(300);
+      const tap = events.find(e => e.event === 'web_store_tap');
+      check('Q  creator: the tap is counted with ct c-PINK', tap && tap.ct === 'c-PINK', tap && tap.ct);
+      await b.close();
+    }
+    {
+      const { b, p } = await open(chromium, IOS, binder());
+      await p.goto(BASE + '@devpatel/151');
+      await p.waitForSelector('.bp-bar');
+      const href = await p.getAttribute('.bp-get', 'href');
+      check('Q  no creator: Tracka / Free on iPhone, ct=binder, no code box', !(await p.$('#code')) && /Free on iPhone/.test(await p.textContent('.bp-app')) && /[?&]ct=binder&mt=8$/.test(href), href);
+      await b.close();
+    }
+    {
+      const { b, p } = await open(chromium, AND, binder());
+      await p.goto(BASE + '@devpatel/151');
+      await p.waitForSelector('.bp-bar');
+      await p.click('.bp-get');
+      const ok = await p.waitForSelector('.aw-scrim.on', { timeout: 2000 }).then(() => true, () => false);
+      check('Q  Android: Get notified opens the waitlist', ok && (await p.textContent('.bp-get')) === 'Get notified' && /iPhone only/.test(await p.textContent('.bp-app')));
+      await b.close();
+    }
+    { // R: TikTok
+      store.length = 0;
+      const { b, p } = await open(chromium, TT, binder(watch));
+      await p.goto(BASE + '@pinkmorpeko/eevee-collection');
+      await p.waitForSelector('.bp-get');
+      const before = p.url();
+      check('R  TikTok: no pinned bar on a binder page', !(await p.$('.tt-bar')));
+      await p.evaluate(() => document.querySelector('.bp-get').click());
+      const ok = await p.waitForSelector('.tt-hold.on .tt-code b', { timeout: 3000 }).then(() => true, () => false);
+      check('R  TikTok: Get Tracka opens the dark hold sheet with PINK', ok && (await p.textContent('.tt-hold .tt-code b')).trim() === 'PINK' && !(await p.$('.tt-hold.tt-light')));
+      check('R  TikTok: the held button carries ct=c-PINK', /[?&]ct=c-PINK(&|$)/.test(await p.evaluate(() => document.querySelector('.tt-go').href)));
+      check('R  TikTok: no navigation, no store load', p.url() === before && !store.length, p.url() + ' ' + store.join(' '));
+      await b.close();
+    }
+    {
+      const { b, p, events } = await open(chromium, TT, binder(watch));
+      await p.goto(BASE + '@devpatel/151');
+      await p.waitForSelector('.bp-get');
+      await p.evaluate(() => document.querySelector('.bp-get').click());
+      const ok = await p.waitForSelector('.tt-hold.on', { timeout: 3000 }).then(() => true, () => false);
+      const shown = events.find(e => e.event === 'web_tiktok_sheet_shown');
+      check('R  TikTok, no creator: the plain sheet with ct=binder, page binder', ok && !(await p.$('.tt-hold .tt-code')) && /[?&]ct=binder(&|$)/.test(await p.evaluate(() => document.querySelector('.tt-go').href)) && shown && shown.page === 'binder', shown && shown.page);
+      await b.close();
+    }
+    { // S: a miss
+      for (const [label, addr] of [['not_found', '@nobody/eevee'], ['network error', '@broken/net']]) {
+        const { b, p } = await open(chromium, IOS, binder());
+        const errs = [];
+        p.on('pageerror', e => errs.push(e.message));
+        await p.goto(BASE + addr);
+        const ok = await p.waitForSelector('.bp-miss', { timeout: 6000 }).then(() => true, () => false);
+        const st = await p.evaluate(() => ({ h: document.querySelector('.bp-miss h1')?.textContent, bg: getComputedStyle(document.body).backgroundColor, lost: !!document.querySelector('main.lost'), href: document.querySelector('.bp-get')?.getAttribute('href') }));
+        check('S  ' + label + ': the dark miss state with the bar, ct=binder', ok && st.h === 'This binder isn’t public' && st.bg === 'rgb(8, 8, 10)' && !st.lost && /[?&]ct=binder&/.test(st.href || '') && !errs.length, JSON.stringify(st) + ' ' + errs.join(' '));
+        await b.close();
+      }
+    }
+    { // T: every other unknown address is the plain 404, no binder script
+      for (const addr of ['nope', '@ab/x', '@pinkmorpeko', '@pinkmorpeko/eevee/extra', 'go/Nope-At-All']) {
+        const { b, p } = await open(chromium, IOS, binder());
+        const scripts = [];
+        p.on('request', r => { if (/binder\.(js|css)/.test(r.url())) scripts.push(r.url()); });
+        await p.goto(BASE + addr);
+        await p.waitForTimeout(400);
+        const st = await p.evaluate(() => ({ h: document.querySelector('main.lost h1')?.textContent, bp: document.documentElement.classList.contains('bp'), vis: !!document.querySelector('main.lost')?.offsetHeight }));
+        check('T  /' + addr + ' is still the plain 404', /^Nothing here/.test(st.h || '') && !st.bp && st.vis && !scripts.length, JSON.stringify(st) + ' ' + scripts.join(' '));
+        await b.close();
+      }
+    }
+    { // U: user text stays text
+      const { b, p } = await open(chromium, IOS, binder());
+      await p.goto(BASE + '@evil_user/xss');
+      await p.waitForSelector('.bp-name', { timeout: 6000 });
+      await p.click('.bp-pk >> nth=0');
+      await p.waitForTimeout(400);
+      const st = await p.evaluate(() => ({ xss: window.__xss, name: document.querySelector('.bp-name').textContent, owner: document.querySelector('.bp-owner').textContent, imgs: document.querySelectorAll('.bp-head img, .bp-name *, .bp-owner *, .bp-lb figcaption img, .bp-lb figcaption i').length, code: !!document.querySelector('#code'), ct: document.querySelector('.bp-get').getAttribute('href') }));
+      check('U  names and card text stay text, nothing runs', st.xss === undefined && st.name.startsWith('<b>bold</b><img') && st.owner.startsWith('<img') && st.imgs === 0, JSON.stringify(st));
+      check('U  a bad creator code and a bad avatar are dropped', !st.code && /ct=binder&/.test(st.ct));
+      check('U  the title is plain text', (await p.title()).startsWith('<b>bold</b>'));
+      await b.close();
+    }
+    { // V: values only when sent; a master binder's missing cards are ghosted
+      const { b, p } = await open(chromium, IOS, binder());
+      await p.goto(BASE + '@devpatel/151');
+      await p.waitForSelector('.bp-name', { timeout: 6000 });
+      const stat = await p.textContent('.bp-stat');
+      check('V  master: owned/total, pages, the value, no hearts at 0', stat === '84/207 cards · 23 pages · $1,235', stat);
+      const ghost = await p.evaluate(() => { const g = document.querySelectorAll('.bp-pk.bp-gh img'); const s = g[0] && getComputedStyle(g[0]); return { n: g.length, op: s && s.opacity, f: s && s.filter, full: getComputedStyle(document.querySelector('.bp-pk:not(.bp-gh) img')).opacity }; });
+      check('V  master: missing cards ghosted (grayscale, faded), owned in full', ghost.n === 4 && Math.abs(+ghost.op - 0.28) < 0.01 && /grayscale/.test(ghost.f) && ghost.full === '1', JSON.stringify(ghost));
+      await p.click('.bp-pk >> nth=0');
+      await p.waitForSelector('.bp-lb.on');
+      check('V  master: the card shows its value', /\$12\.34/.test(await p.textContent('.bp-lb figcaption')));
+      const cover = await p.evaluate(() => getComputedStyle(document.querySelector('.bp-binder > div')).backgroundColor);
+      check('V  master: a legacy color key maps (green → deep teal)', cover === 'rgb(47, 111, 102)', cover);
+      await b.close();
+    }
+    {
+      const { b, p } = await open(chromium, IOS, binder());
+      await p.goto(BASE + '@pinkmorpeko/eevee-collection');
+      await p.waitForSelector('.bp-name', { timeout: 6000 });
+      check('V  custom with values off: no $ anywhere on the page', !/\$/.test(await p.textContent('#bp-root')));
       await b.close();
     }
   }
